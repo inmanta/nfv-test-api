@@ -6,12 +6,23 @@ import os
 import subprocess
 import re
 import json
+from flask import jsonify
 
 app = Flask(__name__)
 
 # Notes:
 #   * Static content available on /static
 
+
+class ServerError(Exception):
+    pass
+
+
+@app.errorhandler(ServerError)
+def handle_invalid_usage(error):
+    response = jsonify({"error": error.args[0]})
+    response.status_code = 500
+    return response
 
 @lru_cache(maxsize=1)
 def get_config():
@@ -75,7 +86,7 @@ def interface(loc):
         return get_interface_state(loc)
     else:
         if "new_state" not in request.form:
-            raise Exception("Parameter \"new_state\" is missing in form")
+            raise ServerError("Parameter 'new_state' is missing in form")
         new_state = request.form["new_state"]
         set_interface_state(loc, new_state)
         return "ok"
@@ -147,10 +158,10 @@ def dns_lookup(loc, dns_server):
     try:
         output = subprocess.check_output(timeout=timeout_in_sec, args=args).decode()
     except subprocess.TimeoutExpired:
-        raise Exception(f"Timeout occured while executing DNS lookup for {hostname_dns_lookup} on DNS server {dns_server} "
+        raise ServerError(f"Timeout occured while executing DNS lookup for {hostname_dns_lookup} on DNS server {dns_server} "
                         f"(location={loc})")
     except subprocess.CalledProcessError:
-        raise Exception(f"Failed to execute DNS lookup for {hostname_dns_lookup} on DNS server {dns_server} (location={loc})")
+        raise ServerError(f"Failed to execute DNS lookup for {hostname_dns_lookup} on DNS server {dns_server} (location={loc})")
     a_records = []
     query_time = None
     for line in output.split('\n'):
