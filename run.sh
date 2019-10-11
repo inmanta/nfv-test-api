@@ -6,4 +6,4 @@ if [ ! -e env ]; then
    env/bin/pip install -r requirements.txt
 fi
 export FLASK_APP=src/main.py
-env/bin/python -m flask run
+env/bin/python -m flask run --host=0.0.0.0
