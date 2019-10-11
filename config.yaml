@@ -1,0 +1,14 @@
+locations:
+    LOC1: "eth1"
+    LOC2: "eth2"
+    LOC3: "eth3"
+    LOC4: "eth4"
+    LOC5: "eth5"
+    LOC6: "eth6"
+    LOC7: "eth7"
+    LOC8: "eth8"
+connection_config:
+    timeout_dns_lookup_in_ms: 100
+duration_bandwidth_test_in_sec: 5
+hostname_for_dns_lookup: "inmanta.com"
+iperf3_server: "10.0.0.36"
