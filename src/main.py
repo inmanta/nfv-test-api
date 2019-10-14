@@ -97,7 +97,7 @@ def interface(loc):
 def set_interface_state(loc, new_status):
     new_status = new_status.lower()
     if new_status not in ["up", "down"]:
-        raise Exception(f"Invalid new_state: {new_status}")
+        raise ServerError(f"Invalid new_state: {new_status}")
 
     # Set administrative state
     interface = get_config()["locations"][loc]
@@ -105,7 +105,7 @@ def set_interface_state(loc, new_status):
     try:
         subprocess.check_output(args=args).decode()
     except subprocess.CalledProcessError:
-        raise Exception(f"Failed to set state of interface {interface} to {new_status} (location={loc})")
+        raise ServerError(f"Failed to set state of interface {interface} to {new_status} (location={loc})")
 
     if new_status == "up":
         start_dhclient(loc, interface)
@@ -116,12 +116,12 @@ def set_interface_state(loc, new_status):
 def remove_ips_from_interface(loc, interface_name):
     pid_file = get_pid_file(interface_name)
     lease_file = get_lease_file(interface_name)
-    bash_command = ["bash", "-c", f"pkill -F {pid_file} && rm -f {pid_file} {lease_file} && ip addr flush dev {interface_name}"]
+    bash_command = ["bash", "-c", f"pkill -F {pid_file}; rm -f {pid_file} {lease_file}; ip addr flush dev {interface_name}"]
     args = ["ip", "netns", "exec", loc] + bash_command
     try:
         subprocess.check_output(args=args).decode()
     except subprocess.CalledProcessError:
-        raise Exception(f"Failed to remove ips from {interface_name} (location={loc})")
+        raise ServerError(f"Failed to remove ips from {interface_name} (location={loc})")
 
 
 def start_dhclient(loc, interface_name):
@@ -130,9 +130,9 @@ def start_dhclient(loc, interface_name):
     lease_file = get_lease_file(interface_name)
     args = ["ip", "netns", "exec", loc, "/sbin/dhclient", "-1", "-q", "-lf", lease_file, "-pf", pid_file, interface_name]
     try:
-        subprocess.check_output(args=args).decode()
+        subprocess.check_output(args=args, timeout=5).decode()
     except subprocess.CalledProcessError:
-        raise Exception(f"Failed to start dhclient (location={loc})")
+        raise ServerError(f"Failed to start dhclient (location={loc})")
 
 
 def get_interface_state(loc):
@@ -141,7 +141,7 @@ def get_interface_state(loc):
     try:
         output = subprocess.check_output(args=args).decode()
     except subprocess.CalledProcessError:
-        raise Exception(f"Failed to list addresses on interface {interface} (location={loc})")
+        raise ServerError(f"Failed to list addresses on interface {interface} (location={loc})")
     result = {"addresses": []}
     for line in output.split('\n'):
         line = line.strip(' ')
@@ -189,11 +189,11 @@ def bandwidth(loc):
     try:
         output = subprocess.check_output(timeout=duration_bandwidth_test_in_sec + 2, args=args).decode()
     except subprocess.TimeoutExpired:
-        raise Exception(f"Timeout occured while executing bandwidth test towards {iperf3_server} (location={loc})")
+        raise ServerError(f"Timeout occured while executing bandwidth test towards {iperf3_server} (location={loc})")
     except subprocess.CalledProcessError:
-        raise Exception(f"Failed to execute bandwidth test towards {iperf3_server} (location={loc})")
+        raise ServerError(f"Failed to execute bandwidth test towards {iperf3_server} (location={loc})")
     dct = json.loads(output)
     try:
         return {"bandwidth_bits_per_sec": float(dct["end"]["sum_received"]["bits_per_second"])}
     except KeyError:
-        raise Exception(f"Failed to extract bandwidth from: {dct}")
+        raise ServerError(f"Failed to extract bandwidth from: {dct}")
