@@ -178,7 +178,7 @@ def dns_lookup(loc, dns_server):
         match = re.search(";; Query time: (?P<query_time>.*) msec", line)
         if match:
             query_time = match.group("query_time").strip()
-    return {"a_records": a_records, "query_time_msec": int(query_time)}
+    return {"dns_server": dns_server,  "a_records": a_records, "query_time_msec": int(query_time)}
 
 
 @app.route('/bandwidth/<loc>', methods=["GET"])
