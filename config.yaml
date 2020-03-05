@@ -1,14 +1,32 @@
-locations:
-    LOC1: "eth1"
-    LOC2: "eth2"
-    LOC3: "eth3"
-    LOC4: "eth4"
-    LOC5: "eth5"
-    LOC6: "eth6"
-    LOC7: "eth7"
-    LOC8: "eth8"
-connection_config:
-    timeout_dns_lookup_in_ms: 1000
-duration_bandwidth_test_in_sec: 5
-hostname_for_dns_lookup: "inmanta.com"
-iperf3_server: "10.0.0.36"
+namespaces:
+    - name: cloud-west1
+      interfaces:
+        - name: eth0
+          mac: "00:16:3e:1c:3e:4a"
+    - name: cloud-north
+      interfaces:
+        - name: eth0
+          mac: "00:16:3e:24:9a:3d"
+    - name: cloud-north-east
+      interfaces:
+        - name: eth0
+          mac: "00:16:3e:68:5f:9c"
+        - name: eth1
+          mac: "00:16:3e:6f:d6:70"
+    - name: cust-east1
+      interfaces:
+        - name: eth0
+          mac: "00:16:3e:3a:80:2e"
+    - name: cust-east2
+      interfaces:
+        - name: eth0
+          mac: "00:16:3e:67:b7:7c"
+    - name: cust-south1
+      interfaces:
+        - name: eth0
+          mac: "00:16:3e:2c:8a:ec"
+        - name: eth1
+          mac: "00:16:3e:27:2c:09"
+server:
+  host: 0.0.0.0
+  port: 8080

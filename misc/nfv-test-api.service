@@ -1,0 +1,13 @@
+[Unit]
+Description=Start the nfv test api server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/opt/nfv-test-api/bin/python3 -m nfv_test_api.main --config /etc/nfv-test-api.yaml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+locations:
+    - name: LOC1
+      mac: "fa:16:3e:31:c8:d8"
+connection_config:
+    timeout_dns_lookup_in_ms: 1000
+duration_bandwidth_test_in_sec: 5
+hostname_for_dns_lookup: "inmanta.com"
+iperf3_server: "10.0.0.36"

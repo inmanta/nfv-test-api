@@ -1,0 +1,13 @@
+[Unit]
+Description=Start the iperf3 server
+After=network.target
+
+[Service]
+Type=simple
+User=centos
+Group=centos
+ExecStart=/bin/iperf3 -s
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

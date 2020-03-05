@@ -1,0 +1,12 @@
+_ns_name=$(ip netns identify 2>/dev/null)
+PS1=${_ns_name:+(${_ns_name})}${PS1}
+unset _ns_name
+
+_workon_completions()
+{
+  COMPREPLY=($(compgen -W "$(sudo ip netns | cut -d ' ' -f 1)" -- "${COMP_WORDS[1]}"))
+}
+
+complete -F _workon_completions workon
+
+alias lsn="sudo ip netns | cut -d ' ' -f 1 | sort -n"
