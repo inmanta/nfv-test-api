@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nfv-test-api"
-version = "0.2.1"
+version = "0.3.0"
 description = ""
 authors = ["Inmanta <code@inmanta.com>"]
 include=["misc/*"]

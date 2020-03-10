@@ -69,18 +69,6 @@ def list_interfaces(namespace):
     return jsonify(util.list_interfaces(namespace))
 
 
-@app.route("/<namespace>/<interface>", methods=["GET"])
-def get_interface_state(namespace, interface):
-    if namespace is None or len(namespace) == 0:
-        raise exceptions.ServerError(f"Invalid namespace {namespace}")
-
-    try:
-        return jsonify(util.get_interface_state(namespace, interface))
-    except Exception:
-        LOGGER.exception("Failed to get the interface state")
-        abort(404)
-
-
 @app.route("/<namespace>/<interface>", methods=["POST"])
 def create_sub_interface(namespace, interface):
     if namespace is None or len(namespace) == 0:
@@ -109,13 +97,53 @@ def create_sub_interface(namespace, interface):
     return jsonify(util.get_interface_state(namespace, interface))
 
 
-@app.route("/<namespace>/<interface>/", methods=["POST"])
+@app.route("/<namespace>/<interface>", methods=["DELETE"])
+def delete_sub_interface(namespace, interface):
+    if namespace is None or len(namespace) == 0:
+        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+
+    all_interfaces = util.list_interfaces(namespace)
+    if interface not in all_interfaces:
+        raise exceptions.ServerError(f"Interface {interface} dot exist in {namespace}")
+
+    parts = interface.split(".")
+    if len(parts) not in [2, 3]:
+        raise exceptions.ServerError(f"Only single and double tagged interfaces are supported")
+
+    base_interface = parts.pop(0)
+
+    if base_interface not in all_interfaces:
+        raise exceptions.ServerError(f"Base interface {base_interface} does not exist")
+
+    outer = int(parts.pop(0))
+    inner = 0
+    if len(parts):
+        inner = int(parts[0])
+
+    util.delete_sub_interface(namespace, base_interface, outer, inner)
+
+    return jsonify({})
+
+
+@app.route("/<namespace>/<interface>/state", methods=["GET"])
+def get_interface_state(namespace, interface):
+    if namespace is None or len(namespace) == 0:
+        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+
+    try:
+        return jsonify(util.get_interface_state(namespace, interface))
+    except Exception:
+        LOGGER.exception("Failed to get the interface state")
+        abort(404)
+
+
+@app.route("/<namespace>/<interface>/state", methods=["POST"])
 def set_interface_state(namespace, interface):
     util.set_interface_state(namespace, interface, request.json)
     return jsonify(util.get_interface_state(namespace, interface))
 
 
-@app.route("/<namespace>", methods=["POST"])
+@app.route("/<namespace>/ping", methods=["POST"])
 def ping_from_ns(namespace):
     dest = request.args.get("destination")
     ping_parser = pingparsing.PingParsing()

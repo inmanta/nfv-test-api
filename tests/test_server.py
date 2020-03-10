@@ -77,39 +77,46 @@ namespaces:
         assert "eth0" in response.json
         assert "eth1" in response.json
 
-        response = c.get("/test-cust-south1/eth0")
+        response = c.get("/test-cust-south1/eth0/state")
         assert response.status == "200 OK"
         assert "interface" in response.json
         assert response.json["interface"]["mtu"] == 1500
         assert not response.json["interface"]["up"]
 
-        response = c.get("/test-cust-south1/eth5")
+        response = c.get("/test-cust-south1/eth5/state")
         assert response.status == "404 NOT FOUND"
 
         response = c.post("/test-cust-south1/eth0.100.500")
         assert response.status == "200 OK"
 
-        response = c.get("/test-cust-south1/eth0.100.500")
+        response = c.get("/test-cust-south1/eth0.100.500/state")
         assert response.status == "200 OK"
 
         response = c.post(
-            "/test-cust-south1/eth0/", json={"up": True, "address": [{"address": "192.168.150.1", "prefixlen": 24}]}
+            "/test-cust-south1/eth0/state", json={"up": True, "address": [{"address": "192.168.150.1", "prefixlen": 24}]}
         )
         assert response.status == "200 OK"
 
-        response = c.get("/test-cust-south1/eth0")
+        response = c.get("/test-cust-south1/eth0/state")
         assert response.status == "200 OK"
         assert response.json["interface"]["address"][0]["address"] == "192.168.150.1"
         assert response.json["interface"]["up"]
 
-        response = c.post("/test-cust-south1/eth0.100.500/", json={"up": True})
+        response = c.post("/test-cust-south1/eth0.100.500/state", json={"up": True})
         assert response.status == "200 OK"
 
-        response = c.get("/test-cust-south1/lo")
+        response = c.get("/test-cust-south1/lo/state")
         assert response.status == "200 OK"
         assert response.json["interface"]["up"]
 
-        response = c.post("/test-cust-south1?destination=127.0.0.1")
+        response = c.post("/test-cust-south1/ping?destination=127.0.0.1")
         assert response.status == "200 OK"
         assert response.json["destination"] == "127.0.0.1"
         assert response.json["packet_loss_count"] == 0
+
+        response = c.delete("/test-cust-south1/eth0.100.500")
+        assert response.status == "200 OK"
+        response = c.get("/test-cust-south1/")
+        assert response.status == "200 OK"
+        assert "eth0.100.500" not in response.json
+        assert "eth0.100" not in response.json
