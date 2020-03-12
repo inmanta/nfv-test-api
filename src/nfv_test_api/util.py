@@ -142,7 +142,10 @@ def set_interface_state(namespace: str, interface: str, state: Dict) -> None:
 
     # check the addresses
     if "address" in state:
-        current = set(f"{intf['address']}/{intf['prefixlen']}" for intf in current_state["interface"]["address"])
+        current = set(
+            f"{intf['address']}/{intf['prefixlen']}"
+            for intf in current_state["interface"]["address"]
+        )
         desired = set(f"{intf['address']}/{intf['prefixlen']}" for intf in state["address"])
         add = desired - current
         remove = current - desired

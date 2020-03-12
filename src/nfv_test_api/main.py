@@ -147,8 +147,12 @@ def set_interface_state(namespace, interface):
 def ping_from_ns(namespace):
     dest = request.args.get("destination")
     ping_parser = pingparsing.PingParsing()
-    result = util.run_in_ns(namespace, ["ping", "-c", "4", "-i", "0.2", dest])
-    return jsonify(ping_parser.parse(result).as_dict())
+    try:
+        result = util.run_in_ns(namespace, ["ping", "-c", "4", "-i", "0.2", dest])
+        return jsonify(ping_parser.parse(result).as_dict())
+    except subprocess.CalledProcessError as e:
+        LOGGER.exception("status: %s, out: %s, err: %s", e.returncode, e.stdout, e.stderr)
+        return jsonify({})
 
 
 @click.command()

@@ -1,6 +1,6 @@
 .PHONY: build clean
 VERSION := $(shell poetry version | cut -f 2 -d " ")
-RPMDIR := "$(shell pwd)/rpms"
+RPMDIR := $(shell pwd)/rpms
 isort = isort -rc src tests
 black = black src tests
 

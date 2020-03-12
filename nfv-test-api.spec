@@ -69,7 +69,7 @@ install -p -m 644 misc/nfv-test-api.service %{buildroot}%{_unitdir}/
 %{envdir}/pyvenv.cfg
 %{_bindir}/workon
 %{_unitdir}
-#%config %attr(-, repomanager, repomanager) /etc/nfv-test-api.yaml
+%config(noreplace) %attr(-, root, root) /etc/nfv-test-api.yaml
 
 %post
 %systemd_post nfv-test-api.service

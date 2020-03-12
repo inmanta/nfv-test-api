@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nfv-test-api"
-version = "0.3.0"
+version = "0.3.2"
 description = ""
 authors = ["Inmanta <code@inmanta.com>"]
 include=["misc/*"]
@@ -24,6 +24,7 @@ flake8 = "*"
 lxml = "*"
 black = "^19.10b0"
 pytest-flask = "^1.0.0"
+requests = "^2.23.0"
 
 [tool.black]
 line-length = 128
@@ -44,8 +45,6 @@ exclude = '''
 )/
 '''
 
-
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
