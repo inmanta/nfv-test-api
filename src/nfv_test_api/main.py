@@ -4,14 +4,16 @@ import re
 
 import click
 import pingparsing
+import subprocess
 from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
-from nfv_test_api import exceptions, util
+from nfv_test_api import exceptions, util, config
 from nfv_test_api.config import get_config
 from nfv_test_api.util import setup_namespaces
 
 app = Flask(__name__)
+app.simulate = False
 CORS(app)
 
 # Notes:
@@ -59,6 +61,9 @@ def not_found():
 
 @app.route("/", methods=["GET"])
 def list_namespaces():
+    if app.simulate:
+        cfg = get_config()
+        return jsonify([ns for ns in cfg.namespaces.keys()])
     return jsonify(util.list_net_ns())
 
 
@@ -66,6 +71,14 @@ def list_namespaces():
 def list_interfaces(namespace):
     if namespace is None or len(namespace) == 0:
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
+
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            return jsonify([])
+
+        return jsonify([intf.name for intf in cfg.namespaces[namespace].interfaces])
+
     return jsonify(util.list_interfaces(namespace))
 
 
@@ -74,13 +87,21 @@ def create_sub_interface(namespace, interface):
     if namespace is None or len(namespace) == 0:
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
 
-    all_interfaces = util.list_interfaces(namespace)
-    if interface in all_interfaces:
-        raise exceptions.ServerError(f"Interface {interface} already exists in {namespace}")
-
     parts = interface.split(".")
     if len(parts) not in [2, 3]:
         raise exceptions.ServerError(f"Only single and double tagged interfaces are supported")
+
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            abort(404)
+
+        all_interfaces = [intf.name for intf in cfg.namespaces[namespace].interfaces]
+    else:
+        all_interfaces = util.list_interfaces(namespace)
+
+    if interface in all_interfaces:
+        raise exceptions.ServerError(f"Interface {interface} already exists in {namespace}")
 
     base_interface = parts.pop(0)
 
@@ -92,9 +113,14 @@ def create_sub_interface(namespace, interface):
     if len(parts):
         inner = int(parts[0])
 
-    util.create_sub_interface(namespace, base_interface, outer, inner)
-
-    return jsonify(util.get_interface_state(namespace, interface))
+    if app.simulate:
+        ns = cfg.namespaces[namespace]
+        base_intf = ns.get_interface(base_interface)
+        ns.interfaces.append(config.Interface(name=interface, mac=base_intf.mac))
+        return jsonify({})
+    else:
+        util.create_sub_interface(namespace, base_interface, outer, inner)
+        return jsonify(util.get_interface_state(namespace, interface))
 
 
 @app.route("/<namespace>/<interface>", methods=["DELETE"])
@@ -102,13 +128,21 @@ def delete_sub_interface(namespace, interface):
     if namespace is None or len(namespace) == 0:
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
 
-    all_interfaces = util.list_interfaces(namespace)
-    if interface not in all_interfaces:
-        raise exceptions.ServerError(f"Interface {interface} dot exist in {namespace}")
-
     parts = interface.split(".")
     if len(parts) not in [2, 3]:
         raise exceptions.ServerError(f"Only single and double tagged interfaces are supported")
+
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            abort(404)
+
+        all_interfaces = [intf.name for intf in cfg.namespaces[namespace].interfaces]
+    else:
+        all_interfaces = util.list_interfaces(namespace)
+
+    if interface not in all_interfaces:
+        raise exceptions.ServerError(f"Interface {interface} dot exist in {namespace}")
 
     base_interface = parts.pop(0)
 
@@ -120,7 +154,12 @@ def delete_sub_interface(namespace, interface):
     if len(parts):
         inner = int(parts[0])
 
-    util.delete_sub_interface(namespace, base_interface, outer, inner)
+    if app.simulate:
+        ns = cfg.namespaces[namespace]
+        intf = ns.get_interface(interface)
+        ns.interfaces.remove(intf)
+    else:
+        util.delete_sub_interface(namespace, base_interface, outer, inner)
 
     return jsonify({})
 
@@ -130,17 +169,45 @@ def get_interface_state(namespace, interface):
     if namespace is None or len(namespace) == 0:
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
 
-    try:
-        return jsonify(util.get_interface_state(namespace, interface))
-    except Exception:
-        LOGGER.exception("Failed to get the interface state")
-        abort(404)
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            abort(404)
+
+        ns = cfg.namespaces[namespace]
+        intf = ns.get_interface(interface)
+        if intf is None:
+            abort(404)
+
+        return jsonify({"interface": intf.get_state()})
+    else:
+        try:
+            return jsonify(util.get_interface_state(namespace, interface))
+        except Exception:
+            LOGGER.exception("Failed to get the interface state")
+            abort(404)
 
 
 @app.route("/<namespace>/<interface>/state", methods=["POST"])
 def set_interface_state(namespace, interface):
-    util.set_interface_state(namespace, interface, request.json)
-    return jsonify(util.get_interface_state(namespace, interface))
+    if namespace is None or len(namespace) == 0:
+        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            abort(404)
+
+        ns = cfg.namespaces[namespace]
+        intf = ns.get_interface(interface)
+        if intf is None:
+            abort(404)
+
+        intf.set_state(request.json)
+        return jsonify({"interface": intf.get_state()})
+    else:
+        util.set_interface_state(namespace, interface, request.json)
+        return jsonify(util.get_interface_state(namespace, interface))
 
 
 @app.route("/<namespace>/ping", methods=["POST"])
@@ -157,9 +224,11 @@ def ping_from_ns(namespace):
 
 @click.command()
 @click.option("--config", help="The configuration file to use")
-def main(config):
+@click.option("--simulate", help="Start the server in a test/mock mode. No real changes will be made to the system", is_flag=True)
+def main(config, simulate):
     cfg = get_config(config)
     setup_namespaces()
+    app.simulate = simulate
     app.run(host=cfg.host, port=cfg.port)
 
 

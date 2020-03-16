@@ -10,6 +10,50 @@ class Interface:
     def __init__(self, name: str, mac: str) -> None:
         self.name = name
         self.mac = mac
+        self._state = {
+            "address": [],
+            "mtu": 1500,
+            "up": False
+        }
+
+    def get_state(self) -> Dict[str, Any]:
+        """ State used for simulation mode
+        """
+        return self._state
+
+    def _del_address(self, address) -> None:
+        """ Add or remove an address from the list
+        """
+        for i, curr in enumerate(self._state["address"]):
+            key = f"{curr['address']}/{curr['prefixlen']}"
+            if address == key:
+                self._state["address"].remove(curr)
+                return
+
+    def set_state(self, state) -> None:
+        """ Set the state, only used for simulation mode
+        """
+        # check the up state
+        if "up" in state:
+            self._state["up"] = state["up"]
+
+        # check the mtu
+        if "mtu" in state:
+            self._state["mtu"] = state["mtu"]
+
+        # check the addresses
+        if "address" in state:
+            current = set(f"{intf['address']}/{intf['prefixlen']}" for intf in self._state["address"])
+            desired_map = {f"{intf['address']}/{intf['prefixlen']}": intf for intf in state["address"]}
+            desired = set(desired_map.keys())
+            add = desired - current
+            remove = current - desired
+
+            for intf in remove:
+                self._del_address(intf)
+
+            for intf in add:
+                self._state["address"].append(desired_map[intf])
 
 
 class Namespace:
