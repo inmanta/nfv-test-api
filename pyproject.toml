@@ -3,7 +3,7 @@ name = "nfv-test-api"
 version = "0.4.0"
 description = "API for testing network functions."
 authors = ["Inmanta <code@inmanta.com>"]
-license=Apache-2.0
+license = "Apache-2.0"
 include=["misc/*"]
 packages = [
     { include = "nfv_test_api", from = "src" },
