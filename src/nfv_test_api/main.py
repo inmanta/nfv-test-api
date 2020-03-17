@@ -75,7 +75,7 @@ def list_interfaces(namespace):
     if app.simulate:
         cfg = get_config()
         if namespace not in cfg.namespaces:
-            return jsonify([])
+            return abort(404)
 
         return jsonify([intf.name for intf in cfg.namespaces[namespace].interfaces])
 
@@ -116,8 +116,9 @@ def create_sub_interface(namespace, interface):
     if app.simulate:
         ns = cfg.namespaces[namespace]
         base_intf = ns.get_interface(base_interface)
-        ns.interfaces.append(config.Interface(name=interface, mac=base_intf.mac))
-        return jsonify({})
+        intf = config.Interface(name=interface, mac=base_intf.mac)
+        ns.interfaces.append(intf)
+        return jsonify({"interface": intf.get_state()})
     else:
         util.create_sub_interface(namespace, base_interface, outer, inner)
         return jsonify(util.get_interface_state(namespace, interface))
@@ -213,13 +214,32 @@ def set_interface_state(namespace, interface):
 @app.route("/<namespace>/ping", methods=["POST"])
 def ping_from_ns(namespace):
     dest = request.args.get("destination")
-    ping_parser = pingparsing.PingParsing()
-    try:
-        result = util.run_in_ns(namespace, ["ping", "-c", "4", "-i", "0.2", dest])
-        return jsonify(ping_parser.parse(result).as_dict())
-    except subprocess.CalledProcessError as e:
-        LOGGER.exception("status: %s, out: %s, err: %s", e.returncode, e.stdout, e.stderr)
-        return jsonify({})
+
+    if app.simulate:
+        if dest == "1.1.1.1":
+            return jsonify({
+                "destination": "1.1.1.1",
+                "packet_duplicate_count": 0,
+                "packet_duplicate_rate": 0,
+                "packet_loss_count": 0,
+                "packet_loss_rate": 0,
+                "packet_receive": 4,
+                "packet_transmit": 4,
+                "rtt_avg": 5.472,
+                "rtt_max": 10.635,
+                "rtt_mdev": 3.171,
+                "rtt_min": 2.533,
+            })
+        else:
+            return jsonify({})
+    else:
+        ping_parser = pingparsing.PingParsing()
+        try:
+            result = util.run_in_ns(namespace, ["ping", "-c", "4", "-i", "0.2", dest])
+            return jsonify(ping_parser.parse(result).as_dict())
+        except subprocess.CalledProcessError as e:
+            LOGGER.exception("status: %s, out: %s, err: %s", e.returncode, e.stdout, e.stderr)
+            return jsonify({})
 
 
 @click.command()

@@ -105,3 +105,12 @@ namespaces:
         )
         assert response.status == "200 OK"
         assert response.json["interface"]["address"] == [{"address": "192.168.151.1", "prefixlen": 28}]
+
+        response = c.post("/test-cust-south1/ping?destination=1.1.1.1")
+        assert response.status == "200 OK"
+        assert response.json["destination"] == "1.1.1.1"
+        assert response.json["packet_loss_count"] == 0
+
+        response = c.post("/test-cust-south1/ping?destination=8.8.8.8")
+        assert response.status == "200 OK"
+        assert not response.json

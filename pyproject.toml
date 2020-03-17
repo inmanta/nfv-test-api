@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "nfv-test-api"
 version = "0.4.0"
-description = ""
+description = "API for testing network functions."
 authors = ["Inmanta <code@inmanta.com>"]
 include=["misc/*"]
 packages = [

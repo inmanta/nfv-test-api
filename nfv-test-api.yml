@@ -1,0 +1,230 @@
+---
+openapi: 3.0.2
+info:
+  title: nfv-test-api
+  version: 1.0.0
+  description: API for testing network functions.
+  contact:
+    name: Inmanta
+    url: https://github.com/inmanta/
+    email: code@inmanta.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+paths:
+  /:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              examples:
+                List of network namespace:
+                  value:
+                  - cust-south1
+                  - cust-east2
+                  - cust-east1
+                  - cloud-north-east
+                  - cloud-north
+                  - cloud-west1
+          description: A list of network namespace
+      summary: List all network namespaces
+      description: ""
+  /{namespace}/:
+    summary: List all interfaces in the given namespace
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              examples:
+                Interface list:
+                  value:
+                  - lo
+                  - eth1
+                  - eth0
+          description: A list of interface names.
+        "500":
+          description: A server error occurred. For example when the given namespace
+            is invalid.
+        "404":
+          description: Returned when the namespace does not exist.
+      summary: List all interfaces in the given namespace
+    parameters:
+    - name: namespace
+      description: The namespace to list the interfaces from.
+      schema:
+        type: string
+      in: path
+      required: true
+  /{namespace}/{interface}:
+    post:
+      parameters:
+      - name: interface
+        description: The interface the operation applies to
+        schema:
+          type: string
+        in: path
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                Returns an interface object:
+                  value:
+                    address: []
+                    mtu: 1500
+                    up: false
+          description: When the sub-interface is created succesful the state of the
+            new interface is returned.
+      summary: Create a new subinterface
+    delete:
+      responses:
+        "200":
+          content:
+            application/json: {}
+          description: The subinterface was succesfully deleted.
+      summary: Delete the subinterface
+    parameters:
+    - examples:
+        namespace:
+          value: cust-south1
+      name: namespace
+      description: The namespace the interface exists in
+      schema:
+        type: string
+      in: path
+      required: true
+    - examples:
+        single tagged subinterface:
+          value: eth0.135
+        double tagged subinterface:
+          value: eth0.145.642
+      name: interface
+      description: The interface the operation applies to
+      schema:
+        type: string
+      in: path
+      required: true
+  /{namespace}/{interface}/state:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                State of the interface:
+                  value:
+                    up: true
+                    mtu: 1500
+                    address:
+                    - address: 192.168.150.1
+                      prefixlen: 24
+          description: Get the current state of the interface
+      summary: Get the current state the interface
+    post:
+      requestBody:
+        description: The state of the interface
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                up:
+                  type: boolean
+                  description: The administrative state of the interface
+                mtu:
+                  type: integer
+                  description: The mtu of the interface
+                  default: 1500
+                address:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                        description: The address of the interface. For ipv4 for example 127.0.0.1
+                      family:
+                        type: string
+                        description: inet of inet6 for ipv4 or ipv6 addresses.
+                      prefixlen:
+                        type: integer
+                        description: The length of the prefix. For exmaple 24
+
+        required: true
+      responses:
+        "200":
+          content:
+            application/json: {}
+          description: Get the new state
+      summary: Update the state of the interface
+    parameters:
+    - examples:
+        namespace:
+          value: cust-south1
+      name: namespace
+      description: The namespace the interface exists in
+      schema:
+        type: string
+      in: path
+      required: true
+    - examples:
+        single tagged subinterface:
+          value: eth0.135
+        double tagged subinterface:
+          value: eth0.145.642
+      name: interface
+      description: The interface the operation applies to
+      schema:
+        type: string
+      in: path
+      required: true
+  /{namespace}/ping?destination={destination}:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                Successful response:
+                  value:
+                    destination: 192.168.150.2
+                    packet_duplicate_count: 0
+                    packet_duplicate_rate: 0
+                    packet_loss_count: 0
+                    packet_loss_rate: 0
+                    packet_receive: 4
+                    packet_transmit: 4
+                    rtt_avg: 5.472
+                    rtt_max: 10.635
+                    rtt_mdev: 3.171
+                    rtt_min: 2.533
+                Failed response:
+                  value: {}
+          description: The result of the ping. If no response was received an empty
+            response is sent. If the ping was succesfull the details are returrned.
+      summary: Do a ping
+      description: Do a ping to the given destitation
+    parameters:
+    - name: namespace
+      description: The namespace to list the interfaces from.
+      schema:
+        type: string
+      in: path
+      required: true
+    - name: destination
+      description: The destination to send the pings to
+      schema:
+        type: string
+      in: path
+      required: true
