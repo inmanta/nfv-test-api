@@ -16,6 +16,7 @@ PyYAML = "^5.3"
 flask-cors = "^3.0.8"
 click = "^7.0"
 pingparsing = "^1.0.1"
+trparse = "^0.3.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"

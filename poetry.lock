@@ -483,6 +483,14 @@ python-versions = "*"
 version = "0.10.0"
 
 [[package]]
+category = "main"
+description = "Traceroute parser"
+name = "trparse"
+optional = false
+python-versions = "*"
+version = "0.3.0"
+
+[[package]]
 category = "dev"
 description = "a fork of Python 2 and 3 ast modules with type comment support"
 name = "typed-ast"
@@ -562,7 +570,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "1420a4863777248ebd73c33f53f9647f76e23dd52180a153bdd6105b3984fec5"
+content-hash = "d8ef733d09d52015e108b7b8955e1ded03f2e0d52ddcf939447d11c9077246db"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -826,6 +834,9 @@ toml = [
     {file = "toml-0.10.0-py2.7.egg", hash = "sha256:f1db651f9657708513243e61e6cc67d101a39bad662eaa9b5546f789338e07a3"},
     {file = "toml-0.10.0-py2.py3-none-any.whl", hash = "sha256:235682dd292d5899d361a811df37e04a8828a5b1da3115886b73cf81ebc9100e"},
     {file = "toml-0.10.0.tar.gz", hash = "sha256:229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c"},
+]
+trparse = [
+    {file = "trparse-0.3.0.tar.gz", hash = "sha256:76558aee05ca4733c406fa57041bb66104691367c5706261d21a58c8504ff9be"},
 ]
 typed-ast = [
     {file = "typed_ast-1.4.1-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:73d785a950fc82dd2a25897d525d003f6378d1cb23ab305578394694202a58c3"},

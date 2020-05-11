@@ -114,6 +114,11 @@ namespaces:
         assert response.json["destination"] == "127.0.0.1"
         assert response.json["packet_loss_count"] == 0
 
+        response = c.post("/test-cust-south1/traceroute?destination=127.0.0.1")
+        assert response.status == "200 OK"
+        assert response.json["destination_ip"] == "127.0.0.1"
+        assert len(response.json["hops"]) == 1
+
         response = c.delete("/test-cust-south1/eth0.100.500")
         assert response.status == "200 OK"
         response = c.get("/test-cust-south1/")

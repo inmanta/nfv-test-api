@@ -1,14 +1,15 @@
 import logging
 import os
 import re
+import subprocess
 
 import click
 import pingparsing
-import subprocess
+import trparse
 from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
-from nfv_test_api import exceptions, util, config
+from nfv_test_api import config, exceptions, util
 from nfv_test_api.config import get_config
 from nfv_test_api.util import setup_namespaces
 
@@ -217,19 +218,21 @@ def ping_from_ns(namespace):
 
     if app.simulate:
         if dest == "1.1.1.1":
-            return jsonify({
-                "destination": "1.1.1.1",
-                "packet_duplicate_count": 0,
-                "packet_duplicate_rate": 0,
-                "packet_loss_count": 0,
-                "packet_loss_rate": 0,
-                "packet_receive": 4,
-                "packet_transmit": 4,
-                "rtt_avg": 5.472,
-                "rtt_max": 10.635,
-                "rtt_mdev": 3.171,
-                "rtt_min": 2.533,
-            })
+            return jsonify(
+                {
+                    "destination": "1.1.1.1",
+                    "packet_duplicate_count": 0,
+                    "packet_duplicate_rate": 0,
+                    "packet_loss_count": 0,
+                    "packet_loss_rate": 0,
+                    "packet_receive": 4,
+                    "packet_transmit": 4,
+                    "rtt_avg": 5.472,
+                    "rtt_max": 10.635,
+                    "rtt_mdev": 3.171,
+                    "rtt_min": 2.533,
+                }
+            )
         else:
             return jsonify({})
     else:
@@ -242,9 +245,47 @@ def ping_from_ns(namespace):
             return jsonify({})
 
 
+@app.route("/<namespace>/traceroute", methods=["POST"])
+def traceroute_from_ns(namespace):
+    dest = request.args.get("destination")
+    if app.simulate:
+        if dest == "1.1.1.1":
+            return jsonify(
+                {
+                    "destination_ip": "1.1.1.1",
+                    "destination_name": "host",
+                    "hops": [
+                        {
+                            "index": 1,
+                            "probes": ["host (1.1.1.1) 0.013 ms", "host (1.1.1.1) 0.003 ms", "host (1.1.1.1) 0.003 ms"],
+                        }
+                    ],
+                }
+            )
+        else:
+            return jsonify({})
+    else:
+        try:
+            result = util.run_in_ns(namespace, ["traceroute", dest])
+            parsed = trparse.loads(result)
+            hops = []
+            for hop in parsed.hops:
+                probes = []
+                for probe in hop.probes:
+                    probes.append(str(probe).strip())
+                hops.append({"index": hop.idx, "probes": probes})
+            traceroute = {"destination_name": parsed.dest_name, "destination_ip": parsed.dest_ip, "hops": hops}
+            return jsonify(traceroute)
+        except subprocess.CalledProcessError as e:
+            LOGGER.exception("status: %s, out: %s, err: %s", e.returncode, e.stdout, e.stderr)
+            return jsonify({})
+
+
 @click.command()
 @click.option("--config", help="The configuration file to use")
-@click.option("--simulate", help="Start the server in a test/mock mode. No real changes will be made to the system", is_flag=True)
+@click.option(
+    "--simulate", help="Start the server in a test/mock mode. No real changes will be made to the system", is_flag=True
+)
 def main(config, simulate):
     cfg = get_config(config)
     setup_namespaces()
