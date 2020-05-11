@@ -10,11 +10,7 @@ class Interface:
     def __init__(self, name: str, mac: str) -> None:
         self.name = name
         self.mac = mac
-        self._state = {
-            "address": [],
-            "mtu": 1500,
-            "up": False
-        }
+        self._state = {"address": [], "mtu": 1500, "up": False}
 
     def get_state(self) -> Dict[str, Any]:
         """ State used for simulation mode
