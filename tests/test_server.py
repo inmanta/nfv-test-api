@@ -1,3 +1,4 @@
+import json
 import subprocess
 import time
 
@@ -118,6 +119,26 @@ namespaces:
         assert response.status == "200 OK"
         assert response.json["destination_ip"] == "127.0.0.1"
         assert len(response.json["hops"]) == 1
+
+        # List routes
+        response = c.get("/test-cust-south1/routes")
+        assert response.status == "200 OK"
+        assert len(response.json) > 0
+        original_routes_length = len(response.json)
+        test_gateway = response.json[0]["prefsrc"]
+
+        # Add a route
+        response = c.post("/test-cust-south1/routes", data=json.dumps(dict(subnet="172.16.64.0/18", gateway=test_gateway)),
+                          content_type='application/json')
+        assert response.status == "200 OK"
+        assert len(response.json) > 0
+        assert len(response.json) > original_routes_length
+
+        # Remove the route
+        response = c.delete("/test-cust-south1/routes?subnet=172.16.64.0/18&gateway=" + test_gateway)
+        assert response.status == "200 OK"
+        assert len(response.json) > 0
+        assert len(response.json) == original_routes_length
 
         response = c.delete("/test-cust-south1/eth0.100.500")
         assert response.status == "200 OK"
