@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -52,18 +53,44 @@ class Interface:
                 self._state["address"].append(desired_map[intf])
 
 
+class Route:
+    dst: str
+    gateway: str
+
+    def __init__(self, dst: str, gateway: str) -> None:
+        self.dst = dst
+        self.gateway = gateway
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
+    def to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__)
+
+
 class Namespace:
     name: str
     interfaces: List[Interface]
+    routes: List[Route]
 
-    def __init__(self, name: str, interfaces: List[Dict]) -> None:
+    def __init__(self, name: str, interfaces: List[Dict], routes: Optional[List[Dict]] = None) -> None:
         self.name = name
         self.interfaces = []
+        self.routes = []
         for intf in interfaces:
             name = intf.get("name")
             mac = intf.get("mac")
             if name is not None and mac is not None:
                 self.interfaces.append(Interface(name=name, mac=mac))
+        if routes:
+            for route in routes:
+                subnet = route.get("subnet")
+                gateway = route.get("gateway")
+                if subnet is not None and gateway is not None:
+                    self.routes.append(Route(dst=subnet, gateway=gateway))
 
     def get_interface(self, name: str) -> Optional[Interface]:
         for intf in self.interfaces:

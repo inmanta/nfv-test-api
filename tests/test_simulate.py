@@ -1,3 +1,4 @@
+import json
 import subprocess
 import time
 
@@ -114,3 +115,16 @@ namespaces:
         response = c.post("/test-cust-south1/ping?destination=8.8.8.8")
         assert response.status == "200 OK"
         assert not response.json
+
+        response = c.post("/test-cust-south1/routes", data=json.dumps(dict(subnet="172.16.64.0/18", gateway="192.168.150.1")),
+                          content_type='application/json')
+        assert response.status == "200 OK"
+        assert len(response.json) == 1
+
+        response = c.get("/test-cust-south1/routes")
+        assert response.status == "200 OK"
+        assert len(response.json) > 0
+
+        response = c.delete("/test-cust-south1/routes?subnet=172.16.64.0/18&gateway=192.168.150.1")
+        assert response.status == "200 OK"
+        assert len(response.json) == 0

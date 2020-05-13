@@ -219,3 +219,12 @@ def setup_namespaces():
                     ns.name,
                     intf.name,
                 )
+
+
+def list_routes(namespace):
+    result = util.run_in_ns(namespace, ["ip", "-j", "route", "ls"])
+    routes = json.loads(result)
+    for route in routes:
+        if route["dst"] == "default":
+            route["dst"] = "0.0.0.0/0"
+    return routes

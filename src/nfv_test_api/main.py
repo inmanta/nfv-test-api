@@ -10,7 +10,7 @@ from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
 from nfv_test_api import config, exceptions, util
-from nfv_test_api.config import get_config
+from nfv_test_api.config import Route, get_config
 from nfv_test_api.util import setup_namespaces
 
 app = Flask(__name__)
@@ -276,6 +276,74 @@ def traceroute_from_ns(namespace):
                 hops.append({"index": hop.idx, "probes": probes})
             traceroute = {"destination_name": parsed.dest_name, "destination_ip": parsed.dest_ip, "hops": hops}
             return jsonify(traceroute)
+        except subprocess.CalledProcessError as e:
+            LOGGER.exception("status: %s, out: %s, err: %s", e.returncode, e.stdout, e.stderr)
+            return jsonify({})
+
+
+@app.route("/<namespace>/routes", methods=["GET"])
+def get_routing_table_from_ns(namespace):
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            abort(404)
+        ns = cfg.namespaces[namespace]
+        return jsonify([route.to_json() for route in ns.routes])
+    else:
+        try:
+            routes = util.list_routes(namespace)
+            return jsonify(routes)
+        except subprocess.CalledProcessError as e:
+            LOGGER.exception("status: %s, out: %s, err: %s", e.returncode, e.stdout, e.stderr)
+            return jsonify({})
+
+
+@app.route("/<namespace>/routes", methods=["POST"])
+def add_route_from_ns(namespace):
+    subnet = request.get_json(force=True).get("subnet")
+    gateway = request.get_json(force=True).get("gateway")
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            abort(404)
+
+        ns = cfg.namespaces[namespace]
+        route = Route(subnet, gateway)
+        if route in ns.routes:
+            abort(409)
+        else:
+            ns.routes.append(route)
+        return jsonify([route.to_json() for route in ns.routes])
+    else:
+        try:
+            util.run_in_ns(namespace, ["ip", "route", "add", subnet, "via", gateway])
+            routes = util.list_routes(namespace)
+            return jsonify(routes)
+        except subprocess.CalledProcessError as e:
+            LOGGER.exception("status: %s, out: %s, err: %s", e.returncode, e.stdout, e.stderr)
+            return jsonify({})
+
+
+@app.route("/<namespace>/routes", methods=["DELETE"])
+def delete_route_from_ns(namespace):
+    subnet = request.args.get("subnet")
+    gateway = request.args.get("gateway")
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            abort(404)
+        ns = cfg.namespaces[namespace]
+        route = Route(subnet, gateway)
+        if route in ns.routes:
+            ns.routes.remove(route)
+        else:
+            abort(404)
+        return jsonify([route.to_json() for route in ns.routes])
+    else:
+        try:
+            util.run_in_ns(namespace, ["ip", "route", "del", subnet, "via", gateway])
+            routes = util.list_routes(namespace)
+            return jsonify(routes)
         except subprocess.CalledProcessError as e:
             LOGGER.exception("status: %s, out: %s, err: %s", e.returncode, e.stdout, e.stderr)
             return jsonify({})
