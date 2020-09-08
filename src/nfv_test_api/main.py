@@ -10,8 +10,8 @@ from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
 from nfv_test_api import config, exceptions, util
-from nfv_test_api.config import Route, get_config
-from nfv_test_api.util import setup_namespaces
+from nfv_test_api.config import Route, get_config, Namespace
+from nfv_test_api.util import setup_namespaces, create_namespace
 
 app = Flask(__name__)
 app.simulate = False
@@ -81,6 +81,36 @@ def list_interfaces(namespace):
         return jsonify([intf.name for intf in cfg.namespaces[namespace].interfaces])
 
     return jsonify(util.list_interfaces(namespace))
+
+
+@app.route("/<namespace>/", methods=["POST"])
+def add_namespace(namespace):
+    if namespace is None or len(namespace) == 0:
+        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+
+    if app.simulate:
+        cfg = get_config()
+
+        if namespace in cfg.namespaces:
+            return abort(409)
+        cfg.namespaces[namespace] = Namespace(namespace, interfaces=[{
+            "ifindex": 1,
+            "ifname": "lo",
+            "flags": ["LOOPBACK"],
+            "mtu": 65536,
+            "qdisc": "noop",
+            "operstate": "DOWN",
+            "linkmode": "DEFAULT",
+            "group": "default",
+            "txqlen": 1000,
+            "link_type": "loopback",
+            "address": "00:00:00:00:00:00",
+            "broadcast": "00:00:00:00:00:00"
+        }])
+        return jsonify({})
+    create_namespace(namespace)
+
+    return jsonify({})
 
 
 @app.route("/<namespace>/<interface>", methods=["POST"])

@@ -72,6 +72,13 @@ namespaces:
         response = c.get("/")
         assert response.status == "200 OK"
         assert len(response.json) == 6
+        response = c.post("/test-cloud-west3/")
+        assert response.status == "200 OK"
+
+        response = c.get("/")
+        assert response.status == "200 OK"
+        assert len(response.json) == 7
+        assert "test-cloud-west3" in response.json
 
         response = c.get("/test-cust-south1/")
         assert response.status == "200 OK"

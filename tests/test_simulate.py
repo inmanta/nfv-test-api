@@ -128,3 +128,10 @@ namespaces:
         response = c.delete("/test-cust-south1/routes?subnet=172.16.64.0/18&gateway=192.168.150.1")
         assert response.status == "200 OK"
         assert len(response.json) == 0
+
+        response = c.post("/test-cloud-west3/")
+        assert response.status == "200 OK"
+        assert not response.json
+        response = c.get("/")
+        assert response.status == "200 OK"
+        assert len(response.json) == 7
