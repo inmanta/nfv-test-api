@@ -30,7 +30,7 @@ pipeline {
             steps {
                 sh '''
                     source env/bin/activate
-                    sudo pytest -v -s --junitxml=junit.xml
+                    pytest -v -s --junitxml=junit.xml
                     junit 'junit.xml'
                 '''
             }
