@@ -38,7 +38,7 @@ pipeline {
 
     post {
         always {
-            # deal with root-owned files resulting from the use of sudo above
+            // deal with root-owned files resulting from the use of sudo above
             sh 'sudo chown -R jenkins:jenkins .'
         }
     }
