@@ -31,7 +31,7 @@ pipeline {
                 sh '''
                     source env/bin/activate
                     sudo pytest -v -s --junitxml=junit.xml
-                    sudo usermod -R jenkins:jenkins .
+                    sudo chown -R jenkins:jenkins .
                     junit 'junit.xml'
                 '''
             }
