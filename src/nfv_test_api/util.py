@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 def run_in_ns(namespace: str, command: List[str]) -> str:
     """ Run the given command in the given namespace and return the result as a string
     """
-    output = subprocess.check_output(["ip", "netns", "exec", namespace] + command)
+    output = subprocess.check_output(["ip", "netns", "exec", namespace] + command, stderr=subprocess.STDOUT)
     return output.decode()
 
 
