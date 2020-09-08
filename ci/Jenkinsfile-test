@@ -29,8 +29,7 @@ pipeline {
         stage("tests") {
             steps {
                 sh '''
-                    source env/bin/activate
-                    sudo pytest -v -s --junitxml=junit.xml
+                    sudo env/bin/pytest -v -s --junitxml=junit.xml
                     sudo chown -R jenkins:jenkins .
                     junit 'junit.xml'
                 '''
