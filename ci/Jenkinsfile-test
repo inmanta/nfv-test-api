@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+    options {
+        disableConcurrentBuilds()
+        skipDefaultCheckout()
+    }
+
+    environment {
+        PIP_INDEX_URL='https://artifacts.internal.inmanta.com/inmanta/dev'
+    }
+
+    stages {
+        stage("clear workspace and checkout source code") {
+            steps {
+                deleteDir()
+                checkout scm
+            }
+        }
+        stage("setup virtualenv") {
+            steps {
+                sh'''
+                    python3 -m venv env
+                    env/bin/pip install -U pip poetry pytest
+                    env/bin/poetry install
+                '''
+            }
+        }
+        stage("tests") {
+            steps {
+                sh '''
+                    sudo env/bin/pytest -v -s --junitxml=junit.xml
+                    junit 'junit.xml'
+                '''
+            }
+        }
+    }
+}
