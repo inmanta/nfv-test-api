@@ -20,7 +20,7 @@ pipeline {
             steps {
                 sh'''
                     python3 -m venv env
-                    env/bin/pip install -U pip poetry pytest junit-xml
+                    env/bin/pip install -U pip poetry pytest
                     source env/bin/activate
                     poetry install
                 '''
@@ -30,7 +30,6 @@ pipeline {
             steps {
                 sh '''
                     sudo env/bin/pytest -v -s --junitxml=junit.xml
-                    junit 'junit.xml'
                 '''
             }
         }
