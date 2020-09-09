@@ -189,7 +189,7 @@ def move_interface(namespace, interface):
         old_ns.interfaces.remove(iface)
         new_ns.interfaces.append(iface)
     else:
-        util.move_interface(new_namespace, interface, old_namespace=namespace)
+        util.move_interface(new_namespace, interface, interface, old_namespace=namespace)
 
     return jsonify({})
 
