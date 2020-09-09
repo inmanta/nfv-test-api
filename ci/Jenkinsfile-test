@@ -25,12 +25,13 @@ pipeline {
             steps {
                 sh'''
                     python3 -m venv env
-                    env/bin/pip install -U pip poetry pytest
+                    env/bin/pip install -U pip
+                    env/bin/pip install -r requirements.txt -r requirements.dev.txt
 
                     # explicitly activate environment so poetry knows to install within it
                     source env/bin/activate
 
-                    poetry install
+                    env/bin/poetry install
                 '''
             }
         }
