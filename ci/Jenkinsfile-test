@@ -43,12 +43,10 @@ pipeline {
 
     post {
         always {
-            steps {
-                // deal with root-owned files resulting from the use of sudo above
-                sh 'sudo chown -R jenkins:jenkins .'
+            // deal with root-owned files resulting from the use of sudo above
+            sh 'sudo chown -R jenkins:jenkins .'
 
-                junit 'junit.xml'
-            }
+            junit 'junit.xml'
         }
     }
 }
