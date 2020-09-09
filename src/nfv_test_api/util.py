@@ -215,7 +215,7 @@ def setup_namespaces():
                 util.ensure_namespace(ns.name)
                 util.move_interface(ns.name, new_name, intf.name, old_namespace=old_namespace)
                 LOGGER.debug(
-                    "Moved interface %s with mac %s to namesapce %s and name %s",
+                    "Moved interface %s with mac %s to namespace %s and name %s",
                     new_name if old_namespace is None else "%s from %s" % (new_name, old_namespace),
                     intf.mac,
                     ns.name,

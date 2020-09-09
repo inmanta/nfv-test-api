@@ -10,7 +10,7 @@ from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
 from nfv_test_api import config, exceptions, util
-from nfv_test_api.config import Route, get_config, Namespace
+from nfv_test_api.config import Route, get_config, Interface, Namespace
 from nfv_test_api.util import setup_namespaces, create_namespace
 
 app = Flask(__name__)
@@ -153,6 +153,47 @@ def create_sub_interface(namespace, interface):
     else:
         util.create_sub_interface(namespace, base_interface, outer, inner)
         return jsonify(util.get_interface_state(namespace, interface))
+
+
+@app.route("/<namespace>/<interface>", methods=["PATCH"])
+def move_interface(namespace, interface):
+    if namespace is None or len(namespace) == 0:
+        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+
+    parts = interface.split(".")
+    if len(parts) not in range(1, 4):
+        raise exceptions.ServerError(f"Only untagged, single and double tagged interfaces are supported")
+
+    if app.simulate:
+        cfg = get_config()
+        if namespace not in cfg.namespaces:
+            abort(404)
+
+        all_interfaces = [intf.name for intf in cfg.namespaces[namespace].interfaces]
+    else:
+        all_interfaces = util.list_interfaces(namespace)
+
+    if interface not in all_interfaces:
+        raise exceptions.ServerError(f"Interface {interface} does not exist in {namespace}")
+
+    new_namespace_key: str = "destination_namespace"
+    if new_namespace_key not in request.json:
+        raise exceptions.ServerError(f"Invalid request: request should contain \"destination_namespace\"")
+
+    new_namespace = request.json[new_namespace_key]
+
+    if app.simulate:
+        old_ns: Namespace = cfg.namespaces[namespace]
+        new_ns: Namespace = cfg.namespaces[new_namespace]
+        iface: Interface = old_ns.get_interface(interface)
+        old_ns.interfaces.remove(iface)
+        new_ns.interfaces.append(iface)
+    else:
+        util.move_interface(new_namespace, interface, old_namespace=namespace)
+
+    return jsonify({})
+
+
 
 
 @app.route("/<namespace>/<interface>", methods=["DELETE"])
