@@ -72,9 +72,20 @@ namespaces:
         assert len(response.json) == 3
         assert "eth0.100.500" in response.json
 
-
         response = c.delete("/test-cust-south1/eth0.100.500")
         assert response.status == "200 OK"
+
+        response = c.post("/test-cust-east1/eth0.100")
+        assert response.status == "200 OK"
+
+        response = c.get("/test-cust-east1/eth0.100/state")
+        assert response.status == "200 OK"
+
+        response = c.patch("/test-cust-east1/eth0.100", json={"destination_namespace": "test-cust-east2"})
+        assert response.status == "200 OK"
+
+        response = c.get("/test-cust-east1/eth0.100/state")
+        assert response.status == "404 NOT FOUND"
 
         response = c.get("/test-cust-south1/")
         assert response.status == "200 OK"

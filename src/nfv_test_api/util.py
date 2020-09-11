@@ -90,10 +90,14 @@ def ensure_namespace(namespace: str) -> None:
         create_namespace(namespace)
 
 
-def move_interface(namespace: str, interface_name: str, new_interface_name: str) -> None:
+def move_interface(namespace: str, interface_name: str, new_interface_name: str, old_namespace: Optional[str] = None) -> None:
     """ Move interface_name into namespace and rename it to new_interface_name
     """
-    subprocess.check_output(["ip", "link", "set", interface_name, "netns", namespace])
+    command: List[str] = ["ip", "link", "set", interface_name, "netns", namespace]
+    if old_namespace is None:
+        subprocess.check_output(command)
+    else:
+        run_in_ns(old_namespace, command)
     run_in_ns(namespace, ["ip", "link", "set", interface_name, "name", new_interface_name])
 
 
@@ -206,15 +210,13 @@ def setup_namespaces():
     for ns in cfg.namespaces.values():
         for intf in ns.interfaces:
             if intf.mac in mac_lookup:
-                if mac_lookup[intf.mac]["namespace"] is not None:
-                    LOGGER.error(f"Cannot move interface {mac_lookup[intf.mac]['name']} to another namespace.")
-                    continue
-
+                old_namespace: Optional[str] = mac_lookup[intf.mac]["namespace"]
+                new_name: str = mac_lookup[intf.mac]["name"]
                 util.ensure_namespace(ns.name)
-                util.move_interface(ns.name, mac_lookup[intf.mac]["name"], intf.name)
+                util.move_interface(ns.name, new_name, intf.name, old_namespace=old_namespace)
                 LOGGER.debug(
-                    "Moved interface %s with mac %s to namesapce %s and name %s",
-                    mac_lookup[intf.mac]["name"],
+                    "Moved interface %s with mac %s to namespace %s and name %s",
+                    new_name if old_namespace is None else "%s from %s" % (new_name, old_namespace),
                     intf.mac,
                     ns.name,
                     intf.name,
