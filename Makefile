@@ -19,7 +19,7 @@ upload: RPM := $(shell basename ${RPMDIR}/nfv-test-api-${VERSION}-*.x86_64.rpm)
 
 upload:
 	@echo Uploading $(RPM)
-	ssh repomanager@artifacts.ii.inmanta.com "/usr/bin/repomanager --config /etc/repomanager.toml --repo tools --distro el7 --file - --file-name ${RPM}" < ${RPMDIR}/${RPM}
+	ssh repomanager@artifacts.ii.inmanta.com "/usr/bin/repomanager --config /etc/repomanager.toml --repo nfv-test-api --distro el7 --file - --file-name ${RPM}" < ${RPMDIR}/${RPM}
 
 .PHONY: format
 format:
