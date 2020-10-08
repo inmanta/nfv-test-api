@@ -121,7 +121,9 @@ def delete_namespace(namespace):
 
     interfaces: List = list_interfaces(namespace).get_json()
     untagged: List = [
-        interface for interface in interfaces if "." not in interface
+        interface
+        for interface in interfaces
+        if "." not in interface and interface != "lo"
     ]
     if untagged:
         raise exceptions.ServerError(
@@ -133,7 +135,7 @@ def delete_namespace(namespace):
     if app.simulate:
         cfg = get_config()
 
-        if namespace in cfg.namespaces:
+        if namespace not in cfg.namespaces:
             return abort(404)
 
         del cfg.namespaces[namespace]
