@@ -413,8 +413,8 @@ def add_route_from_ns(namespace):
 @app.route("/<namespace>/routes", methods=["DELETE"])
 def delete_route_from_ns(namespace):
     subnet = request.args.get("subnet")
-    gateway = request.get_json(force=True).get("gateway", None)
-    interface = request.get_json(force=True).get("interface", None)
+    gateway = request.args.get("gateway", None)
+    interface = request.args.get("interface", None)
     if gateway is None and interface is None:
         raise exceptions.ServerError("gateway or interface should be set.")
 

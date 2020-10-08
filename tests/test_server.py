@@ -171,12 +171,14 @@ namespaces:
                 data=json.dumps(data),
                 content_type="application/json",
             )
+            assert response.status == "200 OK"
             assert len(response.json) == original_routes_length + 1
 
             response = c.delete(
                 f"/{namespace}/routes?%s"
                 % "&".join(f"{key}={value}" for key, value in data.items())
             )
+            assert response.status == "200 OK"
             assert len(response.json) == original_routes_length
 
             return len(response.json)
