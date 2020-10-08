@@ -60,6 +60,21 @@ namespaces:
 
         app.simulate = True
 
+        response = c.get("/")
+        assert response.status == "200 OK"
+        assert len(response.json) == 6
+
+        response = c.post("/test-cloud-west3/")
+        assert response.status == "200 OK"
+
+        response = c.get("/")
+        assert response.status == "200 OK"
+        assert len(response.json) == 7
+        assert "test-cloud-west3" in response.json
+
+        response = c.post("/test-cloud-west3/")
+        assert response.status == "200 OK"
+
         response = c.get("/test-cloud-north-east/")
         assert response.status == "200 OK"
         assert len(response.json) == 2
@@ -81,8 +96,22 @@ namespaces:
         response = c.get("/test-cust-east1/eth0.100/state")
         assert response.status == "200 OK"
 
-        response = c.patch("/test-cust-east1/eth0.100", json={"destination_namespace": "test-cust-east2"})
+        response = c.patch(
+            "/test-cust-east1/eth0.100",
+            json={"destination_namespace": "test-cloud-west3"},
+        )
         assert response.status == "200 OK"
+
+        response = c.delete("/test-cloud-west3")
+        assert response.status == "200 OK"
+
+        response = c.get("/")
+        assert response.status == "200 OK"
+        assert len(response.json) == 6
+        assert "test-cloud-west3" not in response.json
+
+        response = c.delete("/test-cust-east1")
+        assert response.status == "500 INTERNAL ERROR"
 
         response = c.get("/test-cust-east1/eth0.100/state")
         assert response.status == "404 NOT FOUND"
