@@ -107,8 +107,8 @@ namespaces:
         assert len(response.json) == 6
         assert "test-cloud-west3" not in response.json
 
-        response = c.delete("/test-cust-east1")
-        assert response.status == "500 INTERNAL ERROR"
+        response = c.delete("/test-cust-east1/")
+        assert response.status == "500 INTERNAL SERVER ERROR"
 
         response = c.get("/test-cust-east1/eth0.100/state")
         assert response.status == "404 NOT FOUND"
