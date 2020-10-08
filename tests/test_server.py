@@ -106,7 +106,7 @@ namespaces:
         )
         assert response.status == "200 OK"
 
-        response = c.delete("/test-cloud-west3")
+        response = c.delete("/test-cloud-west3/")
         assert response.status == "200 OK"
 
         response = c.get("/")
