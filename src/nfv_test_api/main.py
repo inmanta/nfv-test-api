@@ -116,7 +116,11 @@ def add_namespace(namespace):
 
 @app.route("/<namespace>/", methods=["DELETE"])
 def delete_namespace(namespace):
-    if namespace is None or len(namespace) == 0:
+    if (
+        namespace is None
+        or len(namespace) == 0
+        or namespace not in list_namespaces().get_json()
+    ):
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
 
     interfaces: List = list_interfaces(namespace).get_json()
