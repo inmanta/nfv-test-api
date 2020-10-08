@@ -99,6 +99,12 @@ namespaces:
         )
         assert response.status == "200 OK"
 
+        response = c.get("/test-cust-east1/eth0.100/state")
+        assert response.status == "404 NOT FOUND"
+
+        response = c.get("/test-cloud-west3/eth0.100/state")
+        assert response.status == "200 OK"
+
         response = c.delete("/test-cloud-west3/")
         assert response.status == "200 OK"
 
@@ -109,9 +115,6 @@ namespaces:
 
         response = c.delete("/test-cust-east1/")
         assert response.status == "500 INTERNAL SERVER ERROR"
-
-        response = c.get("/test-cust-east1/eth0.100/state")
-        assert response.status == "404 NOT FOUND"
 
         response = c.get("/test-cust-south1/")
         assert response.status == "200 OK"
