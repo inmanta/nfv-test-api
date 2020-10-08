@@ -1,6 +1,7 @@
 import json
 import subprocess
 import time
+from typing import Dict, Optional
 
 import flask
 import pytest
@@ -146,21 +147,56 @@ namespaces:
         response = c.get("/test-cust-south1/routes")
         assert response.status == "200 OK"
         assert len(response.json) > 0
-        original_routes_length = len(response.json)
-        test_gateway = response.json[0]["prefsrc"]
+        nb_routes = len(response.json)
+        routes_namespace: str = "test-cust-south1"
+        routes_subnet: str = "172.16.64.0/18"
+        routes_gateway = response.json[0]["prefsrc"]
+        routes_interface: str = "eth1"
 
-        # Add a route
-        response = c.post("/test-cust-south1/routes", data=json.dumps(dict(subnet="172.16.64.0/18", gateway=test_gateway)),
-                          content_type='application/json')
-        assert response.status == "200 OK"
-        assert len(response.json) > 0
-        assert len(response.json) > original_routes_length
+        def add_delete_route(
+            original_routes_length: int,
+            namespace: str,
+            subnet: str,
+            gateway: Optional[str] = None,
+            interface: Optional[str] = None,
+        ) -> int:
+            data: Dict[str, str] = {"subnet": subnet}
+            if gateway is not None:
+                data["gateway"] = gateway
+            if interface is not None:
+                data["interface"] = interface
 
-        # Remove the route
-        response = c.delete("/test-cust-south1/routes?subnet=172.16.64.0/18&gateway=" + test_gateway)
-        assert response.status == "200 OK"
-        assert len(response.json) > 0
-        assert len(response.json) == original_routes_length
+            response = c.post(
+                f"/{namespace}/routes",
+                data=json.dumps(data),
+                content_type="application/json",
+            )
+            assert len(response.json) == original_routes_length + 1
+
+            response = c.delete(
+                f"/{namespace}/routes?%s"
+                % "&".join(f"{key}={value}" for key, value in data.items())
+            )
+            assert len(response.json) == original_routes_length
+
+            return len(response.json)
+
+        nb_routes = add_delete_route(
+            nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway
+        )
+        nb_routes = add_delete_route(
+            nb_routes,
+            routes_namespace,
+            routes_subnet,
+            interface=routes_interface,
+        )
+        nb_routes = add_delete_route(
+            nb_routes,
+            routes_namespace,
+            routes_subnet,
+            gateway=routes_gateway,
+            interface=routes_interface,
+        )
 
         response = c.delete("/test-cust-south1/eth0.100.500")
         assert response.status == "200 OK"
