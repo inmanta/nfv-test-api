@@ -167,7 +167,7 @@ namespaces:
         routes_gateway = response.json[0]["prefsrc"]
         routes_interface: str = "eth0"
 
-        def add_delete_route(
+        def verify_route_post_and_delete(
             original_routes_length: int,
             namespace: str,
             subnet: str,
@@ -197,16 +197,16 @@ namespaces:
 
             return len(response.json)
 
-        nb_routes = add_delete_route(
+        nb_routes = verify_route_post_and_delete(
             nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway
         )
-        nb_routes = add_delete_route(
+        nb_routes = verify_route_post_and_delete(
             nb_routes,
             routes_namespace,
             routes_subnet,
             interface=routes_interface,
         )
-        nb_routes = add_delete_route(
+        nb_routes = verify_route_post_and_delete(
             nb_routes,
             routes_namespace,
             routes_subnet,
