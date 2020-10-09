@@ -200,7 +200,7 @@ namespaces:
         # make sure the interface is up,
         # otherwise adding routes via that interface will fail
         response = c.post(
-            "/{routes_namespace}/{routes_interface}/state", json={"up": True}
+            f"/{routes_namespace}/{routes_interface}/state", json={"up": True}
         )
         assert response.status == "200 OK"
         response = c.get(f"/{routes_namespace}/{routes_interface}/state")
