@@ -83,6 +83,10 @@ def create_namespace(namespace: str) -> None:
     run_in_ns(namespace, ["ip", "link", "set", "up", "dev", "lo"])
 
 
+def delete_namespace(namespace: str) -> None:
+    subprocess.check_call(["ip", "netns", "del", namespace])
+
+
 def ensure_namespace(namespace: str) -> None:
     """ Ensure that the given namespace exists
     """
