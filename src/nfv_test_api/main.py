@@ -2,7 +2,7 @@ import logging
 import os
 import re
 import subprocess
-from typing import Optional
+from typing import List
 
 import click
 import pingparsing
@@ -111,6 +111,41 @@ def add_namespace(namespace):
         return jsonify({})
     create_namespace(namespace)
 
+    return jsonify({})
+
+
+@app.route("/<namespace>/", methods=["DELETE"])
+def delete_namespace(namespace):
+    if (
+        namespace is None
+        or len(namespace) == 0
+        or namespace not in list_namespaces().get_json()
+    ):
+        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+
+    interfaces: List = list_interfaces(namespace).get_json()
+    untagged: List = [
+        interface
+        for interface in interfaces
+        if "." not in interface and interface != "lo"
+    ]
+    if untagged:
+        raise exceptions.ServerError(
+            "Unable to delete namespace with untagged interfaces %s in it."
+            " Move them to another interface first."
+            % ", ".join(untagged)
+        )
+
+    if app.simulate:
+        cfg = get_config()
+
+        if namespace not in cfg.namespaces:
+            return abort(404)
+
+        del cfg.namespaces[namespace]
+        return jsonify({})
+
+    util.delete_namespace(namespace)
     return jsonify({})
 
 
