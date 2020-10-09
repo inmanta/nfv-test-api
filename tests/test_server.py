@@ -167,10 +167,6 @@ namespaces:
         routes_gateway = response.json[0]["prefsrc"]
         routes_interface: str = "eth1"
 
-        response = c.get(f"/{routes_namespace}/{routes_interface}/state")
-        assert response.status == "200 OK"
-        assert response.json["interface"]["up"]
-
         def add_delete_route(
             original_routes_length: int,
             namespace: str,
@@ -200,6 +196,16 @@ namespaces:
             assert len(response.json) == original_routes_length
 
             return len(response.json)
+
+        # make sure the interface is up,
+        # otherwise adding routes via that interface will fail
+        response = c.post(
+            "/{routes_namespace}/{routes_interface}/state", json={"up": True}
+        )
+        assert response.status == "200 OK"
+        response = c.get(f"/{routes_namespace}/{routes_interface}/state")
+        assert response.status == "200 OK"
+        assert response.json["interface"]["up"]
 
         nb_routes = add_delete_route(
             nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway
