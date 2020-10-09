@@ -167,7 +167,7 @@ namespaces:
         routes_gateway = response.json[0]["prefsrc"]
         routes_interface: str = "eth1"
 
-        response = c.get("/{routes_namespace}/{routes_interface}/state")
+        response = c.get(f"/{routes_namespace}/{routes_interface}/state")
         assert response.status == "200 OK"
         assert response.json["interface"]["up"]
 
