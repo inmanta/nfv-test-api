@@ -408,14 +408,18 @@ def get_routing_table_from_ns(namespace):
 @app.route("/<namespace>/routes", methods=["POST"])
 def add_route_from_ns(namespace):
     subnet = request.get_json(force=True).get("subnet")
-    gateway = request.get_json(force=True).get("gateway")
+    gateway = request.get_json(force=True).get("gateway", None)
+    interface = request.get_json(force=True).get("interface", None)
+    if gateway is None and interface is None:
+        raise exceptions.ServerError("gateway or interface should be set.")
+
     if app.simulate:
         cfg = get_config()
         if namespace not in cfg.namespaces:
             abort(404)
 
         ns = cfg.namespaces[namespace]
-        route = Route(subnet, gateway)
+        route = Route(subnet, gateway, interface)
         if route in ns.routes:
             abort(409)
         else:
@@ -423,7 +427,17 @@ def add_route_from_ns(namespace):
         return jsonify([route.to_json() for route in ns.routes])
     else:
         try:
-            util.run_in_ns(namespace, ["ip", "route", "add", subnet, "via", gateway])
+            util.run_in_ns(
+                namespace,
+                [
+                    "ip",
+                    "route",
+                    "add",
+                    subnet,
+                    *(["via", gateway] if gateway is not None else []),
+                    *(["dev", interface] if interface is not None else []),
+                ],
+            )
             routes = util.list_routes(namespace)
             return jsonify(routes)
         except subprocess.CalledProcessError as e:
@@ -434,13 +448,17 @@ def add_route_from_ns(namespace):
 @app.route("/<namespace>/routes", methods=["DELETE"])
 def delete_route_from_ns(namespace):
     subnet = request.args.get("subnet")
-    gateway = request.args.get("gateway")
+    gateway = request.args.get("gateway", None)
+    interface = request.args.get("interface", None)
+    if gateway is None and interface is None:
+        raise exceptions.ServerError("gateway or interface should be set.")
+
     if app.simulate:
         cfg = get_config()
         if namespace not in cfg.namespaces:
             abort(404)
         ns = cfg.namespaces[namespace]
-        route = Route(subnet, gateway)
+        route = Route(subnet, gateway, interface)
         if route in ns.routes:
             ns.routes.remove(route)
         else:
@@ -448,7 +466,17 @@ def delete_route_from_ns(namespace):
         return jsonify([route.to_json() for route in ns.routes])
     else:
         try:
-            util.run_in_ns(namespace, ["ip", "route", "del", subnet, "via", gateway])
+            util.run_in_ns(
+                namespace,
+                [
+                    "ip",
+                    "route",
+                    "del",
+                    subnet,
+                    *(["via", gateway] if gateway is not None else []),
+                    *(["dev", interface] if interface is not None else []),
+                ],
+            )
             routes = util.list_routes(namespace)
             return jsonify(routes)
         except subprocess.CalledProcessError as e:

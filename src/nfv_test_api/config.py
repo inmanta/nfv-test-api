@@ -55,11 +55,20 @@ class Interface:
 
 class Route:
     dst: str
-    gateway: str
+    gateway: Optional[str]
+    interface: Optional[str]
 
-    def __init__(self, dst: str, gateway: str) -> None:
+    def __init__(
+        self,
+        dst: str,
+        gateway: Optional[str] = None,
+        interface: Optional[str] = None,
+    ) -> None:
         self.dst = dst
+        if gateway is None and interface is None:
+            raise Exception("gateway or interface should be set")
         self.gateway = gateway
+        self.interface = interface
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
