@@ -491,7 +491,8 @@ def delete_route_from_ns(namespace):
 )
 def main(config, simulate):
     cfg = get_config(config)
-    setup_namespaces()
+    if not simulate:
+        setup_namespaces()
     app.simulate = simulate
     app.run(host=cfg.host, port=cfg.port)
 
