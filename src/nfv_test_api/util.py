@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import re
 import subprocess
 from typing import Dict, List, Optional
 
@@ -11,10 +10,29 @@ from nfv_test_api.config import get_config
 LOGGER = logging.getLogger(__name__)
 
 
-def run_in_ns(namespace: str, command: List[str]) -> str:
+NO_NAMESPACE_VALUE = "none"
+
+
+def process_namespace(namespace: str, allow_none: Optional[bool] = False) -> Optional[str]:
+    """Processes namespace values get by REST handler to check if namespace has been defined (correctly)
+    """
+    if namespace is None or len(namespace) == 0:
+        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+
+    if namespace == NO_NAMESPACE_VALUE:
+        if not allow_none:
+            raise exceptions.ServerError(f"Invalid namespace {namespace} - this value is a reserved keyword")
+
+        return None
+
+    return namespace
+
+
+def run_in_ns(namespace: Optional[str], command: List[str]) -> str:
     """ Run the given command in the given namespace and return the result as a string
     """
-    output = subprocess.check_output(["ip", "netns", "exec", namespace] + command, stderr=subprocess.PIPE)
+    command_prefix = ["ip", "netns", "exec", namespace] if namespace else []
+    output = subprocess.check_output(command_prefix + command, stderr=subprocess.PIPE)
     return output.decode()
 
 
