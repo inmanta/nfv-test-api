@@ -71,8 +71,7 @@ def list_namespaces():
 
 @app.route("/<namespace>/", methods=["GET"])
 def list_interfaces(namespace):
-    if namespace is None or len(namespace) == 0:
-        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+    namespace = util.process_namespace(namespace, allow_none=True)
 
     if app.simulate:
         cfg = get_config()
@@ -86,8 +85,7 @@ def list_interfaces(namespace):
 
 @app.route("/<namespace>/", methods=["POST"])
 def add_namespace(namespace):
-    if namespace is None or len(namespace) == 0:
-        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+    namespace = util.process_namespace(namespace)
 
     if app.simulate:
         cfg = get_config()
@@ -116,11 +114,9 @@ def add_namespace(namespace):
 
 @app.route("/<namespace>/", methods=["DELETE"])
 def delete_namespace(namespace):
-    if (
-        namespace is None
-        or len(namespace) == 0
-        or namespace not in list_namespaces().get_json()
-    ):
+    namespace = util.process_namespace(namespace)
+
+    if namespace not in list_namespaces().get_json():
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
 
     interfaces: List = list_interfaces(namespace).get_json()
@@ -151,8 +147,7 @@ def delete_namespace(namespace):
 
 @app.route("/<namespace>/<interface>", methods=["POST"])
 def create_sub_interface(namespace, interface):
-    if namespace is None or len(namespace) == 0:
-        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+    namespace = util.process_namespace(namespace)
 
     parts = interface.split(".")
     if len(parts) not in [2, 3]:
@@ -193,8 +188,7 @@ def create_sub_interface(namespace, interface):
 
 @app.route("/<namespace>/<interface>", methods=["PATCH"])
 def move_interface(namespace, interface):
-    if namespace is None or len(namespace) == 0:
-        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+    namespace = util.process_namespace(namespace)
 
     parts = interface.split(".")
     if len(parts) not in range(1, 4):
@@ -230,12 +224,9 @@ def move_interface(namespace, interface):
     return jsonify({})
 
 
-
-
 @app.route("/<namespace>/<interface>", methods=["DELETE"])
 def delete_sub_interface(namespace, interface):
-    if namespace is None or len(namespace) == 0:
-        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+    namespace = util.process_namespace(namespace)
 
     parts = interface.split(".")
     if len(parts) not in [2, 3]:
@@ -275,8 +266,7 @@ def delete_sub_interface(namespace, interface):
 
 @app.route("/<namespace>/<interface>/state", methods=["GET"])
 def get_interface_state(namespace, interface):
-    if namespace is None or len(namespace) == 0:
-        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+    namespace = util.process_namespace(namespace, allow_none=True)
 
     if app.simulate:
         cfg = get_config()
@@ -299,8 +289,7 @@ def get_interface_state(namespace, interface):
 
 @app.route("/<namespace>/<interface>/state", methods=["POST"])
 def set_interface_state(namespace, interface):
-    if namespace is None or len(namespace) == 0:
-        raise exceptions.ServerError(f"Invalid namespace {namespace}")
+    namespace = util.process_namespace(namespace)
 
     if app.simulate:
         cfg = get_config()
@@ -321,6 +310,8 @@ def set_interface_state(namespace, interface):
 
 @app.route("/<namespace>/ping", methods=["POST"])
 def ping_from_ns(namespace):
+    namespace = util.process_namespace(namespace, allow_none=True)
+
     dest = request.args.get("destination")
 
     if app.simulate:
@@ -354,6 +345,8 @@ def ping_from_ns(namespace):
 
 @app.route("/<namespace>/traceroute", methods=["POST"])
 def traceroute_from_ns(namespace):
+    namespace = util.process_namespace(namespace, allow_none=True)
+
     dest = request.args.get("destination")
     if app.simulate:
         if dest == "1.1.1.1":
@@ -390,6 +383,8 @@ def traceroute_from_ns(namespace):
 
 @app.route("/<namespace>/routes", methods=["GET"])
 def get_routing_table_from_ns(namespace):
+    namespace = util.process_namespace(namespace, allow_none=True)
+
     if app.simulate:
         cfg = get_config()
         if namespace not in cfg.namespaces:
@@ -407,6 +402,8 @@ def get_routing_table_from_ns(namespace):
 
 @app.route("/<namespace>/routes", methods=["POST"])
 def add_route_from_ns(namespace):
+    namespace = util.process_namespace(namespace, allow_none=True)
+
     subnet = request.get_json(force=True).get("subnet")
     gateway = request.get_json(force=True).get("gateway", None)
     interface = request.get_json(force=True).get("interface", None)
@@ -447,6 +444,8 @@ def add_route_from_ns(namespace):
 
 @app.route("/<namespace>/routes", methods=["DELETE"])
 def delete_route_from_ns(namespace):
+    namespace = util.process_namespace(namespace, allow_none=True)
+
     subnet = request.args.get("subnet")
     gateway = request.args.get("gateway", None)
     interface = request.args.get("interface", None)
