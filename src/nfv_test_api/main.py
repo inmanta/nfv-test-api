@@ -11,8 +11,8 @@ from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
 from nfv_test_api import config, exceptions, util
-from nfv_test_api.config import Route, get_config, Interface, Namespace
-from nfv_test_api.util import setup_namespaces, create_namespace
+from nfv_test_api.config import Interface, Namespace, Route, get_config
+from nfv_test_api.util import create_namespace, setup_namespaces
 
 app = Flask(__name__)
 app.simulate = False
@@ -92,20 +92,25 @@ def add_namespace(namespace):
 
         if namespace in cfg.namespaces:
             return abort(409)
-        cfg.namespaces[namespace] = Namespace(namespace, interfaces=[{
-            "ifindex": 1,
-            "ifname": "lo",
-            "flags": ["LOOPBACK"],
-            "mtu": 65536,
-            "qdisc": "noop",
-            "operstate": "DOWN",
-            "linkmode": "DEFAULT",
-            "group": "default",
-            "txqlen": 1000,
-            "link_type": "loopback",
-            "address": "00:00:00:00:00:00",
-            "broadcast": "00:00:00:00:00:00"
-        }])
+        cfg.namespaces[namespace] = Namespace(
+            namespace,
+            interfaces=[
+                {
+                    "ifindex": 1,
+                    "ifname": "lo",
+                    "flags": ["LOOPBACK"],
+                    "mtu": 65536,
+                    "qdisc": "noop",
+                    "operstate": "DOWN",
+                    "linkmode": "DEFAULT",
+                    "group": "default",
+                    "txqlen": 1000,
+                    "link_type": "loopback",
+                    "address": "00:00:00:00:00:00",
+                    "broadcast": "00:00:00:00:00:00",
+                }
+            ],
+        )
         return jsonify({})
     create_namespace(namespace)
 
@@ -120,16 +125,11 @@ def delete_namespace(namespace):
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
 
     interfaces: List = list_interfaces(namespace).get_json()
-    untagged: List = [
-        interface
-        for interface in interfaces
-        if "." not in interface and interface != "lo"
-    ]
+    untagged: List = [interface for interface in interfaces if "." not in interface and interface != "lo"]
     if untagged:
         raise exceptions.ServerError(
             "Unable to delete namespace with untagged interfaces %s in it."
-            " Move them to another interface first."
-            % ", ".join(untagged)
+            " Move them to another interface first." % ", ".join(untagged)
         )
 
     if app.simulate:
@@ -208,7 +208,7 @@ def move_interface(namespace, interface):
 
     new_namespace_key: str = "destination_namespace"
     if new_namespace_key not in request.json:
-        raise exceptions.ServerError(f"Invalid request: request should contain \"destination_namespace\"")
+        raise exceptions.ServerError(f'Invalid request: request should contain "destination_namespace"')
 
     new_namespace = request.json[new_namespace_key]
 
