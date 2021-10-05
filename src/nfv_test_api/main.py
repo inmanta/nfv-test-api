@@ -13,10 +13,13 @@ from flask_cors import CORS
 from nfv_test_api import config, exceptions, util
 from nfv_test_api.config import Interface, Namespace, Route, get_config
 from nfv_test_api.util import create_namespace, setup_namespaces
+from nfv_test_api.controllers import blueprint as controllers
 
 app = Flask(__name__)
 app.simulate = False
 CORS(app)
+app.config["RESTPLUS_MASK_SWAGGER"] = False
+app.register_blueprint(controllers)
 
 # Notes:
 #   * Static content available on /static

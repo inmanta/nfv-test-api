@@ -2,7 +2,6 @@ import logging
 import subprocess
 from typing import List, Tuple
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -13,13 +12,7 @@ class Host:
     def exec(self, command: List[str]) -> Tuple[str, str]:
         cmd = self._shell_entry_point + command
         LOGGER.debug("Running command %s", cmd)
-        process = subprocess.Popen(
-            cmd,
-            shell=False,
-            universal_newlines=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        process = subprocess.Popen(cmd, shell=False, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
         return process.communicate()
 
     def hostname(self) -> str:

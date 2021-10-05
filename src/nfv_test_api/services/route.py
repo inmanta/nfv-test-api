@@ -1,16 +1,18 @@
-from typing import List, Optional
-from nfv_test_api.controllers.base_controller import BaseController
-from nfv_test_api.data import CommandStatus, Route
-from nfv_test_api.host import Host
-from pydantic import ValidationError
 import json
 import logging
+from typing import List, Union
 
+from pydantic import ValidationError
+from werkzeug.exceptions import NotFound
+
+from nfv_test_api.services.base_service import BaseService, K
+from nfv_test_api.data import CommandStatus, Route
+from nfv_test_api.host import Host
 
 LOGGER = logging.getLogger(__name__)
 
 
-class RouteController(BaseController[Route]):
+class RouteService(BaseService[Route]):
     def __init__(self, host: Host) -> None:
         super().__init__(host)
 
@@ -22,8 +24,7 @@ class RouteController(BaseController[Route]):
         raw_routes = json.loads(stdout or "[]")
         if not isinstance(raw_routes, list):
             raise RuntimeError(
-                f"Failed to parse the list of routes.  Expected a list but got a {type(raw_routes)}: "
-                f"{raw_routes}"
+                f"Failed to parse the list of routes.  Expected a list but got a {type(raw_routes)}: " f"{raw_routes}"
             )
 
         return raw_routes
@@ -38,28 +39,31 @@ class RouteController(BaseController[Route]):
 
         return routes
 
-    def get(self, identifier: str) -> Optional[Route]:
+    def get_or_default(self, identifier: str, default: K = None) -> Union[Route, K]:
         for route in self.get_all():
-            if route.dst == identifier:
+            if str(route.dst) == identifier:
                 return route
-            
-        return None
+
+        return default
+
+    def get(self, identifier: str) -> Route:
+        route = self.get_or_default(identifier)
+        if not route:
+            raise NotFound(f"Could not find any route with destination {identifier}")
+
+        return route
 
     def create(self, o: Route.CreateForm) -> Route:
-        return super().create(o)
+        raise NotImplementedError("Creation of route is not supported yet")
 
     def update(self, identifier: str, o: Route.UpdateForm) -> Route:
-        return super().update(identifier, o)
+        raise NotImplementedError("Updating of route is not supported yet")
 
     def delete(self, identifier: str) -> None:
-        return super().delete(identifier)
+        raise NotImplementedError("Deleting of route is not supported yet")
 
     def status(self) -> CommandStatus:
         command = ["ip", "-details", "route"]
         stdout, stderr = self.host.exec(command)
 
-        return CommandStatus(
-            command=command,
-            stdout=stdout,
-            stderr=stderr,
-        )
+        return CommandStatus(command=command, stdout=stdout, stderr=stderr,)

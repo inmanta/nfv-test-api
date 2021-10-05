@@ -1,66 +1,72 @@
-from typing import List, Optional
-from nfv_test_api.controllers.base_controller import BaseController
-from nfv_test_api.data import CommandStatus, Interface
+from flask import request
+from flask_restplus import Namespace, Resource
+from nfv_test_api.services.interface import InterfaceService
 from nfv_test_api.host import Host
+from nfv_test_api import data
+from http import HTTPStatus
 from pydantic import ValidationError
-import json
-import logging
+from werkzeug.exceptions import BadRequest
+
+namespace = Namespace(name="interfaces", description="Basic interface management")
+
+interface_model = namespace.schema_model(name="Interface", schema=data.Interface.schema())
+interface_create_model = namespace.schema_model(name="InterfaceCreate", schema=data.Interface.CreateForm.schema())
+interface_update_model = namespace.schema_model(name="InterfaceUpdate", schema=data.Interface.UpdateForm.schema())
+
+@namespace.route("")
+class All(Resource):
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api=api, *args, **kwargs)
+        self.host = Host()
+        self.service = InterfaceService(self.host)
+
+    @namespace.response(code=HTTPStatus.OK, description="Get all interfaces on the host", model=interface_model, as_list=True)
+    def get(self):
+        return [interface.json_dict() for interface in self.service.get_all()], HTTPStatus.OK
+
+    @namespace.expect(interface_create_model)
+    @namespace.response(HTTPStatus.CREATED, "A new interface has been created", interface_model)
+    @namespace.response(HTTPStatus.CONFLICT, "Another interface with the same name already exists")
+    def post(self):
+        try:
+            create_form = data.Interface.CreateForm(**request.json)
+        except ValidationError as e:
+            raise BadRequest(str(e))
+        return self.service.create(create_form).json_dict(), HTTPStatus.CREATED
 
 
-LOGGER = logging.getLogger(__name__)
+@namespace.route("/<name>")
+class One(Resource):
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api=api, *args, **kwargs)
+        self.host = Host()
+        self.service = InterfaceService(self.host)
 
+    @namespace.response(HTTPStatus.OK, "Found an interface with a matching name", interface_model)
+    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name")
+    def get(self, name: str):
+        try:
+            data.InputSafeName(name=name)
+        except ValidationError as e:
+            raise BadRequest(str(e))
 
-class InterfaceController(BaseController[Interface]):
-    def __init__(self, host: Host) -> None:
-        super().__init__(host)
+        return self.service.get(name).json_dict(exclude_none=True), HTTPStatus.OK
 
-    def get_all_raw(self) -> List[object]:
-        stdout, stderr = self.host.exec(["ip", "-j", "-details", "addr"])
-        if stderr:
-            raise RuntimeError(f"Failed to run addr command on host: {stderr}")
+    @namespace.expect(interface_update_model)
+    @namespace.response(HTTPStatus.OK, "The interface has been updated", interface_model)
+    def post(self, name: str):
+        try:
+            data.InputSafeName(name=name)
+            update_form = data.Interface.UpdateForm(**request.json)
+        except ValidationError as e:
+            raise BadRequest(str(e))
+        return self.service.create(update_form).json_dict(), HTTPStatus.OK
 
-        raw_interfaces = json.loads(stdout or "[]")
-        if not isinstance(raw_interfaces, list):
-            raise RuntimeError(
-                f"Failed to parse the list of interfaces.  Expected a list but got a {type(raw_interfaces)}: "
-                f"{raw_interfaces}"
-            )
+    @namespace.response(HTTPStatus.OK, "The interface doesn't exist anymore")
+    def delete(self, name: str):
+        try:
+            data.InputSafeName(name=name)
+        except ValidationError as e:
+            raise BadRequest(str(e))
 
-        return raw_interfaces
-
-    def get_all(self) -> List[Interface]:
-        interfaces: List[Interface] = []
-        for raw_interface in self.get_all_raw():
-            try:
-                interfaces.append(Interface(**raw_interface))
-            except ValidationError as e:
-                LOGGER.error(f"Failed to parse an interface: {raw_interface}\n" f"{str(e)}")
-
-        return interfaces
-
-    def get(self, identifier: str) -> Optional[Interface]:
-        for interface in self.get_all():
-            if interface.if_name == identifier:
-                return interface
-            
-        return None
-
-    def create(self, o: Interface.CreateForm) -> Interface:
-        
-        return super().create(o)
-
-    def update(self, identifier: str, o: Interface.UpdateForm) -> Interface:
-        return super().update(identifier, o)
-
-    def delete(self, identifier: str) -> None:
-        return super().delete(identifier)
-
-    def status(self) -> str:
-        command = ["ip", "-details", "addr"]
-        stdout, stderr = self.host.exec(command)
-        
-        return CommandStatus(
-            command=command,
-            stdout=stdout,
-            stderr=stderr,
-        )
+        self.service.delete(name)
