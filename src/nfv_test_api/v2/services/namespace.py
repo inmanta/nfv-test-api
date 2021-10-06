@@ -5,9 +5,10 @@ from typing import List, Union
 from pydantic import ValidationError
 from werkzeug.exceptions import NotFound
 
-from nfv_test_api.services.base_service import BaseService, K
-from nfv_test_api.data import CommandStatus, Namespace
 from nfv_test_api.host import Host
+from nfv_test_api.v2.data import CommandStatus, Namespace, NamespaceCreate, NamespaceUpdate
+
+from .base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,14 +55,18 @@ class NamespaceService(BaseService[Namespace]):
 
         return namespace
 
-    def create(self, o: Namespace.CreateForm) -> Namespace:
+    def create(self, o: NamespaceCreate) -> Namespace:
         existing_namespace = self.get_or_default(o.name)
         if existing_namespace:
             return existing_namespace
 
-        _, stderr = self.host.exec(["ip", "netns", "add", o.name, "auto"])
+        _, stderr = self.host.exec(["ip", "netns", "add", o.name])
         if stderr:
             raise RuntimeError(f"Failed to create namespace: {stderr}")
+
+        _, stderr = self.host.exec(["ip", "netns", "set", o.name, "auto"])
+        if stderr:
+            raise RuntimeError(f"Failed to set namespace id: {stderr}")
 
         existing_namespace = self.get_or_default(o.name)
         if existing_namespace:
@@ -69,7 +74,7 @@ class NamespaceService(BaseService[Namespace]):
 
         raise RuntimeError("The namespace should have been created but can not be found")
 
-    def update(self, identifier: str, o: Namespace.UpdateForm) -> Namespace:
+    def update(self, identifier: str, o: NamespaceUpdate) -> Namespace:
         raise NotImplementedError("Updating namespaces is not supported")
 
     def delete(self, identifier: str) -> None:

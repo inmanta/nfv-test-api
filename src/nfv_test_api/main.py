@@ -13,7 +13,7 @@ from flask_cors import CORS
 from nfv_test_api import config, exceptions, util
 from nfv_test_api.config import Interface, Namespace, Route, get_config
 from nfv_test_api.util import create_namespace, setup_namespaces
-from nfv_test_api.controllers import blueprint as controllers
+from nfv_test_api.v2 import blueprint as controllers
 
 app = Flask(__name__)
 app.simulate = False

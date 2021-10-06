@@ -1,12 +1,13 @@
 from abc import abstractmethod
 from typing import Generic, List, TypeVar, Union
 
-from nfv_test_api.data import CommandStatus, IpBaseModel
+from pydantic.main import BaseModel
+
 from nfv_test_api.host import Host
+from nfv_test_api.v2.data import CommandStatus, IpBaseModel
 
 T = TypeVar("T", bound=IpBaseModel)
-C = TypeVar("C", bound=IpBaseModel.CreateForm)
-U = TypeVar("U", bound=IpBaseModel.UpdateForm)
+B = TypeVar("B", bound=BaseModel)
 K = TypeVar("K", bound=object)
 
 
@@ -35,11 +36,11 @@ class BaseService(Generic[T]):
         pass
 
     @abstractmethod
-    def create(self, o: C) -> T:
+    def create(self, o: B) -> T:
         pass
 
     @abstractmethod
-    def update(self, identifier: str, o: U) -> T:
+    def update(self, identifier: str, o: B) -> T:
         pass
 
     @abstractmethod

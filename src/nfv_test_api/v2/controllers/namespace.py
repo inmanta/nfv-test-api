@@ -1,16 +1,20 @@
+from http import HTTPStatus
+
 from flask import request
 from flask_restplus import Namespace, Resource
-from nfv_test_api.services.namespace import NamespaceService
-from nfv_test_api.host import Host
-from nfv_test_api import data
-from http import HTTPStatus
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest
 
+from nfv_test_api.host import Host
+from nfv_test_api.v2 import data
+from nfv_test_api.v2.controllers.common import add_model_schema
+from nfv_test_api.v2.services import NamespaceService
+
 namespace = Namespace(name="namespaces", description="Basic namespace management")
 
-namespace_model = namespace.schema_model(name="Namespace", schema=data.Namespace.schema())
-namespace_create_model = namespace.schema_model(name="NamespaceCreate", schema=data.Namespace.CreateForm.schema())
+namespace_model = add_model_schema(namespace, data.Namespace)
+namespace_create_model = add_model_schema(namespace, data.NamespaceCreate)
+
 
 @namespace.route("")
 class All(Resource):

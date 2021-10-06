@@ -5,9 +5,10 @@ from typing import List, Union
 from pydantic import ValidationError
 from werkzeug.exceptions import NotFound
 
-from nfv_test_api.services.base_service import BaseService, K
-from nfv_test_api.data import CommandStatus, Route
 from nfv_test_api.host import Host
+from nfv_test_api.v2.data import CommandStatus, Route, RouteCreate, RouteUpdate
+
+from .base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,10 +54,10 @@ class RouteService(BaseService[Route]):
 
         return route
 
-    def create(self, o: Route.CreateForm) -> Route:
+    def create(self, o: RouteCreate) -> Route:
         raise NotImplementedError("Creation of route is not supported yet")
 
-    def update(self, identifier: str, o: Route.UpdateForm) -> Route:
+    def update(self, identifier: str, o: RouteUpdate) -> Route:
         raise NotImplementedError("Updating of route is not supported yet")
 
     def delete(self, identifier: str) -> None:

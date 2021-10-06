@@ -5,3 +5,4 @@ rpms
 dist
 .mypy_cache
 .venv
+.vscode

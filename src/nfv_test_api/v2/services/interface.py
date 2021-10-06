@@ -6,9 +6,10 @@ from typing import List, Set, Union
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest, Conflict, NotFound
 
-from nfv_test_api.services.base_service import BaseService, K
-from nfv_test_api.data import CommandStatus, Interface
 from nfv_test_api.host import Host
+from nfv_test_api.v2.data import CommandStatus, Interface, InterfaceCreate, InterfaceUpdate
+
+from .base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class InterfaceService(BaseService[Interface]):
 
         return interface
 
-    def create(self, o: Interface.CreateForm) -> Interface:
+    def create(self, o: InterfaceCreate) -> Interface:
         existing_interface = self.get_or_default(o.name)
         if existing_interface:
             raise Conflict("An interface with this name already exists")
@@ -90,7 +91,7 @@ class InterfaceService(BaseService[Interface]):
 
         return existing_interface
 
-    def update(self, identifier: str, o: Interface.UpdateForm) -> Interface:
+    def update(self, identifier: str, o: InterfaceUpdate) -> Interface:
         existing_interface = self.get(identifier)
         existing_addresses: Set[Union[IPv4Interface, IPv6Interface]] = {
             ip_interface(f"{str(addr_info.local)}/{addr_info.prefix_len}") for addr_info in existing_interface.addr_info
