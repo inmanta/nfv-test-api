@@ -5,6 +5,8 @@ from typing import List, Optional, Union
 from pydantic import BaseModel, validator
 from typing_extensions import Literal
 
+from nfv_test_api.host import Host
+
 from .base_model import IpBaseModel
 from .common import SafeName, Scope
 
@@ -67,3 +69,9 @@ class Route(IpBaseModel):
     flags: List[SafeName]
     pref_src: Optional[Union[IPv4Address, IPv6Address]]
     metric: Optional[int]
+
+    _host: Host
+
+    @property
+    def host(self) -> Host:
+        return self._host

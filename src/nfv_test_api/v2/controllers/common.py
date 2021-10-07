@@ -1,4 +1,4 @@
-from typing import Pattern, Type
+from typing import Type
 
 from flask_restplus import Namespace, SchemaModel
 from pydantic import BaseModel

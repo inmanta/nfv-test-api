@@ -1,5 +1,6 @@
 from ipaddress import IPv4Address, IPv4Interface, IPv6Address, IPv6Interface
 from typing import Optional, Union
+
 from pydantic import BaseModel
 
 from nfv_test_api.v2.data.base_model import IpBaseModel

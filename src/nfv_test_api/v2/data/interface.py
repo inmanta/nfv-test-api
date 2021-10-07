@@ -5,6 +5,8 @@ from typing import List, Optional, Union
 from pydantic import BaseModel
 from typing_extensions import Literal
 
+from nfv_test_api.host import Host
+
 from .base_model import IpBaseModel
 from .common import Family, MacAddress, SafeName, Scope
 
@@ -58,6 +60,7 @@ class InterfaceState(str, Enum):
     UP = "UP"
     DOWN = "DOWN"
     UNKNOWN = "UNKNOWN"
+    LOWERLAYERDOWN = "LOWERLAYERDOWN"
 
 
 class InterfaceCreate(BaseModel):
@@ -67,13 +70,15 @@ class InterfaceCreate(BaseModel):
     address: Optional[Union[IPv4Interface, IPv6Interface]]
     broadcast: Optional[Union[IPv4Address, IPv6Address]]
     type: LinkInfo.Kind = LinkInfo.Kind.VETH
+    slave_interfaces: Optional[List[SafeName]]
 
 
 class InterfaceUpdate(BaseModel):
-    state: InterfaceState = InterfaceState.UP
-    mtu: int
-    addresses: List[Union[IPv4Interface, IPv6Interface]]
-    master: Optional[SafeName]
+    name: Optional[SafeName]
+    state: Optional[InterfaceState]
+    mtu: Optional[int]
+    addresses: Optional[List[Union[IPv4Interface, IPv6Interface]]]
+    master: Optional[Union[SafeName, Literal["nomaster"]]]
     netns: Optional[Union[SafeName, int]]
 
 

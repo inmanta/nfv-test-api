@@ -1,9 +1,10 @@
-from nfv_test_api.host import Host
-from nfv_test_api.v2.data import Ping, PingRequest, interface
-from pingparsing import PingParsing
-from pydantic import ValidationError
 import logging
 
+from pingparsing import PingParsing
+from pydantic import ValidationError
+
+from nfv_test_api.host import Host
+from nfv_test_api.v2.data import Ping, PingRequest, interface
 
 LOGGER = logging.getLogger(__name__)
 

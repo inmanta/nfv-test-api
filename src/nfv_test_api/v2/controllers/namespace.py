@@ -17,7 +17,7 @@ namespace_create_model = add_model_schema(namespace, data.NamespaceCreate)
 
 
 @namespace.route("")
-class All(Resource):
+class AllNamespaces(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.host = Host()
@@ -32,14 +32,14 @@ class All(Resource):
     @namespace.response(HTTPStatus.CONFLICT, "Another namespace with the same name already exists")
     def post(self):
         try:
-            create_form = data.Namespace.CreateForm(**request.json)
+            create_form = data.NamespaceCreate(**request.json)
         except ValidationError as e:
             raise BadRequest(str(e))
         return self.service.create(create_form).json_dict(), HTTPStatus.CREATED
 
 
 @namespace.route("/<name>")
-class One(Resource):
+class OneNamespace(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.host = Host()

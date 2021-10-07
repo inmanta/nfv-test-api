@@ -34,7 +34,9 @@ class RouteService(BaseService[Route]):
         routes: List[Route] = []
         for raw_route in self.get_all_raw():
             try:
-                routes.append(Route(**raw_route))
+                route = Route(**raw_route)
+                route.attach_host(self.host)
+                routes.append(route)
             except ValidationError as e:
                 LOGGER.error(f"Failed to parse a route: {raw_route}\n" f"{str(e)}")
 

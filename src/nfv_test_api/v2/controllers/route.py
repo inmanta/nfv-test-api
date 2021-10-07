@@ -16,8 +16,7 @@ route_model = add_model_schema(namespace, data.Route)
 
 
 @namespace.route("")
-@namespace.route("/ns/<ns_name>")
-class All(Resource):
+class AllRoutes(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = RouteService(Host())
@@ -43,10 +42,13 @@ class All(Resource):
         return [route.json_dict() for route in self.get_service(ns_name).get_all()], HTTPStatus.OK
 
 
+@namespace.route("/ns/<ns_name>")
+class AllRoutesInNamespace(AllRoutes):
+    pass
+
+
 @namespace.route("/<dst_addr>")
-@namespace.route("/<dst_addr>/<int:dst_prefix_len>")
-@namespace.route("/ns/<ns_name>/<dst_addr>/<int:dst_prefix_len>")
-class One(Resource):
+class OneRoute(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = RouteService(Host())
@@ -72,3 +74,18 @@ class One(Resource):
             raise BadRequest(str(e))
 
         return self.get_service(ns_name).get(destination).json_dict(exclude_none=True), HTTPStatus.OK
+
+
+@namespace.route("/<dst_addr>/<int:dst_prefix_len>")
+class OnRouteWithPrefix(OneRoute):
+    pass
+
+
+@namespace.route("/ns/<ns_name>/<dst_addr>")
+class OneRouteInNamespace(OneRoute):
+    pass
+
+
+@namespace.route("/ns/<ns_name>/<dst_addr>/<int:dst_prefix_len>")
+class OneRouteWithPrefixInNamespace(OneRoute):
+    pass

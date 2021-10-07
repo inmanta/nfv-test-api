@@ -1,10 +1,10 @@
 from flask import Blueprint
 from flask_restplus import Api
 
+from .controllers.actions import namespace as actions_ns
 from .controllers.interface import namespace as interface_ns
 from .controllers.namespace import namespace as namespace_ns
 from .controllers.route import namespace as route_ns
-from .controllers.actions import namespace as actions_ns
 
 blueprint = Blueprint("api v2", __name__, url_prefix="/api/v2")
 

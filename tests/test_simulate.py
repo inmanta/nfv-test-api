@@ -94,10 +94,7 @@ namespaces:
         response = c.get("/test-cust-east1/eth0.100/state")
         assert response.status == "200 OK"
 
-        response = c.patch(
-            "/test-cust-east1/eth0.100",
-            json={"destination_namespace": "test-cloud-west3"},
-        )
+        response = c.patch("/test-cust-east1/eth0.100", json={"destination_namespace": "test-cloud-west3"},)
         assert response.status == "200 OK"
 
         response = c.get("/test-cust-east1/eth0.100/state")
@@ -128,23 +125,18 @@ namespaces:
         assert response.json["interface"]["mtu"] == 1500
         assert not response.json["interface"]["up"]
 
-        response = c.post(
-            "/test-cust-south1/eth0/state", json={"address": [{"address": "192.168.150.1", "prefixlen": 24}]}
-        )
+        response = c.post("/test-cust-south1/eth0/state", json={"address": [{"address": "192.168.150.1", "prefixlen": 24}]})
         assert response.status == "200 OK"
         assert response.json["interface"]["address"] == [{"address": "192.168.150.1", "prefixlen": 24}]
 
         response = c.post(
             "/test-cust-south1/eth0/state",
-            json={"address": [{"address": "192.168.150.1", "prefixlen": 24}, {"address": "192.168.151.1", "prefixlen": 28}]}
+            json={"address": [{"address": "192.168.150.1", "prefixlen": 24}, {"address": "192.168.151.1", "prefixlen": 28}]},
         )
         assert response.status == "200 OK"
         assert len(response.json["interface"]["address"]) == 2
 
-        response = c.post(
-            "/test-cust-south1/eth0/state",
-            json={"address": [{"address": "192.168.151.1", "prefixlen": 28}]}
-        )
+        response = c.post("/test-cust-south1/eth0/state", json={"address": [{"address": "192.168.151.1", "prefixlen": 28}]})
         assert response.status == "200 OK"
         assert response.json["interface"]["address"] == [{"address": "192.168.151.1", "prefixlen": 28}]
 
@@ -180,36 +172,18 @@ namespaces:
             if interface is not None:
                 data["interface"] = interface
 
-            response = c.post(
-                f"/{namespace}/routes",
-                data=json.dumps(data),
-                content_type="application/json",
-            )
+            response = c.post(f"/{namespace}/routes", data=json.dumps(data), content_type="application/json",)
             assert response.status == "200 OK"
             assert len(response.json) == original_routes_length + 1
 
-            response = c.delete(
-                f"/{namespace}/routes?%s"
-                % "&".join(f"{key}={value}" for key, value in data.items())
-            )
+            response = c.delete(f"/{namespace}/routes?%s" % "&".join(f"{key}={value}" for key, value in data.items()))
             assert response.status == "200 OK"
             assert len(response.json) == original_routes_length
 
             return len(response.json)
 
+        nb_routes = verify_route_post_and_delete(nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway)
+        nb_routes = verify_route_post_and_delete(nb_routes, routes_namespace, routes_subnet, interface=routes_interface,)
         nb_routes = verify_route_post_and_delete(
-            nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway
-        )
-        nb_routes = verify_route_post_and_delete(
-            nb_routes,
-            routes_namespace,
-            routes_subnet,
-            interface=routes_interface,
-        )
-        nb_routes = verify_route_post_and_delete(
-            nb_routes,
-            routes_namespace,
-            routes_subnet,
-            gateway=routes_gateway,
-            interface=routes_interface,
+            nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway, interface=routes_interface,
         )

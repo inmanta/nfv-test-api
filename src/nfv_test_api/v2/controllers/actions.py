@@ -18,7 +18,6 @@ ping_request_model = add_model_schema(namespace, data.PingRequest)
 
 
 @namespace.route("/ping")
-@namespace.route("/ns/<ns_name>/ping")
 class Ping(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
@@ -46,3 +45,7 @@ class Ping(Resource):
 
         return self.get_service(ns_name).ping(request_form).json_dict(), HTTPStatus.OK
 
+
+@namespace.route("/ns/<ns_name>/ping")
+class PingInNamespace(Ping):
+    pass

@@ -35,7 +35,9 @@ class NamespaceService(BaseService[Namespace]):
         namespaces = []
         for raw_namespace in self.get_all_raw():
             try:
-                namespaces.append(Namespace(**raw_namespace))
+                namespace = Namespace(**raw_namespace)
+                namespace.attach_host(self.host)
+                namespaces.append(namespace)
             except ValidationError as e:
                 LOGGER.error(f"Failed to parse a namespace: {raw_namespace}\n" f"{str(e)}")
 

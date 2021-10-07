@@ -4,10 +4,11 @@ from ipaddress import IPv4Interface, IPv6Interface, ip_interface
 from typing import List, Set, Union
 
 from pydantic import ValidationError
-from werkzeug.exceptions import BadRequest, Conflict, NotFound
+from werkzeug.exceptions import Conflict, NotFound
 
-from nfv_test_api.host import Host
+from nfv_test_api.host import Host, NamespaceHost
 from nfv_test_api.v2.data import CommandStatus, Interface, InterfaceCreate, InterfaceUpdate
+from nfv_test_api.v2.data.interface import InterfaceState
 
 from .base_service import BaseService, K
 
@@ -36,7 +37,9 @@ class InterfaceService(BaseService[Interface]):
         interfaces: List[Interface] = []
         for raw_interface in self.get_all_raw():
             try:
-                interfaces.append(Interface(**raw_interface))
+                interface = Interface(**raw_interface)
+                interface.attach_host(self.host)
+                interfaces.append(interface)
             except ValidationError as e:
                 LOGGER.error(f"Failed to parse an interface: {raw_interface}\n" f"{str(e)}")
 
@@ -83,7 +86,7 @@ class InterfaceService(BaseService[Interface]):
         command += ["type", o.type]
         _, stderr = self.host.exec(command)
         if stderr:
-            raise BadRequest(stderr)
+            raise RuntimeError(f"Failed to create interface with command {command}: {stderr}")
 
         existing_interface = self.get_or_default(o.name)
         if not existing_interface:
@@ -92,48 +95,151 @@ class InterfaceService(BaseService[Interface]):
         return existing_interface
 
     def update(self, identifier: str, o: InterfaceUpdate) -> Interface:
-        existing_interface = self.get(identifier)
-        existing_addresses: Set[Union[IPv4Interface, IPv6Interface]] = {
-            ip_interface(f"{str(addr_info.local)}/{addr_info.prefix_len}") for addr_info in existing_interface.addr_info
-        }
-        desired_addresses: Set[Union[IPv4Interface, IPv6Interface]] = {interface for interface in o.addresses}
+        interface = self.get(identifier)
 
+        if o.mtu is not None:
+            interface = self.set_mtu(interface, o.mtu)
+
+        if o.master is not None:
+            interface = self.set_master(interface, o.master)
+
+        if o.state is not None:
+            interface = self.set_state(interface, o.state)
+
+        if o.addresses is not None:
+            existing_addresses: Set[Union[IPv4Interface, IPv6Interface]] = {
+                ip_interface(f"{str(addr_info.local)}/{addr_info.prefix_len}") for addr_info in interface.addr_info
+            }
+            desired_addresses: Set[Union[IPv4Interface, IPv6Interface]] = {addr for addr in o.addresses}
+
+            extra_addresses = existing_addresses - desired_addresses
+            missing_addresses = desired_addresses - existing_addresses
+
+            for addr in extra_addresses:
+                interface = self.del_address(interface, addr)
+
+            for addr in missing_addresses:
+                interface = self.add_address(interface, addr)
+
+        if o.name is not None:
+            interface = self.rename(interface, o.name)
+
+        if o.netns is not None:
+            # This should be called last,
+            interface = self.move(interface, o.netns)
+
+        return interface
+
+    def set_state(self, interface: Interface, state: InterfaceState) -> Interface:
         command = [
             "ip",
             "link",
             "set",
-            identifier,
-            o.state,
-            "mtu",
-            o.mtu,
+            interface.if_name,
+            state.name.lower(),
         ]
-        if o.master is None:
+        _, stderr = interface.host.exec(command)
+        if stderr:
+            raise RuntimeError(f"Failed to set link state with command {command}: {stderr}")
+
+        return self.get(interface.if_name)
+
+    def set_mtu(self, interface: Interface, mtu: int) -> Interface:
+        command = [
+            "ip",
+            "link",
+            "set",
+            interface.if_name,
+            "mtu",
+            str(mtu),
+        ]
+        _, stderr = interface.host.exec(command)
+        if stderr:
+            raise RuntimeError(f"Failed to set link mtu with command {command}: {stderr}")
+
+        return self.get(interface.if_name)
+
+    def set_master(self, interface: Interface, new_master: str) -> Interface:
+        command = [
+            "ip",
+            "link",
+            "set",
+            "dev",
+            interface.if_name,
+        ]
+
+        if new_master == "nomaster":
             command += ["nomaster"]
         else:
-            command += ["master", o.master]
+            command += ["master", new_master]
 
-        _, stderr = self.host.exec(command)
+        _, stderr = interface.host.exec(command)
         if stderr:
-            raise BadRequest(stderr)
+            raise RuntimeError(f"Failed to set link master with command {command}: {stderr}")
 
-        extra_addresses = existing_addresses - desired_addresses
-        missing_addresses = desired_addresses - existing_addresses
+        return self.get(interface.if_name)
 
-        # Removing additional addresses
-        for interface in extra_addresses:
-            command = ["ip", "address", "del", str(interface), "dev", identifier]
-            _, stderr = self.host.exec(command)
-            if stderr:
-                raise BadRequest(stderr)
+    def add_address(self, interface: Interface, address: Union[IPv4Interface, IPv6Interface]) -> Interface:
+        command = [
+            "ip",
+            "address",
+            "add",
+            str(address),
+            "dev",
+            interface.if_name,
+        ]
+        _, stderr = interface.host.exec(command)
+        if stderr:
+            raise RuntimeError(f"Failed to add address with command {command}: {stderr}")
 
-        # Adding missing addresses
-        for interface in missing_addresses:
-            command = ["ip", "address", "add", str(interface), "dev", identifier]
-            _, stderr = self.host.exec(command)
-            if stderr:
-                raise BadRequest(stderr)
+        return self.get(interface.if_name)
 
-        return self.get(identifier)
+    def del_address(self, interface: Interface, address: Union[IPv4Interface, IPv6Interface]) -> Interface:
+        command = [
+            "ip",
+            "address",
+            "del",
+            str(address),
+            "dev",
+            interface.if_name,
+        ]
+        _, stderr = interface.host.exec(command)
+        if stderr:
+            raise RuntimeError(f"Failed to delete address with command {command}: {stderr}")
+
+        return self.get(interface.if_name)
+
+    def rename(self, interface: Interface, new_name: str) -> Interface:
+        command = [
+            "ip",
+            "link",
+            "set",
+            "dev",
+            interface.if_name,
+            "name",
+            new_name,
+        ]
+        _, stderr = interface.host.exec(command)
+        if stderr:
+            raise RuntimeError(f"Failed to rename interface with command {command}: {stderr}")
+
+        return self.get(new_name)
+
+    def move(self, interface: Interface, new_namespace: str) -> Interface:
+        command = [
+            "ip",
+            "link",
+            "set",
+            "dev",
+            interface.if_name,
+            "netns",
+            new_namespace,
+        ]
+        _, stderr = interface.host.exec(command)
+        if stderr:
+            raise RuntimeError(f"Failed to move interface to new namespace with command {command}: {stderr}")
+
+        return InterfaceService(NamespaceHost(new_namespace)).get(interface.if_name)
 
     def delete(self, identifier: str) -> None:
         existing_interface = self.get_or_default(identifier)
@@ -141,9 +247,9 @@ class InterfaceService(BaseService[Interface]):
             return
 
         command = ["ip", "link", "del", identifier]
-        _, stderr = self.host.exec(command)
+        _, stderr = existing_interface.host.exec(command)
         if stderr:
-            raise BadRequest(stderr)
+            raise RuntimeError(f"Failed to delete interface with command {command}: {stderr}")
 
     def status(self) -> str:
         command = ["ip", "-details", "addr"]

@@ -1,5 +1,6 @@
 import json
 from typing import Any, Callable, Optional, Union
+from nfv_test_api.host import Host
 
 from pydantic import BaseModel
 
@@ -12,16 +13,23 @@ def dense_name(string: str) -> str:
 
 
 class IpBaseModel(BaseModel):
+
     class Config:
         underscore_attrs_are_private = True
         alias_generator = dense_name
         allow_population_by_field_name = True
 
-    class CreateForm(BaseModel):
-        pass
+    _host: Optional[Host]
 
-    class UpdateForm(BaseModel):
-        pass
+    def attach_host(self, host: Host) -> None:
+        self._host = host
+    
+    @property
+    def host(self) -> Host:
+        if not self._host:
+            raise ValueError("No host has been attached to this resource")
+
+        return self._host
 
     def json_dict(
         self,
@@ -36,7 +44,7 @@ class IpBaseModel(BaseModel):
         encoder: Optional[Callable[[Any], Any]] = None,
         **dumps_kwargs: Any,
     ) -> dict:
-        return json.loads(
+        produced_dict: dict = json.loads(
             self.json(
                 include=include,
                 exclude=exclude,
@@ -49,3 +57,5 @@ class IpBaseModel(BaseModel):
                 **dumps_kwargs,
             )
         )
+
+        return produced_dict
