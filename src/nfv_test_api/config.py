@@ -1,3 +1,18 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 import json
 from typing import Any, Dict, List, Optional
 
@@ -14,13 +29,11 @@ class Interface:
         self._state = {"address": [], "mtu": 1500, "up": False}
 
     def get_state(self) -> Dict[str, Any]:
-        """ State used for simulation mode
-        """
+        """State used for simulation mode"""
         return self._state
 
     def _del_address(self, address) -> None:
-        """ Add or remove an address from the list
-        """
+        """Add or remove an address from the list"""
         for i, curr in enumerate(self._state["address"]):
             key = f"{curr['address']}/{curr['prefixlen']}"
             if address == key:
@@ -28,8 +41,7 @@ class Interface:
                 return
 
     def set_state(self, state) -> None:
-        """ Set the state, only used for simulation mode
-        """
+        """Set the state, only used for simulation mode"""
         # check the up state
         if "up" in state:
             self._state["up"] = state["up"]
@@ -58,7 +70,12 @@ class Route:
     gateway: Optional[str]
     interface: Optional[str]
 
-    def __init__(self, dst: str, gateway: Optional[str] = None, interface: Optional[str] = None,) -> None:
+    def __init__(
+        self,
+        dst: str,
+        gateway: Optional[str] = None,
+        interface: Optional[str] = None,
+    ) -> None:
         self.dst = dst
         if gateway is None and interface is None:
             raise Exception("gateway or interface should be set")

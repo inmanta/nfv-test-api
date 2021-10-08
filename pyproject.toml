@@ -10,7 +10,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6.1"
+python = ">=3.6.1,<4.0"
 Flask = "^1.1.1"
 PyYAML = "^5.3"
 flask-cors = "^3.0.8"
@@ -25,13 +25,10 @@ requests = "^2.23.0"
 pydantic = "^1.8.2"
 
 [tool.poetry.dev-dependencies]
-pytest = "*"
 mypy = "*"
-isort = "*"
-flake8 = "*"
 lxml = "*"
-black = "^19.10b0"
 pytest-flask = "^1.0.0"
+inmanta-dev-dependencies = {extras = ["module"], version = "^1.59.0"}
 
 [tool.black]
 line-length = 128

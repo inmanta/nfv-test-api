@@ -1,6 +1,20 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 import json
 import subprocess
-import time
 from typing import Dict, Optional
 
 import flask
@@ -101,7 +115,10 @@ namespaces:
         response = c.get("/test-cust-east1/eth0.100/state")
         assert response.status == "200 OK"
 
-        response = c.patch("/test-cust-east1/eth0.100", json={"destination_namespace": "test-cloud-west3"},)
+        response = c.patch(
+            "/test-cust-east1/eth0.100",
+            json={"destination_namespace": "test-cloud-west3"},
+        )
         assert response.status == "200 OK"
 
         response = c.get("/test-cust-east1/eth0.100/state")
@@ -177,7 +194,11 @@ namespaces:
             if interface is not None:
                 data["interface"] = interface
 
-            response = c.post(f"/{namespace}/routes", data=json.dumps(data), content_type="application/json",)
+            response = c.post(
+                f"/{namespace}/routes",
+                data=json.dumps(data),
+                content_type="application/json",
+            )
             assert response.status == "200 OK"
             assert len(response.json) == original_routes_length + 1
 
@@ -188,9 +209,18 @@ namespaces:
             return len(response.json)
 
         nb_routes = verify_route_post_and_delete(nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway)
-        nb_routes = verify_route_post_and_delete(nb_routes, routes_namespace, routes_subnet, interface=routes_interface,)
         nb_routes = verify_route_post_and_delete(
-            nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway, interface=routes_interface,
+            nb_routes,
+            routes_namespace,
+            routes_subnet,
+            interface=routes_interface,
+        )
+        nb_routes = verify_route_post_and_delete(
+            nb_routes,
+            routes_namespace,
+            routes_subnet,
+            gateway=routes_gateway,
+            interface=routes_interface,
         )
 
         response = c.delete("/test-cust-south1/eth0.100.500")

@@ -1,3 +1,18 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 import logging
 import os
 import re
@@ -44,8 +59,7 @@ def get_pid_file(location, interface_name):
 
 
 def get_local_dns_server(location, interface_name):
-    """ Retrieve the dns server provided by the DHCP server for the given interface name
-    """
+    """Retrieve the dns server provided by the DHCP server for the given interface name"""
     lease_file = get_lease_file(location, interface_name)
     if not os.path.exists(lease_file):
         return None
@@ -154,7 +168,7 @@ def create_sub_interface(namespace, interface):
 
     parts = interface.split(".")
     if len(parts) not in [2, 3]:
-        raise exceptions.ServerError(f"Only single and double tagged interfaces are supported")
+        raise exceptions.ServerError("Only single and double tagged interfaces are supported")
 
     if app.simulate:
         cfg = get_config()
@@ -195,7 +209,7 @@ def move_interface(namespace, interface):
 
     parts = interface.split(".")
     if len(parts) not in range(1, 4):
-        raise exceptions.ServerError(f"Only untagged, single and double tagged interfaces are supported")
+        raise exceptions.ServerError("Only untagged, single and double tagged interfaces are supported")
 
     if app.simulate:
         cfg = get_config()
@@ -211,7 +225,7 @@ def move_interface(namespace, interface):
 
     new_namespace_key: str = "destination_namespace"
     if new_namespace_key not in request.json:
-        raise exceptions.ServerError(f'Invalid request: request should contain "destination_namespace"')
+        raise exceptions.ServerError('Invalid request: request should contain "destination_namespace"')
 
     new_namespace = request.json[new_namespace_key]
 
@@ -233,7 +247,7 @@ def delete_sub_interface(namespace, interface):
 
     parts = interface.split(".")
     if len(parts) not in [2, 3]:
-        raise exceptions.ServerError(f"Only single and double tagged interfaces are supported")
+        raise exceptions.ServerError("Only single and double tagged interfaces are supported")
 
     if app.simulate:
         cfg = get_config()

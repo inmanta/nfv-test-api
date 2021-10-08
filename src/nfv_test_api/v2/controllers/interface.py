@@ -1,21 +1,43 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 from http import HTTPStatus
 from typing import Dict, Optional
 
-from flask import request
-from flask_restplus import Namespace, Resource
+from flask import request  # type: ignore
+from flask_restplus import Namespace, Resource  # type: ignore
 from pydantic import ValidationError
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest  # type: ignore
 
 from nfv_test_api.host import Host, NamespaceHost
-from nfv_test_api.v2 import data
 from nfv_test_api.v2.controllers.common import add_model_schema
-from nfv_test_api.v2.services import BondInterfaceService, InterfaceService
+from nfv_test_api.v2.data.common import InputOptionalSafeName, InputSafeName
+from nfv_test_api.v2.data.interface import (
+    Interface,
+    InterfaceCreate,
+    InterfaceUpdate,
+    LinkInfo,
+)
+from nfv_test_api.v2.services.bond_interface import BondInterfaceService
+from nfv_test_api.v2.services.interface import InterfaceService
 
 namespace = Namespace(name="interfaces", description="Basic interface management")
 
-interface_model = add_model_schema(namespace, data.Interface)
-interface_create_model = add_model_schema(namespace, data.InterfaceCreate)
-interface_update_model = add_model_schema(namespace, data.InterfaceUpdate)
+interface_model = add_model_schema(namespace, Interface)
+interface_create_model = add_model_schema(namespace, InterfaceCreate)
+interface_update_model = add_model_schema(namespace, InterfaceUpdate)
 
 
 @namespace.route("")
@@ -38,7 +60,7 @@ class AllInterfaces(Resource):
     def get(self, ns_name: Optional[str] = None):
         try:
             # Validating input
-            data.InputOptionalSafeName(name=ns_name)
+            InputOptionalSafeName(name=ns_name)
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -50,14 +72,14 @@ class AllInterfaces(Resource):
     def post(self, ns_name: Optional[str] = None):
         try:
             # Validating input
-            data.InputOptionalSafeName(name=ns_name)
-            create_form = data.InterfaceCreate(**request.json)
+            InputOptionalSafeName(name=ns_name)
+            create_form = InterfaceCreate(**request.json)
         except ValidationError as e:
             raise BadRequest(str(e))
 
         host = self.get_host(ns_name)
         interface_service = InterfaceService(host)
-        if create_form.type == data.LinkInfo.Kind.BOND:
+        if create_form.type == LinkInfo.Kind.BOND:
             interface_service = BondInterfaceService(host)
 
         return interface_service.create(create_form).json_dict(), HTTPStatus.CREATED
@@ -89,21 +111,21 @@ class OneInterface(Resource):
     def get(self, name: str, ns_name: Optional[str] = None):
         try:
             # Validating input
-            data.InputSafeName(name=name)
-            data.InputOptionalSafeName(name=ns_name)
+            InputSafeName(name=name)
+            InputOptionalSafeName(name=ns_name)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.get_service(ns_name).get(name).json_dict(exclude_none=True), HTTPStatus.OK
+        return self.get_service(ns_name).get_one(name).json_dict(exclude_none=True), HTTPStatus.OK
 
     @namespace.expect(interface_update_model)
     @namespace.response(HTTPStatus.OK, "The interface has been updated", interface_model)
     def patch(self, name: str, ns_name: Optional[str] = None):
         try:
             # Validating input
-            data.InputSafeName(name=name)
-            data.InputOptionalSafeName(name=ns_name)
-            update_form = data.InterfaceUpdate(**request.json)
+            InputSafeName(name=name)
+            InputOptionalSafeName(name=ns_name)
+            update_form = InterfaceUpdate(**request.json)
         except ValidationError as e:
             raise BadRequest(str(e))
         return self.get_service(ns_name).update(name, update_form).json_dict(), HTTPStatus.OK
@@ -112,8 +134,8 @@ class OneInterface(Resource):
     def delete(self, name: str, ns_name: Optional[str] = None):
         try:
             # Validating input
-            data.InputSafeName(name=name)
-            data.InputOptionalSafeName(name=ns_name)
+            InputSafeName(name=name)
+            InputOptionalSafeName(name=ns_name)
         except ValidationError as e:
             raise BadRequest(str(e))
 

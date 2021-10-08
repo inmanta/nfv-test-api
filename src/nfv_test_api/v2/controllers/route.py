@@ -1,18 +1,34 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 from http import HTTPStatus
 from typing import Dict, Optional
 
-from flask_restplus import Namespace, Resource
+from flask_restplus import Namespace, Resource  # type: ignore
 from pydantic import ValidationError
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest  # type: ignore
 
 from nfv_test_api.host import Host, NamespaceHost
-from nfv_test_api.v2 import data
 from nfv_test_api.v2.controllers.common import add_model_schema
-from nfv_test_api.v2.services import RouteService
+from nfv_test_api.v2.data.common import InputOptionalSafeName
+from nfv_test_api.v2.data.route import InputDestination, Route
+from nfv_test_api.v2.services.route import RouteService
 
 namespace = Namespace(name="routes", description="Basic route management")
 
-route_model = add_model_schema(namespace, data.Route)
+route_model = add_model_schema(namespace, Route)
 
 
 @namespace.route("")
@@ -35,7 +51,7 @@ class AllRoutes(Resource):
     def get(self, ns_name: Optional[str] = None):
         try:
             # Validating input
-            data.InputOptionalSafeName(name=ns_name)
+            InputOptionalSafeName(name=ns_name)
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -68,12 +84,12 @@ class OneRoute(Resource):
     def get(self, dst_addr: str, dst_prefix_len: Optional[int] = None, ns_name: Optional[str] = None):
         try:
             # Validating input
-            destination = data.InputDestination(dst_addr=dst_addr, dst_prefix_len=dst_prefix_len).destination_name
-            data.InputOptionalSafeName(name=ns_name)
+            destination = InputDestination(dst_addr=dst_addr, dst_prefix_len=dst_prefix_len).destination_name
+            InputOptionalSafeName(name=ns_name)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.get_service(ns_name).get(destination).json_dict(exclude_none=True), HTTPStatus.OK
+        return self.get_service(ns_name).get_one(destination).json_dict(exclude_none=True), HTTPStatus.OK
 
 
 @namespace.route("/<dst_addr>/<int:dst_prefix_len>")

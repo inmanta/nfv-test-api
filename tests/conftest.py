@@ -1,9 +1,31 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 import subprocess
 
 import pytest
 
 from nfv_test_api import config
-from nfv_test_api.util import create_namespace, get_mac, list_interfaces, list_net_ns, move_interface, run_in_ns
+from nfv_test_api.util import (
+    create_namespace,
+    get_mac,
+    list_interfaces,
+    list_net_ns,
+    move_interface,
+    run_in_ns,
+)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -12,8 +34,7 @@ def reset_config():
 
 
 def cleanup_network() -> None:
-    """ Cleanup networking by removing tap devices and network namespace
-    """
+    """Cleanup networking by removing tap devices and network namespace"""
     for namespace in list_net_ns():
         if namespace.startswith("test-"):
             subprocess.check_output(["ip", "netns", "delete", namespace])
@@ -24,16 +45,14 @@ def cleanup_network() -> None:
 
 
 def create_test_interface(name: str) -> str:
-    """ Create an interface with the given name and return its mac address
-    """
+    """Create an interface with the given name and return its mac address"""
     subprocess.check_output(["ip", "tuntap", "add", name, "mode", "tap"])
     return get_mac(name)
 
 
 @pytest.fixture
 def setup_networking():
-    """ Create multiple tap devices and a matching configuration file for running tests
-    """
+    """Create multiple tap devices and a matching configuration file for running tests"""
     cleanup_network()
 
     # create network devices

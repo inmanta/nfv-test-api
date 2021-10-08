@@ -1,5 +1,20 @@
-from flask import Blueprint
-from flask_restplus import Api
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
+from flask import Blueprint  # type: ignore
+from flask_restplus import Api  # type: ignore
 
 from .controllers.actions import namespace as actions_ns
 from .controllers.interface import namespace as interface_ns
@@ -9,7 +24,11 @@ from .controllers.route import namespace as route_ns
 blueprint = Blueprint("api v2", __name__, url_prefix="/api/v2")
 
 api_extension = Api(
-    blueprint, title="NFV Test API", version="1.0", description="Test api for client side network operations", doc="/docs",
+    blueprint,
+    title="NFV Test API",
+    version="1.0",
+    description="Test api for client side network operations",
+    doc="/docs",
 )
 
 api_extension.add_namespace(namespace_ns)
