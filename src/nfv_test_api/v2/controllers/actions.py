@@ -63,5 +63,5 @@ class OnePing(Resource):
 
 
 @namespace.route("/ns/<ns_name>/ping")
-class OnePingInNamespace(Ping):
+class OnePingInNamespace(OnePing):
     pass
