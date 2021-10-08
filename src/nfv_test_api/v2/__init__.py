@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from typing import Optional, TypeVar
+from typing import Dict, List, Optional, TypeVar
 
 import requests  # type: ignore
 from flask import Blueprint  # type: ignore
@@ -45,7 +45,7 @@ from flask_restplus.swagger import Swagger  # type: ignore # noqa: E402
 
 as_dict = Swagger.as_dict
 
-T = TypeVar("T")
+T = TypeVar("T", List, Dict, object)
 
 
 def replace_ref(schema: T, schema_prefix: str) -> T:
@@ -57,10 +57,10 @@ def replace_ref(schema: T, schema_prefix: str) -> T:
     :param schema: A schema to recursively search references in
     :param schema_prefix: The new prefix to set
     """
-    if isinstance(schema, list):
+    if isinstance(schema, List):
         return [replace_ref(item, schema_prefix) for item in schema]
 
-    if isinstance(schema, dict):
+    if isinstance(schema, Dict):
         if "$ref" in schema:
             schema["$ref"] = schema_prefix + schema["$ref"].split("/")[-1]
             return schema
