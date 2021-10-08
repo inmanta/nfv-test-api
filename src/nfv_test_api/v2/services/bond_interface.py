@@ -53,7 +53,7 @@ class BondInterfaceService(InterfaceService):
             raise RuntimeError(f"Failed to change bonding mode of interface: {stderr}")
 
         for slave_interface in slave_interfaces:
-            slave_interface = super().set_master(slave_interface, "nomaster")
+            slave_interface = super().set_master(slave_interface, interface.if_name)
             slave_interface = super().set_state(slave_interface, InterfaceState.UP)
 
         return super().set_state(interface, InterfaceState.UP)
