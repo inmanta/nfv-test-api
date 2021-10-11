@@ -3,6 +3,10 @@ FROM python:3.6
 ARG CHECKOUT=master
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
+# Install dependencies
+RUN apt-get update && \
+    apt-get install iproute2 -y
+
 # Copying the source of this project
 COPY poetry.lock /home/user/nfv-test-api/poetry.lock
 COPY pyproject.toml //home/user/nfv-test-api/pyproject.toml
@@ -13,9 +17,6 @@ COPY config.yaml /home/user/nfv-test-api/config.yaml
 RUN groupadd user && \
 	useradd -g user -G user -ms /bin/bash user && \
     chown -R user:user /home/user
-
-RUN apt-get update && \
-    apt-get install iproute2 -y
     
 USER user
 WORKDIR /home/user

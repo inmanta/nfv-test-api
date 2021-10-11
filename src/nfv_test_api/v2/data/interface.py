@@ -88,7 +88,7 @@ class InterfaceCreate(BaseModel):
 
 class InterfaceUpdate(BaseModel):
     name: Optional[SafeName]  # type: ignore
-    state: Optional[InterfaceState]
+    state: Optional[Union[Literal[InterfaceState.UP], Literal[InterfaceState.DOWN]]]
     mtu: Optional[int]
     addresses: Optional[List[Union[IPv4Interface, IPv6Interface]]]
     master: Optional[Union[SafeName, Literal["nomaster"]]]  # type: ignore
