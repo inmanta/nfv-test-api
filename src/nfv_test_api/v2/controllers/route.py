@@ -32,7 +32,17 @@ route_model = add_model_schema(namespace, Route)
 
 
 @namespace.route("")
+@namespace.response(
+    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    description="An error occurred when trying to process the request, this can also be because of bad input from the user",
+)
 class AllRoutes(Resource):
+    """
+    The scope of this controller is all the routes that are not in a namespace.
+
+    With it you can get them all.
+    """
+
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = RouteService(Host())
@@ -49,6 +59,9 @@ class AllRoutes(Resource):
 
     @namespace.response(code=HTTPStatus.OK, description="Get all routes on the host", model=route_model, as_list=True)
     def get(self, ns_name: Optional[str] = None):
+        """
+        Get all routes on the host
+        """
         try:
             # Validating input
             InputOptionalSafeName(name=ns_name)
@@ -59,12 +72,30 @@ class AllRoutes(Resource):
 
 
 @namespace.route("/ns/<ns_name>")
+@namespace.param("ns_name", description="The name of the namespace in which routes belong")
 class AllRoutesInNamespace(AllRoutes):
-    pass
+    """
+    The scope of this controller is all the routes that are in a namespace.
+
+    With it you can get them all.
+    """
 
 
 @namespace.route("/<dst_addr>")
+@namespace.param(
+    "dst_addr", description='The destination ("default" or any address with a prefix length) of the route we mean to select'
+)
+@namespace.response(
+    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    description="An error occurred when trying to process the request, this can also be because of bad input from the user",
+)
 class OneRoute(Resource):
+    """
+    The scope of this controller is any route that is not in a namespace.
+
+    With it you can get it.
+    """
+
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = RouteService(Host())
@@ -82,6 +113,11 @@ class OneRoute(Resource):
     @namespace.response(HTTPStatus.OK, "Found an route with a matching destination", route_model)
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any route with given destination")
     def get(self, dst_addr: str, dst_prefix_len: Optional[int] = None, ns_name: Optional[str] = None):
+        """
+        Get a route on the host
+
+        The route is identified by its destination.
+        """
         try:
             # Validating input
             destination = InputDestination(dst_addr=dst_addr, dst_prefix_len=dst_prefix_len).destination_name
@@ -93,15 +129,37 @@ class OneRoute(Resource):
 
 
 @namespace.route("/<dst_addr>/<int:dst_prefix_len>")
-class OnRouteWithPrefix(OneRoute):
-    pass
+@namespace.param("dst_addr", description="The address of the destination of the route")
+@namespace.param("dst_prefix_len", description="The prefix length of the destination of the route")
+class OneRouteWithPrefix(OneRoute):
+    """
+    The scope of this controller is any route that is not in a namespace.
+
+    With it you can get it.
+
+    The class is identical to its superclass OneRoute, but can match destination addresses
+    (and not just "default")
+    """
 
 
 @namespace.route("/ns/<ns_name>/<dst_addr>")
+@namespace.param("ns_name", description="The name of the namespace in which the route belong")
 class OneRouteInNamespace(OneRoute):
-    pass
+    """
+    The scope of this controller is any route that is in a namespace.
+
+    With it you can get it.
+    """
 
 
 @namespace.route("/ns/<ns_name>/<dst_addr>/<int:dst_prefix_len>")
-class OneRouteWithPrefixInNamespace(OneRoute):
-    pass
+@namespace.param("ns_name", description="The name of the namespace in which the route belong")
+class OneRouteWithPrefixInNamespace(OneRouteWithPrefix, OneRouteInNamespace):
+    """
+    The scope of this controller is any route that is in a namespace.
+
+    With it you can get it.
+
+    The class is identical to its superclass OneRouteInNamespace, but can match destination
+    addresses (and not just "default")
+    """

@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from typing import Dict, List, Optional, TypeVar
+from typing import Dict, List, Optional, Set, TypeVar
 
 import requests  # type: ignore
 from flask import Blueprint  # type: ignore
@@ -45,7 +45,14 @@ from flask_restplus.swagger import Swagger  # type: ignore # noqa: E402
 
 as_dict = Swagger.as_dict
 
-T = TypeVar("T", List, Dict, object)
+T = TypeVar("T", List, Dict, Set, str, int, float, bool, bytes, object)
+"""
+This type var will be used in replace_ref function.  It indicates that for any input
+type given the :param schema:, the same type will be returned.  This is not true for
+dict and list, as any subclass of dict and list will be converted to dict and list.
+To workaround the type checking, and as we never expect anything else than List, Dict
+or primitive types, we set them directly in the type var possible types.
+"""
 
 
 def replace_ref(schema: T, schema_prefix: str) -> T:

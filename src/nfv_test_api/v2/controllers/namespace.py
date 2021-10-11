@@ -34,7 +34,17 @@ namespace_create_model = add_model_schema(namespace, NamespaceCreate)
 
 
 @namespace.route("")
+@namespace.response(
+    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    description="An error occurred when trying to process the request, this can also be because of bad input from the user",
+)
 class AllNamespaces(Resource):
+    """
+    The scope of this controller is all the namespaces on the host.
+
+    With it you can either get them all, or create a new one in that scope.
+    """
+
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.host = Host()
@@ -42,12 +52,21 @@ class AllNamespaces(Resource):
 
     @namespace.response(code=HTTPStatus.OK, description="Get all namespaces on the host", model=namespace_model, as_list=True)
     def get(self):
+        """
+        Get all namespaces on the host
+        """
         return [namespace.json_dict() for namespace in self.service.get_all()], HTTPStatus.OK
 
     @namespace.expect(namespace_create_model)
     @namespace.response(HTTPStatus.CREATED, "A new namespace has been created", namespace_model)
     @namespace.response(HTTPStatus.CONFLICT, "Another namespace with the same name already exists")
     def post(self):
+        """
+        Create a namespace on the host
+
+        The namespace is identified by its name, if another namespace with the same name already exists, a
+        conflict error is raised.
+        """
         try:
             create_form = NamespaceCreate(**request.json)
         except ValidationError as e:
@@ -56,7 +75,18 @@ class AllNamespaces(Resource):
 
 
 @namespace.route("/<name>")
+@namespace.param("name", description="The name of the namespace we mean to select")
+@namespace.response(
+    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    description="An error occurred when trying to process the request, this can also be because of bad input from the user",
+)
 class OneNamespace(Resource):
+    """
+    The scope of this controller is any namespace on the host.
+
+    With it you can either get it or delete it.
+    """
+
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.host = Host()
@@ -65,6 +95,11 @@ class OneNamespace(Resource):
     @namespace.response(HTTPStatus.OK, "Found a namespace with a matching name", namespace_model)
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any namespace with given name")
     def get(self, name: str):
+        """
+        Get a namespace on the host
+
+        The namespace is identified by its name.
+        """
         try:
             InputSafeName(name=name)
         except ValidationError as e:
@@ -74,6 +109,12 @@ class OneNamespace(Resource):
 
     @namespace.response(HTTPStatus.OK, "The namespace doesn't exist anymore")
     def delete(self, name: str):
+        """
+        Delete a namespace from the host
+
+        The namespace is identified by its name. This method is idempotent, if the namespace
+        doesn't exist it won't try to delete it again, and consider the deletion successful.
+        """
         try:
             InputSafeName(name=name)
         except ValidationError as e:

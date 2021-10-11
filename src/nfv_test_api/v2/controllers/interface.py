@@ -41,7 +41,17 @@ interface_update_model = add_model_schema(namespace, InterfaceUpdate)
 
 
 @namespace.route("")
+@namespace.response(
+    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    description="An error occurred when trying to process the request, this can also be because of bad input from the user",
+)
 class AllInterfaces(Resource):
+    """
+    The scope of this controller is all the interfaces that are not in a namespace.
+
+    With it you can either get them all, or create a new one in that scope.
+    """
+
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self._default_host = Host()
@@ -58,6 +68,9 @@ class AllInterfaces(Resource):
 
     @namespace.response(code=HTTPStatus.OK, description="Get all interfaces on the host", model=interface_model, as_list=True)
     def get(self, ns_name: Optional[str] = None):
+        """
+        Get all interfaces on the host
+        """
         try:
             # Validating input
             InputOptionalSafeName(name=ns_name)
@@ -70,6 +83,12 @@ class AllInterfaces(Resource):
     @namespace.response(HTTPStatus.CREATED, "A new interface has been created", interface_model)
     @namespace.response(HTTPStatus.CONFLICT, "Another interface with the same name already exists")
     def post(self, ns_name: Optional[str] = None):
+        """
+        Create an interface on the host
+
+        The interface is identified by its name, if another interface with the same name already exists, a
+        conflict error is raised.
+        """
         try:
             # Validating input
             InputOptionalSafeName(name=ns_name)
@@ -86,12 +105,28 @@ class AllInterfaces(Resource):
 
 
 @namespace.route("/ns/<ns_name>")
+@namespace.param("ns_name", description="The name of the namespace in which interfaces belong")
 class AllInterfacesInNamespace(AllInterfaces):
-    pass
+    """
+    The scope of this controller is all the interfaces that are in a namespace.
+
+    With it you can either get them all, or create a new one in that scope.
+    """
 
 
 @namespace.route("/<name>")
+@namespace.param("name", description="The name of the interface we mean to select")
+@namespace.response(
+    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    description="An error occurred when trying to process the request, this can also be because of bad input from the user",
+)
 class OneInterface(Resource):
+    """
+    The scope of this controller is any interface that is not in a namespace.
+
+    With it you can either get it, update it or delete it.
+    """
+
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = InterfaceService(Host())
@@ -109,6 +144,11 @@ class OneInterface(Resource):
     @namespace.response(HTTPStatus.OK, "Found an interface with a matching name", interface_model)
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name")
     def get(self, name: str, ns_name: Optional[str] = None):
+        """
+        Get an interface on the host
+
+        The interface is identified by its name.
+        """
         try:
             # Validating input
             InputSafeName(name=name)
@@ -120,7 +160,13 @@ class OneInterface(Resource):
 
     @namespace.expect(interface_update_model)
     @namespace.response(HTTPStatus.OK, "The interface has been updated", interface_model)
+    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name")
     def patch(self, name: str, ns_name: Optional[str] = None):
+        """
+        Update an interface on the host
+
+        The interface is identified by its name.
+        """
         try:
             # Validating input
             InputSafeName(name=name)
@@ -132,6 +178,12 @@ class OneInterface(Resource):
 
     @namespace.response(HTTPStatus.OK, "The interface doesn't exist anymore")
     def delete(self, name: str, ns_name: Optional[str] = None):
+        """
+        Delete an interface from the host
+
+        The interface is identified by its name. This method is idempotent, if the interface
+        doesn't exist it won't try to delete it again, and consider the deletion successful.
+        """
         try:
             # Validating input
             InputSafeName(name=name)
@@ -143,5 +195,10 @@ class OneInterface(Resource):
 
 
 @namespace.route("/ns/<ns_name>/<name>")
+@namespace.param("ns_name", description="The name of the namespace in which interfaces belong")
 class OneInterfaceInNamespace(OneInterface):
-    pass
+    """
+    The scope of this controller is any interface that is in a namespace.
+
+    With it you can either get it, update it or delete it.
+    """

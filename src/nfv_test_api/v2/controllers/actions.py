@@ -35,6 +35,10 @@ ping_request_model = add_model_schema(namespace, PingRequest)
 
 @namespace.route("/ping")
 class OnePing(Resource):
+    """
+    The scope of this controller is the ping action on the host, not in a namespace.
+    """
+
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = ActionsService(Host())
@@ -52,6 +56,13 @@ class OnePing(Resource):
     @namespace.expect(ping_request_model)
     @namespace.response(HTTPStatus.OK, "The ping request has been executed", ping_model)
     def post(self, ns_name: Optional[str] = None):
+        """
+        Send ping requests to a destination
+
+        The server will synchronously send ping requests to the required address, and them reply
+        with the result.  It is the user responsibility not to set ping interval and count that would
+        make the server request timeout.
+        """
         try:
             # Validating input
             InputOptionalSafeName(name=ns_name)
@@ -63,5 +74,8 @@ class OnePing(Resource):
 
 
 @namespace.route("/ns/<ns_name>/ping")
+@namespace.param("ns_name", description="The name of the namespace in which to execute the ping")
 class OnePingInNamespace(OnePing):
-    pass
+    """
+    The scope of this controller is the ping action in a namespace on the host.
+    """
