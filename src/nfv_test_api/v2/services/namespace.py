@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import pydantic
 from pydantic import ValidationError
-from werkzeug.exceptions import NotFound  # type: ignore
+from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
 from nfv_test_api.host import Host
 from nfv_test_api.v2.data.common import CommandStatus
@@ -54,12 +54,9 @@ class NamespaceService(BaseService[Namespace, NamespaceCreate, NamespaceUpdate])
         return namespaces
 
     def get_one_raw(self, identifier: str) -> Optional[Dict[str, Any]]:
-        stdout, stderr = self.host.exec(["ip", "-j", "-details", "netns", "show", identifier])
-        if stderr:
-            raise RuntimeError(f"Failed to get an addr on host: {stderr}")
-
-        raw_namespaces = json.loads(stdout or "[]")
-        raw_namespaces_list = pydantic.parse_obj_as(List[Dict[str, Any]], raw_namespaces)
+        raw_namespaces_list = [
+            raw_namespace for raw_namespace in self.get_all_raw() if raw_namespace.get("name", "") == identifier
+        ]
         if not raw_namespaces_list:
             return None
 
@@ -87,7 +84,7 @@ class NamespaceService(BaseService[Namespace, NamespaceCreate, NamespaceUpdate])
     def create(self, o: NamespaceCreate) -> Namespace:
         existing_namespace = self.get_one_or_default(o.name)
         if existing_namespace:
-            return existing_namespace
+            raise Conflict("A namespace with this name already exists")
 
         _, stderr = self.host.exec(["ip", "netns", "add", o.name])
         if stderr:

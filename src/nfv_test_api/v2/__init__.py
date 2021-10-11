@@ -18,9 +18,9 @@ from typing import Dict, List, Optional, Set, TypeVar
 
 import requests  # type: ignore
 from flask import Blueprint  # type: ignore
-from flask_restplus import Api
+from flask_restplus import Api  # type: ignore
 from requests.models import HTTPError  # type: ignore
-from werkzeug.exceptions import ServiceUnavailable
+from werkzeug.exceptions import ServiceUnavailable  # type: ignore
 
 from nfv_test_api.v2.controllers.actions import namespace as actions_ns
 from nfv_test_api.v2.controllers.interface import namespace as interface_ns

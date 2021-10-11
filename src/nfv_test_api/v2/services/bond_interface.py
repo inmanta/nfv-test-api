@@ -43,17 +43,17 @@ class BondInterfaceService(InterfaceService):
         slave_interfaces = [self.get_one(identifier) for identifier in o.slave_interfaces]
 
         interface = super().create(o)
-        interface = super().set_state(interface, InterfaceState.DOWN)
+        interface = self.set_state(interface, InterfaceState.DOWN)
         for slave_interface in slave_interfaces:
-            slave_interface = super().set_state(slave_interface, InterfaceState.DOWN)
-            slave_interface = super().set_master(slave_interface, "nomaster")
+            slave_interface = self.set_state(slave_interface, InterfaceState.DOWN)
+            slave_interface = self.set_master(slave_interface, "nomaster")
 
         _, stderr = self.host.exec(["sh", "-c", f"echo 4 > /sys/class/net/{interface.if_name}/bonding/mode"])
         if stderr:
             raise RuntimeError(f"Failed to change bonding mode of interface: {stderr}")
 
         for slave_interface in slave_interfaces:
-            slave_interface = super().set_master(slave_interface, interface.if_name)
-            slave_interface = super().set_state(slave_interface, InterfaceState.UP)
+            slave_interface = self.set_master(slave_interface, interface.if_name)
+            slave_interface = self.set_state(slave_interface, InterfaceState.UP)
 
-        return super().set_state(interface, InterfaceState.UP)
+        return self.set_state(interface, InterfaceState.UP)

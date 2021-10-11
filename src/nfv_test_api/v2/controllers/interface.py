@@ -32,6 +32,8 @@ from nfv_test_api.v2.data.interface import (
 )
 from nfv_test_api.v2.services.bond_interface import BondInterfaceService
 from nfv_test_api.v2.services.interface import InterfaceService
+from nfv_test_api.v2.services.namespace import NamespaceService
+from nfv_test_api.v2.services.vlan_interface import VlanInterfaceService
 
 namespace = Namespace(name="interfaces", description="Basic interface management")
 
@@ -60,6 +62,9 @@ class AllInterfaces(Resource):
     def get_host(self, ns_name: Optional[str]) -> Host:
         if not ns_name:
             return self._default_host
+
+        # Ensuring the namespace exists
+        NamespaceService(self._default_host).get_one(ns_name)
 
         if ns_name not in self._hosts:
             self._hosts[ns_name] = NamespaceHost(ns_name)
@@ -100,6 +105,8 @@ class AllInterfaces(Resource):
         interface_service = InterfaceService(host)
         if create_form.type == LinkInfo.Kind.BOND:
             interface_service = BondInterfaceService(host)
+        if create_form.type == LinkInfo.Kind.VLAN:
+            interface_service = VlanInterfaceService(host)
 
         return interface_service.create(create_form).json_dict(), HTTPStatus.CREATED
 

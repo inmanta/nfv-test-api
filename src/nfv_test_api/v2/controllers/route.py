@@ -24,6 +24,7 @@ from nfv_test_api.host import Host, NamespaceHost
 from nfv_test_api.v2.controllers.common import add_model_schema
 from nfv_test_api.v2.data.common import InputOptionalSafeName
 from nfv_test_api.v2.data.route import InputDestination, Route
+from nfv_test_api.v2.services.namespace import NamespaceService
 from nfv_test_api.v2.services.route import RouteService
 
 namespace = Namespace(name="routes", description="Basic route management")
@@ -51,6 +52,9 @@ class AllRoutes(Resource):
     def get_service(self, ns_name: Optional[str]) -> RouteService:
         if not ns_name:
             return self._default_service
+
+        # Ensuring the namespace exists
+        NamespaceService(Host()).get_one(ns_name)
 
         if ns_name not in self._route_services:
             self._route_services[ns_name] = RouteService(NamespaceHost(ns_name))

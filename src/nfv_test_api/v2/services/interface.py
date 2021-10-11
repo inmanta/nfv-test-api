@@ -110,13 +110,13 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
             command += ["link", o.parent_dev]
 
         if o.address is not None:
-            command += ["address", o.address]
+            command += ["address", str(o.address)]
 
         if o.broadcast is not None:
-            command += ["broadcast", o.broadcast]
+            command += ["broadcast", str(o.broadcast)]
 
         if o.mtu is not None:
-            command += ["mtu", o.mtu]
+            command += ["mtu", str(o.mtu)]
 
         command += ["type", o.type]
         _, stderr = self.host.exec(command)
@@ -244,6 +244,11 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         return self.get_one(interface.if_name)
 
     def rename(self, interface: Interface, new_name: str) -> Interface:
+        previous_state = interface.oper_state
+        if previous_state == InterfaceState.UP:
+            # The interface needs to be down for renaming it
+            interface = self.set_state(interface, InterfaceState.DOWN)
+
         command = [
             "ip",
             "link",
@@ -257,7 +262,11 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         if stderr:
             raise RuntimeError(f"Failed to rename interface with command {command}: {stderr}")
 
-        return self.get_one(new_name)
+        interface = self.get_one(new_name)
+        if previous_state == InterfaceState.UP:
+            interface = self.set_state(interface, InterfaceState.UP)
+
+        return interface
 
     def move(self, interface: Interface, new_namespace: Union[str, int]) -> Interface:
         namespace_name: Optional[str] = None
@@ -267,10 +276,16 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
                     namespace_name = namespace.name
                     break
         else:
+            NamespaceService(Host()).get_one(new_namespace)
             namespace_name = new_namespace
 
         if not namespace_name:
             raise NotFound(f"Couldn't find any namespace with id {new_namespace}")
+
+        previous_state = interface.oper_state
+        if previous_state == InterfaceState.UP:
+            # The interface needs to be down for moving it
+            interface = self.set_state(interface, InterfaceState.DOWN)
 
         command = [
             "ip",
@@ -285,7 +300,11 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         if stderr:
             raise RuntimeError(f"Failed to move interface to new namespace with command {command}: {stderr}")
 
-        return InterfaceService(NamespaceHost(namespace_name)).get_one(interface.if_name)
+        interface = InterfaceService(NamespaceHost(namespace_name)).get_one(interface.if_name)
+        if previous_state == InterfaceState.UP:
+            interface = self.set_state(interface, InterfaceState.UP)
+
+        return interface
 
     def delete(self, identifier: str) -> None:
         existing_interface = self.get_one_or_default(identifier)
