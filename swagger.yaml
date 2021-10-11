@@ -1,0 +1,1150 @@
+openapi: 3.0.1
+info:
+  title: NFV Test API
+  description: Test api for client side network operations
+  version: '1.0'
+servers:
+  - url: /api/v2
+tags:
+  - name: namespaces
+    description: Basic namespace management
+  - name: interfaces
+    description: Basic interface management
+  - name: routes
+    description: Basic route management
+  - name: actions
+    description: Execute some actions on the host
+paths:
+  /actions/ns/{ns_name}/ping:
+    post:
+      tags:
+        - actions
+      summary: Send ping requests to a destination
+      description: |-
+        The server will synchronously send ping requests to the required address, and them reply
+        with the result.  It is the user responsibility not to set ping interval and count that would
+        make the server request timeout.
+      operationId: post_one_ping_in_namespace
+      parameters:
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which to execute the ping
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PingRequest'
+        required: true
+      responses:
+        '200':
+          description: The ping request has been executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ping'
+      x-codegen-request-body-name: payload
+  /actions/ping:
+    post:
+      tags:
+        - actions
+      summary: Send ping requests to a destination
+      description: |-
+        The server will synchronously send ping requests to the required address, and them reply
+        with the result.  It is the user responsibility not to set ping interval and count that would
+        make the server request timeout.
+      operationId: post_one_ping
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PingRequest'
+        required: true
+      responses:
+        '200':
+          description: The ping request has been executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ping'
+      x-codegen-request-body-name: payload
+  /interfaces:
+    get:
+      tags:
+        - interfaces
+      summary: Get all interfaces on the host
+      description: Get all the interfaces on the host
+      operationId: get_all_interfaces
+      responses:
+        '200':
+          description: Get all interfaces on the host
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+    post:
+      tags:
+        - interfaces
+      summary: Create an interface on the host
+      description: |-
+        Create a new interface on the host
+        The interface is identified by its name, if another interface with the same name already exists, a
+        conflict error is raised.
+      operationId: post_all_interfaces
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceCreate'
+        required: true
+      responses:
+        '201':
+          description: A new interface has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        '409':
+          description: Another interface with the same name already exists
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
+  /interfaces/ns/{ns_name}:
+    get:
+      tags:
+        - interfaces
+      summary: Get all interfaces on the host
+      description: Get all the interfaces on the host
+      operationId: get_all_interfaces_in_namespace
+      parameters:
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which interfaces belong
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Get all interfaces on the host
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+    post:
+      tags:
+        - interfaces
+      summary: Create an interface on the host
+      description: |-
+        Create a new interface on the host
+        The interface is identified by its name, if another interface with the same name already exists, a
+        conflict error is raised.
+      operationId: post_all_interfaces_in_namespace
+      parameters:
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which interfaces belong
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceCreate'
+        required: true
+      responses:
+        '201':
+          description: A new interface has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        '409':
+          description: Another interface with the same name already exists
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
+  /interfaces/ns/{ns_name}/{name}:
+    get:
+      tags:
+        - interfaces
+      summary: Get an interface on the host
+      description: |-
+        Get an interface with this name from the host
+        The interface is identified by its name.
+      operationId: get_one_interface_in_namespace
+      parameters:
+        - name: name
+          in: path
+          description: The name of the interface we mean to select
+          required: true
+          schema:
+            type: string
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which interfaces belong
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found an interface with a matching name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        '404':
+          description: Couldn't find any interface with given name
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+    delete:
+      tags:
+        - interfaces
+      summary: Delete an interface from the host
+      description: |-
+        The interface is identified by its name. This method is idempotent, if the interface
+        doesn't exist it won't try to delete it again, and consider the deletion successful.
+      operationId: delete_one_interface_in_namespace
+      parameters:
+        - name: name
+          in: path
+          description: The name of the interface we mean to select
+          required: true
+          schema:
+            type: string
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which interfaces belong
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The interface doesn't exist anymore
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+    patch:
+      tags:
+        - interfaces
+      summary: Update an interface on the host
+      description: The interface is identified by its name.
+      operationId: patch_one_interface_in_namespace
+      parameters:
+        - name: name
+          in: path
+          description: The name of the interface we mean to select
+          required: true
+          schema:
+            type: string
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which interfaces belong
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceUpdate'
+        required: true
+      responses:
+        '200':
+          description: The interface has been updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        '404':
+          description: Couldn't find any interface with given name
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
+  /interfaces/{name}:
+    get:
+      tags:
+        - interfaces
+      summary: Get an interface on the host
+      description: |-
+        Get an interface with this name from the host
+        The interface is identified by its name.
+      operationId: get_one_interface
+      parameters:
+        - name: name
+          in: path
+          description: The name of the interface we mean to select
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found an interface with a matching name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        '404':
+          description: Couldn't find any interface with given name
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+    delete:
+      tags:
+        - interfaces
+      summary: Delete an interface from the host
+      description: |-
+        The interface is identified by its name. This method is idempotent, if the interface
+        doesn't exist it won't try to delete it again, and consider the deletion successful.
+      operationId: delete_one_interface
+      parameters:
+        - name: name
+          in: path
+          description: The name of the interface we mean to select
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The interface doesn't exist anymore
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+    patch:
+      tags:
+        - interfaces
+      summary: Update an interface on the host
+      description: The interface is identified by its name.
+      operationId: patch_one_interface
+      parameters:
+        - name: name
+          in: path
+          description: The name of the interface we mean to select
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceUpdate'
+        required: true
+      responses:
+        '200':
+          description: The interface has been updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        '404':
+          description: Couldn't find any interface with given name
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
+  /namespaces:
+    get:
+      tags:
+        - namespaces
+      summary: Get all namespaces on the host
+      operationId: get_all_namespaces
+      responses:
+        '200':
+          description: Get all namespaces on the host
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Namespace'
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+    post:
+      tags:
+        - namespaces
+      summary: Create a namespace on the host
+      description: |-
+        The namespace is identified by its name, if another namespace with the same name already exists, a
+        conflict error is raised.
+      operationId: post_all_namespaces
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NamespaceCreate'
+        required: true
+      responses:
+        '201':
+          description: A new namespace has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Namespace'
+        '409':
+          description: Another namespace with the same name already exists
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
+  /namespaces/{name}:
+    get:
+      tags:
+        - namespaces
+      summary: Get a namespace on the host
+      description: The namespace is identified by its name.
+      operationId: get_one_namespace
+      parameters:
+        - name: name
+          in: path
+          description: The name of the namespace we mean to select
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found a namespace with a matching name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Namespace'
+        '404':
+          description: Couldn't find any namespace with given name
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+    delete:
+      tags:
+        - namespaces
+      summary: Delete a namespace from the host
+      description: |-
+        The namespace is identified by its name. This method is idempotent, if the namespace
+        doesn't exist it won't try to delete it again, and consider the deletion successful.
+      operationId: delete_one_namespace
+      parameters:
+        - name: name
+          in: path
+          description: The name of the namespace we mean to select
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The namespace doesn't exist anymore
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+  /routes:
+    get:
+      tags:
+        - routes
+      summary: Get all routes on the host
+      operationId: get_all_routes
+      responses:
+        '200':
+          description: Get all routes on the host
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+  /routes/ns/{ns_name}:
+    get:
+      tags:
+        - routes
+      summary: Get all routes on the host
+      operationId: get_all_routes_in_namespace
+      parameters:
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which routes belong
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Get all routes on the host
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+  /routes/ns/{ns_name}/{dst_addr}:
+    get:
+      tags:
+        - routes
+      summary: Get a route on the host
+      description: The route is identified by its destination.
+      operationId: get_one_route_in_namespace
+      parameters:
+        - name: dst_addr
+          in: path
+          description: The destination ("default" or any address with a prefix length) of the route we mean to select
+          required: true
+          schema:
+            type: string
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which the route belong
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found an route with a matching destination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '404':
+          description: Couldn't find any route with given destination
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+  /routes/ns/{ns_name}/{dst_addr}/{dst_prefix_len}:
+    get:
+      tags:
+        - routes
+      summary: Get a route on the host
+      description: The route is identified by its destination.
+      operationId: get_one_route_with_prefix_in_namespace
+      parameters:
+        - name: dst_addr
+          in: path
+          description: The address of the destination of the route
+          required: true
+          schema:
+            type: string
+        - name: dst_prefix_len
+          in: path
+          description: The prefix length of the destination of the route
+          required: true
+          schema:
+            type: integer
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which the route belong
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found an route with a matching destination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '404':
+          description: Couldn't find any route with given destination
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+  /routes/{dst_addr}:
+    get:
+      tags:
+        - routes
+      summary: Get a route on the host
+      description: The route is identified by its destination.
+      operationId: get_one_route
+      parameters:
+        - name: dst_addr
+          in: path
+          description: The destination ("default" or any address with a prefix length) of the route we mean to select
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found an route with a matching destination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '404':
+          description: Couldn't find any route with given destination
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+  /routes/{dst_addr}/{dst_prefix_len}:
+    get:
+      tags:
+        - routes
+      summary: Get a route on the host
+      description: The route is identified by its destination.
+      operationId: get_one_route_with_prefix
+      parameters:
+        - name: dst_addr
+          in: path
+          description: The address of the destination of the route
+          required: true
+          schema:
+            type: string
+        - name: dst_prefix_len
+          in: path
+          description: The prefix length of the destination of the route
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Found an route with a matching destination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '404':
+          description: Couldn't find any route with given destination
+          content: {}
+        '500':
+          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          content: {}
+components:
+  schemas:
+    NamespaceCreate:
+      title: NamespaceCreate
+      type: object
+      properties:
+        name:
+          title: Name
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        ns_id:
+          title: Ns Id
+          type: integer
+      required:
+        - name
+    Namespace:
+      title: Namespace
+      type: object
+      properties:
+        name:
+          title: Name
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        ns_id:
+          title: Nsid
+          type: integer
+      required:
+        - ns_id
+    InterfaceCreate:
+      title: InterfaceCreate
+      type: object
+      properties:
+        name:
+          title: Name
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        parent_dev:
+          title: Parent Dev
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        mtu:
+          title: Mtu
+          type: integer
+        address:
+          title: Address
+          anyOf:
+            - type: string
+              format: ipv4interface
+            - type: string
+              format: ipv6interface
+        broadcast:
+          title: Broadcast
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        type:
+          default: veth
+          allOf:
+            - $ref: '#/components/schemas/Kind'
+        slave_interfaces:
+          title: Slave Interfaces
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+      required:
+        - name
+    Interface:
+      title: Interface
+      type: object
+      properties:
+        if_index:
+          title: Ifindex
+          type: integer
+        link_index:
+          title: Linkindex
+          type: integer
+        if_name:
+          title: Ifname
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        flags:
+          title: Flags
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+        mtu:
+          title: Mtu
+          type: integer
+        max_mtu:
+          title: Maxmtu
+          type: integer
+        min_mtu:
+          title: Minmtu
+          type: integer
+        master:
+          title: Master
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        oper_state:
+          $ref: '#/components/schemas/InterfaceState'
+        group:
+          title: Group
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        link_type:
+          title: Linktype
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        address:
+          title: Address
+          pattern: ^([0-9A-Fa-f]{2}[:]){5}[0-9A-Fa-f]{2}$
+          type: string
+        broadcast:
+          title: Broadcast
+          pattern: ^([0-9A-Fa-f]{2}[:]){5}[0-9A-Fa-f]{2}$
+          type: string
+        link_netns_id:
+          title: Linknetnsid
+          type: integer
+        link_info:
+          $ref: '#/components/schemas/LinkInfo'
+        addr_info:
+          title: Addrinfo
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/Addr4Info'
+              - $ref: '#/components/schemas/Addr6Info'
+        alt_names:
+          title: Altnames
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+      required:
+        - if_index
+        - if_name
+        - flags
+        - mtu
+        - oper_state
+        - group
+        - link_type
+        - addr_info
+    InterfaceUpdate:
+      title: InterfaceUpdate
+      type: object
+      properties:
+        name:
+          title: Name
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        state:
+          $ref: '#/components/schemas/InterfaceState'
+        mtu:
+          title: Mtu
+          type: integer
+        addresses:
+          title: Addresses
+          type: array
+          items:
+            anyOf:
+              - type: string
+                format: ipv4interface
+              - type: string
+                format: ipv6interface
+        master:
+          title: Master
+          anyOf:
+            - type: string
+              pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+            - enum:
+                - nomaster
+              type: string
+        netns:
+          title: Netns
+          anyOf:
+            - type: string
+              pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+            - type: integer
+    Route:
+      title: Route
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/Type'
+        dst:
+          title: Dst
+          anyOf:
+            - type: string
+              format: ipv4interface
+            - type: string
+              format: ipv6interface
+            - enum:
+                - default
+              type: string
+        gateway:
+          title: Gateway
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        dev:
+          title: Dev
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        protocol:
+          title: Protocol
+          anyOf:
+            - $ref: '#/components/schemas/Protocol'
+            - type: integer
+            - type: string
+              pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+        scope:
+          title: Scope
+          anyOf:
+            - $ref: '#/components/schemas/Scope'
+            - type: integer
+        flags:
+          title: Flags
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+        pref_src:
+          title: Prefsrc
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        metric:
+          title: Metric
+          type: integer
+      required:
+        - type
+        - dst
+        - dev
+        - protocol
+        - scope
+        - flags
+    PingRequest:
+      title: PingRequest
+      type: object
+      properties:
+        destination:
+          title: Destination
+          anyOf:
+            - type: string
+              pattern: ^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        interface:
+          title: Interface
+          anyOf:
+            - type: string
+              pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+            - type: string
+              format: ipv4interface
+            - type: string
+              format: ipv6interface
+        count:
+          title: Count
+          default: 4
+          type: integer
+        interval:
+          title: Interval
+          default: 0.5
+          type: number
+      required:
+        - destination
+    Ping:
+      title: Ping
+      type: object
+      properties:
+        destination:
+          title: Destination
+          anyOf:
+            - type: string
+              pattern: ^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        packet_duplicate_count:
+          title: Packetduplicatecount
+          type: integer
+        packet_duplicate_rate:
+          title: Packetduplicaterate
+          type: number
+        packet_loss_count:
+          title: Packetlosscount
+          type: integer
+        packet_loss_rate:
+          title: Packetlossrate
+          type: number
+        packet_receive:
+          title: Packetreceive
+          type: integer
+        packet_transmit:
+          title: Packettransmit
+          type: integer
+        rtt_avg:
+          title: Rttavg
+          type: number
+        rtt_max:
+          title: Rttmax
+          type: number
+        rtt_mdev:
+          title: Rttmdev
+          type: number
+        rtt_min:
+          title: Rttmin
+          type: number
+      required:
+        - destination
+        - packet_duplicate_count
+        - packet_duplicate_rate
+        - packet_loss_count
+        - packet_loss_rate
+        - packet_receive
+        - packet_transmit
+        - rtt_avg
+        - rtt_max
+        - rtt_mdev
+        - rtt_min
+    Kind:
+      title: Kind
+      description: An enumeration.
+      enum:
+        - bond
+        - veth
+        - bridge
+        - tun
+        - vlan
+      type: string
+    InterfaceState:
+      title: InterfaceState
+      description: An enumeration.
+      enum:
+        - UP
+        - DOWN
+        - UNKNOWN
+        - LOWERLAYERDOWN
+      type: string
+    LinkInfo:
+      title: LinkInfo
+      type: object
+      properties:
+        info_kind:
+          $ref: '#/components/schemas/Kind'
+        info_data:
+          title: Infodata
+          type: object
+        info_slave_kind:
+          $ref: '#/components/schemas/Kind'
+        info_slave_data:
+          title: Infoslavedata
+          type: object
+      required:
+        - info_kind
+    Scope:
+      title: Scope
+      description: An enumeration.
+      enum:
+        - global
+        - link
+        - host
+      type: string
+    Addr4Info:
+      title: Addr4Info
+      type: object
+      properties:
+        family:
+          title: Family
+          enum:
+            - inet
+          type: string
+        prefix_len:
+          title: Prefixlen
+          type: integer
+        scope:
+          title: Scope
+          anyOf:
+            - $ref: '#/components/schemas/Scope'
+            - type: integer
+        label:
+          title: Label
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        valid_life_time:
+          title: Validlifetime
+          type: integer
+        preferred_life_time:
+          title: Preferredlifetime
+          type: integer
+        no_prefix_route:
+          title: Noprefixroute
+          default: false
+          type: boolean
+        auto_join:
+          title: Autojoin
+          default: false
+          type: boolean
+        local:
+          title: Local
+          type: string
+          format: ipv4
+        broadcast:
+          title: Broadcast
+          type: string
+          format: ipv4
+      required:
+        - family
+        - prefix_len
+        - scope
+        - valid_life_time
+        - preferred_life_time
+        - local
+    Addr6Info:
+      title: Addr6Info
+      type: object
+      properties:
+        family:
+          title: Family
+          enum:
+            - inet6
+          type: string
+        prefix_len:
+          title: Prefixlen
+          type: integer
+        scope:
+          title: Scope
+          anyOf:
+            - $ref: '#/components/schemas/Scope'
+            - type: integer
+        label:
+          title: Label
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+        valid_life_time:
+          title: Validlifetime
+          type: integer
+        preferred_life_time:
+          title: Preferredlifetime
+          type: integer
+        no_prefix_route:
+          title: Noprefixroute
+          default: false
+          type: boolean
+        auto_join:
+          title: Autojoin
+          default: false
+          type: boolean
+        local:
+          title: Local
+          type: string
+          format: ipv6
+        broadcast:
+          title: Broadcast
+          type: string
+          format: ipv6
+        no_dad:
+          title: Nodad
+          default: false
+          type: boolean
+        optimistic:
+          title: Optimistic
+          default: false
+          type: boolean
+        home:
+          title: Home
+          default: false
+          type: boolean
+        mng_tmp_addr:
+          title: Mngtmpaddr
+          default: false
+          type: boolean
+      required:
+        - family
+        - prefix_len
+        - scope
+        - valid_life_time
+        - preferred_life_time
+        - local
+    Type:
+      title: Type
+      description: An enumeration.
+      enum:
+        - unicast
+        - local
+        - broadcast
+        - multicast
+        - throw
+        - unreachable
+        - prohibit
+        - blackhole
+        - nat
+      type: string
+    Protocol:
+      title: Protocol
+      description: An enumeration.
+      enum:
+        - boot
+        - static
+        - kernel
+        - redirect
+        - ra
+      type: string
+  responses:
+    MaskError:
+      description: When any error occurs on mask
+      content: {}
+    ParseError:
+      description: When a mask can't be parsed
+      content: {}
