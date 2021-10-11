@@ -13,16 +13,21 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import logging
 from typing import Dict, List, Optional, Set, TypeVar
 
 import requests  # type: ignore
 from flask import Blueprint  # type: ignore
-from flask_restplus import Api  # type: ignore
+from flask_restplus import Api
+from requests.models import HTTPError  # type: ignore
+from werkzeug.exceptions import ServiceUnavailable
 
 from nfv_test_api.v2.controllers.actions import namespace as actions_ns
 from nfv_test_api.v2.controllers.interface import namespace as interface_ns
 from nfv_test_api.v2.controllers.namespace import namespace as namespace_ns
 from nfv_test_api.v2.controllers.route import namespace as route_ns
+
+LOGGER = logging.getLogger(__name__)
 
 blueprint = Blueprint("api v2", __name__, url_prefix="/api/v2")
 
@@ -99,11 +104,19 @@ def as_dict_overwrite(self):
     # Replacing all wrong references
     new_dict = replace_ref(d, "#/definitions/")
 
-    # Converting the model to openapi 3 using swagger converter
-    response = requests.post(
-        "https://converter.swagger.io/api/convert", json=new_dict, headers={"content-type": "application/json"}
-    )
-    response.raise_for_status()
+    try:
+        # Converting the model to openapi 3 using swagger converter
+        response = requests.post(
+            "https://converter.swagger.io/api/convert", json=new_dict, headers={"content-type": "application/json"}
+        )
+        response.raise_for_status()
+    except HTTPError as e:
+        LOGGER.error(str(e))
+        raise ServiceUnavailable(
+            "Failed to convert the schema to openapi 3.  "
+            "This is likely because this server is not connected to the internet.  "
+            "Please check server logs for more details."
+        )
 
     new_dict = response.json()
 
