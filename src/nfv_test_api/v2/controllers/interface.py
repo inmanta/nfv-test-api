@@ -118,6 +118,10 @@ class AllInterfacesInNamespace(AllInterfaces):
     The scope of this controller is all the interfaces that are in a namespace.
 
     With it you can either get them all, or create a new one in that scope.
+
+    This class is strictly equivalent to its parent one, the reason we extend it is to support
+    multiple route on the same class in the generated documentation:
+    https://github.com/noirbizarre/flask-restplus/issues/288
     """
 
 
@@ -208,4 +212,8 @@ class OneInterfaceInNamespace(OneInterface):
     The scope of this controller is any interface that is in a namespace.
 
     With it you can either get it, update it or delete it.
+
+    This class is strictly equivalent to its parent one, the reason we extend it is to support
+    multiple route on the same class in the generated documentation:
+    https://github.com/noirbizarre/flask-restplus/issues/288
     """

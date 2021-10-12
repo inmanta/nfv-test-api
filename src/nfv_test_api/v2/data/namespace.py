@@ -22,16 +22,24 @@ from .common import SafeName
 
 
 class NamespaceCreate(BaseModel):
+    """
+    Input for creating a network namespace
+    """
+
     name: SafeName  # type: ignore
     ns_id: Optional[int]
 
 
 class NamespaceUpdate(BaseModel):
-    name: SafeName  # type: ignore
-    ns_id: Optional[int]
+    """
+    Input for updating a network namespace
+    """
 
 
 class Namespace(IpBaseModel):
+    """
+    A namespace, as returned by the `ip netns list-id` command
+    """
 
     name: Optional[SafeName]  # type: ignore
     ns_id: int

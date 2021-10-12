@@ -78,4 +78,8 @@ class OnePing(Resource):
 class OnePingInNamespace(OnePing):
     """
     The scope of this controller is the ping action in a namespace on the host.
+
+    This class is strictly equivalent to its parent one, the reason we extend it is to support
+    multiple route on the same class in the generated documentation:
+    https://github.com/noirbizarre/flask-restplus/issues/288
     """

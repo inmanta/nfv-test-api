@@ -82,6 +82,10 @@ class AllRoutesInNamespace(AllRoutes):
     The scope of this controller is all the routes that are in a namespace.
 
     With it you can get them all.
+
+    This class is strictly equivalent to its parent one, the reason we extend it is to support
+    multiple route on the same class in the generated documentation:
+    https://github.com/noirbizarre/flask-restplus/issues/288
     """
 
 
@@ -143,6 +147,10 @@ class OneRouteWithPrefix(OneRoute):
 
     The class is identical to its superclass OneRoute, but can match destination addresses
     (and not just "default")
+
+    This class is strictly equivalent to its parent one, the reason we extend it is to support
+    multiple route on the same class in the generated documentation:
+    https://github.com/noirbizarre/flask-restplus/issues/288
     """
 
 
@@ -153,6 +161,10 @@ class OneRouteInNamespace(OneRoute):
     The scope of this controller is any route that is in a namespace.
 
     With it you can get it.
+
+    This class is strictly equivalent to its parent one, the reason we extend it is to support
+    multiple route on the same class in the generated documentation:
+    https://github.com/noirbizarre/flask-restplus/issues/288
     """
 
 
@@ -166,4 +178,8 @@ class OneRouteWithPrefixInNamespace(OneRouteWithPrefix, OneRouteInNamespace):
 
     The class is identical to its superclass OneRouteInNamespace, but can match destination
     addresses (and not just "default")
+
+    This class is strictly equivalent to its parent one, the reason we extend it is to support
+    multiple route on the same class in the generated documentation:
+    https://github.com/noirbizarre/flask-restplus/issues/288
     """

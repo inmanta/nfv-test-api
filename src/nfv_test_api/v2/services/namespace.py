@@ -90,7 +90,7 @@ class NamespaceService(BaseService[Namespace, NamespaceCreate, NamespaceUpdate])
         if stderr:
             raise RuntimeError(f"Failed to create namespace: {stderr}")
 
-        _, stderr = self.host.exec(["ip", "netns", "set", o.name, "auto"])
+        _, stderr = self.host.exec(["ip", "netns", "set", o.name, str(o.ns_id or "auto")])
         if stderr:
             raise RuntimeError(f"Failed to set namespace id: {stderr}")
 

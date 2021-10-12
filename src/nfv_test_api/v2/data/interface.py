@@ -25,6 +25,9 @@ from .common import Family, MacAddress, SafeName, Scope
 
 
 class AddrInfo(IpBaseModel):
+    """
+    Information about an address of an interface, as returned by `ip addr`
+    """
 
     family: Family
     prefix_len: int
@@ -37,6 +40,9 @@ class AddrInfo(IpBaseModel):
 
 
 class Addr4Info(AddrInfo):
+    """
+    Information about an IPv4 address of an interface, as returned by `ip addr`
+    """
 
     family: Literal[Family.INET]
     local: IPv4Address
@@ -44,6 +50,9 @@ class Addr4Info(AddrInfo):
 
 
 class Addr6Info(AddrInfo):
+    """
+    Information about an IPv6 address of an interface, as returned by `ip addr`
+    """
 
     family: Literal[Family.INET6]
     local: IPv6Address
@@ -55,6 +64,10 @@ class Addr6Info(AddrInfo):
 
 
 class LinkInfo(IpBaseModel):
+    """
+    Information about a link, related to its specific kind, as returned by `ip addr`
+    """
+
     class Kind(str, Enum):
         BOND = "bond"
         VETH = "veth"
@@ -70,6 +83,10 @@ class LinkInfo(IpBaseModel):
 
 
 class InterfaceState(str, Enum):
+    """
+    The different states an interface can be in
+    """
+
     UP = "UP"
     DOWN = "DOWN"
     UNKNOWN = "UNKNOWN"
@@ -77,6 +94,10 @@ class InterfaceState(str, Enum):
 
 
 class InterfaceCreate(BaseModel):
+    """
+    Input schema for creating an interface
+    """
+
     name: SafeName  # type: ignore
     parent_dev: Optional[SafeName]  # type: ignore
     mtu: Optional[int]
@@ -87,6 +108,14 @@ class InterfaceCreate(BaseModel):
 
 
 class InterfaceUpdate(BaseModel):
+    """
+    Input schema for updating an interface.
+
+    All the fields are optional, any value non specified or null will
+    be ignored for the update.
+    And empty body will result in not update.
+    """
+
     name: Optional[SafeName]  # type: ignore
     state: Optional[Union[Literal[InterfaceState.UP], Literal[InterfaceState.DOWN]]]
     mtu: Optional[int]
@@ -96,6 +125,9 @@ class InterfaceUpdate(BaseModel):
 
 
 class Interface(IpBaseModel):
+    """
+    An interface as returned by the `ip addr` command
+    """
 
     if_index: int
     link_index: Optional[int]

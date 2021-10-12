@@ -25,6 +25,10 @@ from .common import SafeName, Scope
 
 
 class InputDestination(BaseModel):
+    """
+    Input for destinations, the purpose of this class is purely for validation of user input
+    """
+
     dst_addr: Union[IPv4Address, IPv6Address, Literal["default"]]
     dst_prefix_len: Optional[int]
 
@@ -47,14 +51,22 @@ class InputDestination(BaseModel):
 
 
 class RouteCreate(BaseModel):
-    pass
+    """
+    Input for creating a route
+    """
 
 
 class RouteUpdate(BaseModel):
-    pass
+    """
+    Input for updating a route
+    """
 
 
 class Route(IpBaseModel):
+    """
+    A route as return by the command `ip route`
+    """
+
     class Type(str, Enum):
         UNICAST = "unicast"
         LOCAL = "local"
