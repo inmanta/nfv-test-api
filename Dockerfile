@@ -5,7 +5,10 @@ ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 # Install dependencies
 RUN apt-get update && \
-    apt-get install iproute2 -y
+    apt-get install -y \
+        iproute2 \
+        iputils-ping \
+        traceroute
 
 # Copying the source of this project
 COPY poetry.lock /home/user/nfv-test-api/poetry.lock
