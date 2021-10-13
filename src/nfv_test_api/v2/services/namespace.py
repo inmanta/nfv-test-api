@@ -86,6 +86,10 @@ class NamespaceService(BaseService[Namespace, NamespaceCreate, NamespaceUpdate])
         if existing_namespace:
             raise Conflict("A namespace with this name already exists")
 
+        if o.ns_id is not None:
+            if o.ns_id in [ns.ns_id for ns in self.get_all()]:
+                raise Conflict("A namespace with this id already exists")
+
         _, stderr = self.host.exec(["ip", "netns", "add", o.name])
         if stderr:
             raise RuntimeError(f"Failed to create namespace: {stderr}")
