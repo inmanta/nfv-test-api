@@ -27,7 +27,7 @@ from nfv_test_api.v2.data.route import InputDestination, Route
 from nfv_test_api.v2.services.namespace import NamespaceService
 from nfv_test_api.v2.services.route import RouteService
 
-namespace = Namespace(name="routes", description="Basic route management")
+namespace = Namespace(name="routes", description="Read routes on the host")
 
 route_model = add_model_schema(namespace, Route)
 
