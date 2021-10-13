@@ -11,7 +11,7 @@ tags:
   - name: interfaces
     description: Basic interface management
   - name: routes
-    description: Basic route management
+    description: Read routes on the host
   - name: actions
     description: Execute some actions on the host
 paths:
@@ -75,7 +75,6 @@ paths:
       tags:
         - interfaces
       summary: Get all interfaces on the host
-      description: Get all the interfaces on the host
       operationId: get_all_interfaces
       responses:
         '200':
@@ -92,7 +91,6 @@ paths:
         - interfaces
       summary: Create an interface on the host
       description: |-
-        Create a new interface on the host
         The interface is identified by its name, if another interface with the same name already exists, a
         conflict error is raised.
       operationId: post_all_interfaces
@@ -121,7 +119,6 @@ paths:
       tags:
         - interfaces
       summary: Get all interfaces on the host
-      description: Get all the interfaces on the host
       operationId: get_all_interfaces_in_namespace
       parameters:
         - name: ns_name
@@ -145,7 +142,6 @@ paths:
         - interfaces
       summary: Create an interface on the host
       description: |-
-        Create a new interface on the host
         The interface is identified by its name, if another interface with the same name already exists, a
         conflict error is raised.
       operationId: post_all_interfaces_in_namespace
@@ -181,9 +177,7 @@ paths:
       tags:
         - interfaces
       summary: Get an interface on the host
-      description: |-
-        Get an interface with this name from the host
-        The interface is identified by its name.
+      description: The interface is identified by its name.
       operationId: get_one_interface_in_namespace
       parameters:
         - name: name
@@ -283,9 +277,7 @@ paths:
       tags:
         - interfaces
       summary: Get an interface on the host
-      description: |-
-        Get an interface with this name from the host
-        The interface is identified by its name.
+      description: The interface is identified by its name.
       operationId: get_one_interface
       parameters:
         - name: name
@@ -400,7 +392,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Namespace'
         '409':
-          description: Another namespace with the same name already exists
+          description: Another namespace with the same name or id already exists
           content: {}
         '500':
           description: An error occurred when trying to process the request, this can also be because of bad input from the user
@@ -630,6 +622,10 @@ components:
   schemas:
     NamespaceCreate:
       title: NamespaceCreate
+      description: |-
+        Input for creating a network namespace
+
+        :param ns_id: The optional namespace id, if none is provided, one will be picked in the pool of available ids
       type: object
       properties:
         name:
@@ -643,6 +639,7 @@ components:
         - name
     Namespace:
       title: Namespace
+      description: A namespace, as returned by the `ip netns list-id` command
       type: object
       properties:
         name:
@@ -656,6 +653,7 @@ components:
         - ns_id
     InterfaceCreate:
       title: InterfaceCreate
+      description: Input schema for creating an interface
       type: object
       properties:
         name:
@@ -697,6 +695,7 @@ components:
         - name
     Interface:
       title: Interface
+      description: An interface as returned by the `ip addr` command
       type: object
       properties:
         if_index:
@@ -775,6 +774,12 @@ components:
         - addr_info
     InterfaceUpdate:
       title: InterfaceUpdate
+      description: |-
+        Input schema for updating an interface.
+
+        All the fields are optional, any value non specified or null will
+        be ignored for the update.
+        And empty body will result in not update.
       type: object
       properties:
         name:
@@ -782,7 +787,14 @@ components:
           pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
           type: string
         state:
-          $ref: '#/components/schemas/InterfaceState'
+          title: State
+          anyOf:
+            - enum:
+                - UP
+              type: string
+            - enum:
+                - DOWN
+              type: string
         mtu:
           title: Mtu
           type: integer
@@ -811,6 +823,7 @@ components:
             - type: integer
     Route:
       title: Route
+      description: A route as return by the command `ip route`
       type: object
       properties:
         type:
@@ -970,7 +983,7 @@ components:
       type: string
     InterfaceState:
       title: InterfaceState
-      description: An enumeration.
+      description: The different states an interface can be in
       enum:
         - UP
         - DOWN
@@ -979,6 +992,7 @@ components:
       type: string
     LinkInfo:
       title: LinkInfo
+      description: Information about a link, related to its specific kind, as returned by `ip addr`
       type: object
       properties:
         info_kind:
@@ -1003,6 +1017,7 @@ components:
       type: string
     Addr4Info:
       title: Addr4Info
+      description: Information about an IPv4 address of an interface, as returned by `ip addr`
       type: object
       properties:
         family:
@@ -1053,6 +1068,7 @@ components:
         - local
     Addr6Info:
       title: Addr6Info
+      description: Information about an IPv6 address of an interface, as returned by `ip addr`
       type: object
       properties:
         family:
