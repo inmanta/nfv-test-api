@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nfv-test-api"
-version = "0.6.1"
+version = "1.0.0"
 description = "API for testing network functions."
 authors = ["Inmanta <code@inmanta.com>"]
 license = "Apache-2.0"
@@ -10,23 +10,25 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = ">=3.6.1,<4.0"
 Flask = "^1.1.1"
 PyYAML = "^5.3"
 flask-cors = "^3.0.8"
 click = "^7.0"
 pingparsing = "^1.0.1"
 trparse = "^0.3.0"
+flask-restplus = "^0.13.0"
+Werkzeug = "0.16.1"
+flask-apispec = "^0.11.0"
+apispec = "^5.1.1"
+requests = "^2.23.0"
+pydantic = "^1.8.2"
 
 [tool.poetry.dev-dependencies]
-pytest = "*"
 mypy = "*"
-isort = "*"
-flake8 = "*"
 lxml = "*"
-black = "^19.10b0"
 pytest-flask = "^1.0.0"
-requests = "^2.23.0"
+inmanta-dev-dependencies = {extras = ["module"], version = "^1.59.0"}
 
 [tool.black]
 line-length = 128

@@ -1,8 +1,9 @@
 .PHONY: build clean
 VERSION := $(shell poetry version | cut -f 2 -d " ")
 RPMDIR := $(shell pwd)/rpms
-isort = isort -rc src tests
+isort = isort src tests
 black = black src tests
+flake8 = flake8 src tests
 
 build:
 	poetry build
@@ -25,7 +26,15 @@ upload:
 format:
 	$(isort)
 	$(black)
+	$(flake8)
 
 .PHONY: pep8
 pep8:
 	flake8 nfv-test-api tests
+
+# Build up folders strucuture corresponding to inmanta loader structure, so mypy knows what goes where.
+RUN_MYPY=MYPYPATH=src python -m mypy --html-report mypy -p nfv_test_api
+
+.PHONY: mypy
+mypy:
+	$(RUN_MYPY)

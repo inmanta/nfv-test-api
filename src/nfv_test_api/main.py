@@ -1,3 +1,18 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 import logging
 import os
 import re
@@ -11,12 +26,15 @@ from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
 from nfv_test_api import config, exceptions, util
-from nfv_test_api.config import Route, get_config, Interface, Namespace
-from nfv_test_api.util import setup_namespaces, create_namespace
+from nfv_test_api.config import Interface, Namespace, Route, get_config
+from nfv_test_api.util import create_namespace, setup_namespaces
+from nfv_test_api.v2 import blueprint as controllers
 
 app = Flask(__name__)
 app.simulate = False
 CORS(app)
+app.config["RESTPLUS_MASK_SWAGGER"] = False
+app.register_blueprint(controllers)
 
 # Notes:
 #   * Static content available on /static
@@ -41,8 +59,7 @@ def get_pid_file(location, interface_name):
 
 
 def get_local_dns_server(location, interface_name):
-    """ Retrieve the dns server provided by the DHCP server for the given interface name
-    """
+    """Retrieve the dns server provided by the DHCP server for the given interface name"""
     lease_file = get_lease_file(location, interface_name)
     if not os.path.exists(lease_file):
         return None
@@ -92,20 +109,25 @@ def add_namespace(namespace):
 
         if namespace in cfg.namespaces:
             return abort(409)
-        cfg.namespaces[namespace] = Namespace(namespace, interfaces=[{
-            "ifindex": 1,
-            "ifname": "lo",
-            "flags": ["LOOPBACK"],
-            "mtu": 65536,
-            "qdisc": "noop",
-            "operstate": "DOWN",
-            "linkmode": "DEFAULT",
-            "group": "default",
-            "txqlen": 1000,
-            "link_type": "loopback",
-            "address": "00:00:00:00:00:00",
-            "broadcast": "00:00:00:00:00:00"
-        }])
+        cfg.namespaces[namespace] = Namespace(
+            namespace,
+            interfaces=[
+                {
+                    "ifindex": 1,
+                    "ifname": "lo",
+                    "flags": ["LOOPBACK"],
+                    "mtu": 65536,
+                    "qdisc": "noop",
+                    "operstate": "DOWN",
+                    "linkmode": "DEFAULT",
+                    "group": "default",
+                    "txqlen": 1000,
+                    "link_type": "loopback",
+                    "address": "00:00:00:00:00:00",
+                    "broadcast": "00:00:00:00:00:00",
+                }
+            ],
+        )
         return jsonify({})
     create_namespace(namespace)
 
@@ -120,16 +142,11 @@ def delete_namespace(namespace):
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
 
     interfaces: List = list_interfaces(namespace).get_json()
-    untagged: List = [
-        interface
-        for interface in interfaces
-        if "." not in interface and interface != "lo"
-    ]
+    untagged: List = [interface for interface in interfaces if "." not in interface and interface != "lo"]
     if untagged:
         raise exceptions.ServerError(
             "Unable to delete namespace with untagged interfaces %s in it."
-            " Move them to another interface first."
-            % ", ".join(untagged)
+            " Move them to another interface first." % ", ".join(untagged)
         )
 
     if app.simulate:
@@ -151,7 +168,7 @@ def create_sub_interface(namespace, interface):
 
     parts = interface.split(".")
     if len(parts) not in [2, 3]:
-        raise exceptions.ServerError(f"Only single and double tagged interfaces are supported")
+        raise exceptions.ServerError("Only single and double tagged interfaces are supported")
 
     if app.simulate:
         cfg = get_config()
@@ -192,7 +209,7 @@ def move_interface(namespace, interface):
 
     parts = interface.split(".")
     if len(parts) not in range(1, 4):
-        raise exceptions.ServerError(f"Only untagged, single and double tagged interfaces are supported")
+        raise exceptions.ServerError("Only untagged, single and double tagged interfaces are supported")
 
     if app.simulate:
         cfg = get_config()
@@ -208,7 +225,7 @@ def move_interface(namespace, interface):
 
     new_namespace_key: str = "destination_namespace"
     if new_namespace_key not in request.json:
-        raise exceptions.ServerError(f"Invalid request: request should contain \"destination_namespace\"")
+        raise exceptions.ServerError('Invalid request: request should contain "destination_namespace"')
 
     new_namespace = request.json[new_namespace_key]
 
@@ -230,7 +247,7 @@ def delete_sub_interface(namespace, interface):
 
     parts = interface.split(".")
     if len(parts) not in [2, 3]:
-        raise exceptions.ServerError(f"Only single and double tagged interfaces are supported")
+        raise exceptions.ServerError("Only single and double tagged interfaces are supported")
 
     if app.simulate:
         cfg = get_config()

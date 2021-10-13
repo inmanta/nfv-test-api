@@ -1,6 +1,19 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 import json
-import subprocess
-import time
 from typing import Dict, Optional
 
 import flask
@@ -17,7 +30,7 @@ def app() -> flask.Flask:
 
 
 def test_server(pre_post_cleanup, app: flask.Flask):
-    cfg = util.get_config(
+    util.get_config(
         config_dict=yaml.safe_load(
             """
 namespaces:
@@ -128,23 +141,18 @@ namespaces:
         assert response.json["interface"]["mtu"] == 1500
         assert not response.json["interface"]["up"]
 
-        response = c.post(
-            "/test-cust-south1/eth0/state", json={"address": [{"address": "192.168.150.1", "prefixlen": 24}]}
-        )
+        response = c.post("/test-cust-south1/eth0/state", json={"address": [{"address": "192.168.150.1", "prefixlen": 24}]})
         assert response.status == "200 OK"
         assert response.json["interface"]["address"] == [{"address": "192.168.150.1", "prefixlen": 24}]
 
         response = c.post(
             "/test-cust-south1/eth0/state",
-            json={"address": [{"address": "192.168.150.1", "prefixlen": 24}, {"address": "192.168.151.1", "prefixlen": 28}]}
+            json={"address": [{"address": "192.168.150.1", "prefixlen": 24}, {"address": "192.168.151.1", "prefixlen": 28}]},
         )
         assert response.status == "200 OK"
         assert len(response.json["interface"]["address"]) == 2
 
-        response = c.post(
-            "/test-cust-south1/eth0/state",
-            json={"address": [{"address": "192.168.151.1", "prefixlen": 28}]}
-        )
+        response = c.post("/test-cust-south1/eth0/state", json={"address": [{"address": "192.168.151.1", "prefixlen": 28}]})
         assert response.status == "200 OK"
         assert response.json["interface"]["address"] == [{"address": "192.168.151.1", "prefixlen": 28}]
 
@@ -188,18 +196,13 @@ namespaces:
             assert response.status == "200 OK"
             assert len(response.json) == original_routes_length + 1
 
-            response = c.delete(
-                f"/{namespace}/routes?%s"
-                % "&".join(f"{key}={value}" for key, value in data.items())
-            )
+            response = c.delete(f"/{namespace}/routes?%s" % "&".join(f"{key}={value}" for key, value in data.items()))
             assert response.status == "200 OK"
             assert len(response.json) == original_routes_length
 
             return len(response.json)
 
-        nb_routes = verify_route_post_and_delete(
-            nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway
-        )
+        nb_routes = verify_route_post_and_delete(nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway)
         nb_routes = verify_route_post_and_delete(
             nb_routes,
             routes_namespace,

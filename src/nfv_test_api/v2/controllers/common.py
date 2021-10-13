@@ -13,3 +13,15 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+from typing import Type
+
+from flask_restplus import Namespace, SchemaModel  # type: ignore
+from pydantic import BaseModel
+from pydantic.schema import model_schema
+
+
+def add_model_schema(namespace: Namespace, model: Type[BaseModel]) -> SchemaModel:
+    base_schema = model_schema(model, by_alias=False, ref_prefix=f"#/definitions/{model.__name__}/definitions/")
+    schema_model = namespace.schema_model(name=base_schema["title"], schema=base_schema)
+
+    return schema_model

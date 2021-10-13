@@ -1,6 +1,20 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 import json
 import subprocess
-import time
 from typing import Dict, Optional
 
 import flask
@@ -188,18 +202,13 @@ namespaces:
             assert response.status == "200 OK"
             assert len(response.json) == original_routes_length + 1
 
-            response = c.delete(
-                f"/{namespace}/routes?%s"
-                % "&".join(f"{key}={value}" for key, value in data.items())
-            )
+            response = c.delete(f"/{namespace}/routes?%s" % "&".join(f"{key}={value}" for key, value in data.items()))
             assert response.status == "200 OK"
             assert len(response.json) == original_routes_length
 
             return len(response.json)
 
-        nb_routes = verify_route_post_and_delete(
-            nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway
-        )
+        nb_routes = verify_route_post_and_delete(nb_routes, routes_namespace, routes_subnet, gateway=routes_gateway)
         nb_routes = verify_route_post_and_delete(
             nb_routes,
             routes_namespace,

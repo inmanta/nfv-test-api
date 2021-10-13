@@ -1,3 +1,18 @@
+"""
+       Copyright 2021 Inmanta
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
 import json
 import logging
 import os
@@ -14,8 +29,7 @@ NO_NAMESPACE_VALUE = "none"
 
 
 def process_namespace(namespace: str, allow_none: Optional[bool] = False) -> Optional[str]:
-    """Processes namespace values get by REST handler to check if namespace has been defined (correctly)
-    """
+    """Processes namespace values get by REST handler to check if namespace has been defined (correctly)"""
     if namespace is None or len(namespace) == 0:
         raise exceptions.ServerError(f"Invalid namespace {namespace}")
 
@@ -29,8 +43,7 @@ def process_namespace(namespace: str, allow_none: Optional[bool] = False) -> Opt
 
 
 def run_in_ns(namespace: Optional[str], command: List[str]) -> str:
-    """ Run the given command in the given namespace and return the result as a string
-    """
+    """Run the given command in the given namespace and return the result as a string"""
     command_prefix = ["ip", "netns", "exec", namespace] if namespace else []
     output = subprocess.check_output(command_prefix + command, stderr=subprocess.PIPE)
     return output.decode()
@@ -47,8 +60,8 @@ def list_interfaces(namespace: Optional[str] = None) -> List[str]:
 
 
 def list_all_interfaces() -> List[Dict[str, str]]:
-    """ List all interface in all namespaces. For each interface the name, namespace and
-        mac-address is listed.
+    """List all interface in all namespaces. For each interface the name, namespace and
+    mac-address is listed.
     """
     interfaces = []
     for ns in list_net_ns():
@@ -56,14 +69,22 @@ def list_all_interfaces() -> List[Dict[str, str]]:
             mac = get_mac(intf, ns)
             if mac is not None:
                 interfaces.append(
-                    {"namespace": ns, "name": intf, "mac": mac,}
+                    {
+                        "namespace": ns,
+                        "name": intf,
+                        "mac": mac,
+                    }
                 )
 
     for intf in list_interfaces():
         mac = get_mac(intf)
         if mac is not None:
             interfaces.append(
-                {"namespace": None, "name": intf, "mac": mac,}
+                {
+                    "namespace": None,
+                    "name": intf,
+                    "mac": mac,
+                }
             )
 
     return interfaces
@@ -95,8 +116,7 @@ def list_net_ns() -> List[str]:
 
 
 def create_namespace(namespace: str) -> None:
-    """ Create a new network namespace
-    """
+    """Create a new network namespace"""
     subprocess.check_call(["ip", "netns", "add", namespace])
     run_in_ns(namespace, ["ip", "link", "set", "up", "dev", "lo"])
 
@@ -106,15 +126,13 @@ def delete_namespace(namespace: str) -> None:
 
 
 def ensure_namespace(namespace: str) -> None:
-    """ Ensure that the given namespace exists
-    """
+    """Ensure that the given namespace exists"""
     if namespace not in list_net_ns():
         create_namespace(namespace)
 
 
 def move_interface(namespace: str, interface_name: str, new_interface_name: str, old_namespace: Optional[str] = None) -> None:
-    """ Move interface_name into namespace and rename it to new_interface_name
-    """
+    """Move interface_name into namespace and rename it to new_interface_name"""
     command: List[str] = ["ip", "link", "set", interface_name, "netns", namespace]
     if old_namespace is None:
         subprocess.check_output(command)
@@ -124,11 +142,11 @@ def move_interface(namespace: str, interface_name: str, new_interface_name: str,
 
 
 def get_interface_state(namespace: str, interface: str) -> Dict:
-    """ Get the state of the given interface. This method returns a dict with key "interface".
-        The value is a dict with keys:
-            up: boolean, true if the service is up
-            mtu: integer mtu value
-            address: A list of address objects. Each object contains address and family attributes (inet or inet6)
+    """Get the state of the given interface. This method returns a dict with key "interface".
+    The value is a dict with keys:
+        up: boolean, true if the service is up
+        mtu: integer mtu value
+        address: A list of address objects. Each object contains address and family attributes (inet or inet6)
     """
     try:
         output = run_in_ns(namespace, ["ip", "-j", "addr", "ls", "dev", interface])
@@ -153,8 +171,7 @@ def get_interface_state(namespace: str, interface: str) -> Dict:
 
 
 def set_interface_state(namespace: str, interface: str, state: Dict) -> None:
-    """ Make sure the state of the interface matches the given state
-    """
+    """Make sure the state of the interface matches the given state"""
     # verify the link exists and get its current state
     current_state = get_interface_state(namespace, interface)
 
@@ -181,8 +198,7 @@ def set_interface_state(namespace: str, interface: str, state: Dict) -> None:
 
 
 def create_sub_interface(namespace: str, interface: str, outer_vlan: int, inner_vlan: int = 0) -> None:
-    """ Create a dot1q subinterface. Single or double tagged
-    """
+    """Create a dot1q subinterface. Single or double tagged"""
     run_in_ns(
         namespace,
         ["ip", "link", "add", "name", f"{interface}.{outer_vlan}", "link", interface, "type", "vlan", "id", str(outer_vlan)],
@@ -209,8 +225,7 @@ def create_sub_interface(namespace: str, interface: str, outer_vlan: int, inner_
 def delete_sub_interface(
     namespace: str, interface: str, outer_vlan: int, inner_vlan: int = 0, keep_outer: bool = False
 ) -> None:
-    """ Delete a subinterface
-    """
+    """Delete a subinterface"""
     if inner_vlan > 0:
         full = f"{interface}.{outer_vlan}.{inner_vlan}"
     else:
@@ -225,8 +240,7 @@ def delete_sub_interface(
 
 
 def setup_namespaces():
-    """ Make sure all the namespaces from the config file are created and the correct interfaces are defined
-    """
+    """Make sure all the namespaces from the config file are created and the correct interfaces are defined"""
     mac_lookup = {x["mac"]: x for x in util.list_all_interfaces()}
     cfg = get_config()
     for ns in cfg.namespaces.values():
