@@ -24,6 +24,8 @@ from .common import SafeName
 class NamespaceCreate(BaseModel):
     """
     Input for creating a network namespace
+
+    :param ns_id: The optional namespace id, if none is provided, one will be picked in the pool of available ids
     """
 
     name: SafeName  # type: ignore
