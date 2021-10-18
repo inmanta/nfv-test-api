@@ -35,7 +35,7 @@ class ActionsService:
             "-c",
             str(ping_request.count),
             "-i",
-            str(ping_request.interval).replace(".", ","),
+            str(ping_request.interval),
         ]
         if ping_request.interface is not None:
             command += ["-I", str(ping_request.interface)]
