@@ -962,15 +962,10 @@ components:
       required:
         - destination
         - packet_duplicate_count
-        - packet_duplicate_rate
         - packet_loss_count
         - packet_loss_rate
         - packet_receive
         - packet_transmit
-        - rtt_avg
-        - rtt_max
-        - rtt_mdev
-        - rtt_min
     Kind:
       title: Kind
       description: An enumeration.
