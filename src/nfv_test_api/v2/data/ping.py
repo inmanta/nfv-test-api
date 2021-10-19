@@ -33,12 +33,12 @@ class PingRequest(BaseModel):
 class Ping(IpBaseModel):
     destination: Union[Hostname, IPv4Address, IPv6Address]  # type: ignore
     packet_duplicate_count: int
-    packet_duplicate_rate: float
+    packet_duplicate_rate: Optional[float]
     packet_loss_count: int
     packet_loss_rate: float
     packet_receive: int
     packet_transmit: int
-    rtt_avg: float
-    rtt_max: float
-    rtt_mdev: float
-    rtt_min: float
+    rtt_avg: Optional[float]
+    rtt_max: Optional[float]
+    rtt_mdev: Optional[float]
+    rtt_min: Optional[float]
