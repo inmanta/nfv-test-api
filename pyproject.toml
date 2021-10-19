@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nfv-test-api"
-version = "1.0.1"
+version = "1.0.2"
 description = "API for testing network functions."
 authors = ["Inmanta <code@inmanta.com>"]
 license = "Apache-2.0"
