@@ -44,7 +44,10 @@ class ActionsService:
         stdout, stderr = self.host.exec(command)
 
         if stderr:
-            raise RuntimeError(f"Failed to execute ping command: {stderr}")
+            if not stdout:
+                raise RuntimeError(f"Failed to execute ping command: {stderr}")
+            
+            LOGGER.warning(stderr)
 
         ping_result = self.ping_parser.parse(stdout).as_dict()
         try:
