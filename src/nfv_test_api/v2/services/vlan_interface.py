@@ -42,13 +42,8 @@ class VlanInterfaceService(InterfaceService):
         # Ensuring parent interface exists
         self.get_one(o.parent_dev)
         try:
-            parsed_name = o.name.split(".")
-            if len(parsed_name) != 2:
-                raise ValueError(str(parsed_name))
-
-            parent_dev = parsed_name[0]
-            if parent_dev != o.parent_dev:
-                raise ValueError(f"{parent_dev} != {o.parent_dev}")
+            if not o.name.startswith(o.parent_dev):
+                raise ValueError(f"'{o.name}' doesn't start with '{o.parent_dev}'")
 
             vlan_id = int(o.name.split(".")[-1])
         except ValueError as e:
