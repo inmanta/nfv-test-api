@@ -45,7 +45,11 @@ class VlanInterfaceService(InterfaceService):
             if not o.name.startswith(o.parent_dev):
                 raise ValueError(f"'{o.name}' doesn't start with '{o.parent_dev}'")
 
-            vlan_id = int(o.name.split(".")[-1])
+            remainder = o.name[len(o.parent_dev) :]
+            if not remainder.startswith("."):
+                raise ValueError(f"'{o.name}' doesn't have a dot after the parent name")
+
+            vlan_id = int(remainder[1:])
         except ValueError as e:
             LOGGER.error(str(e))
             raise BadRequest("A vlan type interface should be named with the following format: <parent_dev>.<vlan_id>")

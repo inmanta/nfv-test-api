@@ -46,7 +46,7 @@ class ActionsService:
         if stderr:
             if not stdout:
                 raise RuntimeError(f"Failed to execute ping command: {stderr}")
-            
+
             LOGGER.warning(stderr)
 
         ping_result = self.ping_parser.parse(stdout).as_dict()
