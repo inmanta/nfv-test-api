@@ -42,15 +42,14 @@ class VlanInterfaceService(InterfaceService):
         # Ensuring parent interface exists
         self.get_one(o.parent_dev)
         try:
-            parsed_name = o.name.split(".")
-            if len(parsed_name) != 2:
-                raise ValueError(str(parsed_name))
+            if not o.name.startswith(o.parent_dev):
+                raise ValueError(f"'{o.name}' doesn't start with '{o.parent_dev}'")
 
-            parent_dev = parsed_name[0]
-            if parent_dev != o.parent_dev:
-                raise ValueError(f"{parent_dev} != {o.parent_dev}")
+            remainder = o.name[len(o.parent_dev) :]
+            if not remainder.startswith("."):
+                raise ValueError(f"'{o.name}' doesn't have a dot after the parent name")
 
-            vlan_id = int(o.name.split(".")[-1])
+            vlan_id = int(remainder[1:])
         except ValueError as e:
             LOGGER.error(str(e))
             raise BadRequest("A vlan type interface should be named with the following format: <parent_dev>.<vlan_id>")
