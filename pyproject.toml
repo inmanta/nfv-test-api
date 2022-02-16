@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nfv-test-api"
-version = "1.0.3"
+version = "2.0.0"
 description = "API for testing network functions."
 authors = ["Inmanta <code@inmanta.com>"]
 license = "Apache-2.0"
@@ -10,7 +10,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6.1,<4.0"
+python = ">=3.9,<4.0"
 Flask = "^1.1.1"
 PyYAML = "^5.3"
 flask-cors = "^3.0.8"
