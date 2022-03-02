@@ -9,6 +9,9 @@ packages = [
     { include = "nfv_test_api", from = "src" },
 ]
 
+[tool.poetry.plugins.console_scripts]
+nfv-test-api = "nfv_test_api.main:main"
+
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
 Flask = "^1.1.1"
