@@ -25,29 +25,41 @@ pipeline {
             steps {
                 sh'''
                     python3 -m venv env
-                    env/bin/pip install -U pip
-                    env/bin/pip install -r requirements.txt -r requirements.dev.txt
-
-                    # explicitly activate environment so poetry knows to install within it
                     source env/bin/activate
 
-                    env/bin/poetry install
+                    make install
+                '''
+            }
+        }
+        stage("run code linting check") {
+            steps {
+                sh '''
+                    source env/bin/activate
+                    make pep8
+                '''
+            }
+        }
+        stage("run code typing check") {
+            steps {
+                sh '''
+                    source env/bin/activate
+                    make mypy
                 '''
             }
         }
         stage("run tests") {
             steps {
-                sh 'sudo env/bin/pytest -v -s --junitxml=junit.xml'
+                sh '''
+                    source env/bin/activate
+                    pytest -vs --junitxml=junit.xml
+                '''
             }
         }
     }
 
     post {
         always {
-            // deal with root-owned files resulting from the use of sudo above
-            sh 'sudo chown -R jenkins:jenkins .'
-
-            junit 'junit.xml'
+            deleteDir()
         }
     }
 }

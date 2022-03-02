@@ -15,9 +15,9 @@
 """
 import logging
 
-import click
-from flask import Flask
-from flask_cors import CORS
+import click  # type: ignore
+from flask import Flask  # type: ignore
+from flask_cors import CORS  # type: ignore
 
 from nfv_test_api.config import get_config
 from nfv_test_api.v2 import blueprint as controllers
