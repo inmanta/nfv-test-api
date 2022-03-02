@@ -33,6 +33,7 @@ lxml = "*"
 pytest-flask = "^1.0.0"
 inmanta-dev-dependencies = {extras = ["module"], version = "^1.59.0"}
 types-PyYAML = "^6.0.4"
+docker = "^5.0.3"
 
 [tool.black]
 line-length = 128
