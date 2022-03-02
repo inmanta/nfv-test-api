@@ -93,7 +93,7 @@ class InterfaceState(str, Enum):
     LOWERLAYERDOWN = "LOWERLAYERDOWN"
 
 
-class InterfaceCreate(BaseModel):
+class InterfaceCreate(IpBaseModel):
     """
     Input schema for creating an interface
     """
@@ -107,7 +107,7 @@ class InterfaceCreate(BaseModel):
     slave_interfaces: Optional[List[SafeName]]  # type: ignore
 
 
-class InterfaceUpdate(BaseModel):
+class InterfaceUpdate(IpBaseModel):
     """
     Input schema for updating an interface.
 
