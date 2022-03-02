@@ -13,17 +13,18 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from ipaddress import IPv4Address, IPv6Address, ip_address
 import logging
 import os
-from typing import Generator, Union
-import pytest
-import docker
-from docker.models import images, containers
-from docker.errors import ImageNotFound, NotFound
-import uuid
 import time
+import uuid
+from ipaddress import ip_address
+from typing import Generator
+
+import docker  # type: ignore
+import pytest
 import requests
+from docker.errors import ImageNotFound, NotFound  # type: ignore
+from docker.models import containers, images  # type: ignore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -98,7 +99,7 @@ def nfv_test_api_instance(docker_client: docker.DockerClient, nfv_test_api_image
     while requests.get(f"{api}/docs", timeout=0.5).status_code != 200 and max_attempts > 0:
         time.sleep(1)
         max_attempts -= 1
-    
+
     if max_attempts == 0:
         raise RuntimeError("Failed to start server")
 
