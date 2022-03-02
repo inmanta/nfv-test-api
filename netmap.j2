@@ -1,9 +1,0 @@
-{
-{%- for attachment in attachments%}
-{{attachment.network.name | tojson }}: 
-  {
-      "mac": {{attachment.mac | tojson }},
-      "address" : {{attachment.port.address | tojson }}
-  }{% if not loop.last %},{% endif %}
-{% endfor %}
-}

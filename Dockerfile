@@ -1,38 +1,29 @@
-FROM python:3.6
+FROM registry.access.redhat.com/ubi8/python-39:latest
 
-ARG CHECKOUT=master
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+# We need to be root to setup the container image
+USER root
 
-# Install dependencies
-RUN apt-get update && \
-    apt-get install -y \
-        iproute2 \
-        iputils-ping \
-        traceroute
+# Install required packages
+RUN yum install -y yum-utils curl nc iproute iputils
 
 # Copying the source of this project
-COPY poetry.lock /home/user/nfv-test-api/poetry.lock
-COPY pyproject.toml //home/user/nfv-test-api/pyproject.toml
-COPY src/ /home/user/nfv-test-api/src
-COPY config.yaml /home/user/nfv-test-api/config.yaml
-
-# Creating user
-RUN groupadd user && \
-	useradd -g user -G user -ms /bin/bash user && \
-    chown -R user:user /home/user
-    
-USER user
-WORKDIR /home/user
+COPY poetry.lock /opt/nfv-test-api/poetry.lock
+COPY pyproject.toml /opt/nfv-test-api/pyproject.toml
+COPY src/ /opt/nfv-test-api/src
+COPY config.yaml /etc/nfv-test-api.yaml
+COPY entrypoint.sh /entrypoint.sh
 
 # Installing 
-RUN cd nfv-test-api && \
+RUN cd /opt/nfv-test-api && \
     python3 -m venv env && \
     . ./env/bin/activate && \
     pip install -U pip wheel && \
     pip install -U poetry && \
-    poetry install --no-dev
+    poetry install --no-dev && \
+    ln -s /opt/nfv-test-api/env/bin /opt/nfv-test-api/bin && \
+    chmod +x /entrypoint.sh
 
-USER root
+ENTRYPOINT ["/entrypoint.sh"]
 
 EXPOSE 8080
-CMD /home/user/nfv-test-api/env/bin/python -m nfv_test_api.main --config nfv-test-api/config.yaml
+CMD nfv-test-api

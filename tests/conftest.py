@@ -13,80 +13,101 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-import subprocess
+import logging
+import os
+import time
+import uuid
+from ipaddress import ip_address
+from typing import Generator
 
+import docker  # type: ignore
 import pytest
+import requests
+from docker.errors import ImageNotFound, NotFound  # type: ignore
+from docker.models import containers, images  # type: ignore
 
-from nfv_test_api import config
-from nfv_test_api.util import (
-    create_namespace,
-    get_mac,
-    list_interfaces,
-    list_net_ns,
-    move_interface,
-    run_in_ns,
-)
+LOGGER = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="function", autouse=True)
-def reset_config():
-    config.CONFIG = None
+@pytest.fixture(scope="session")
+def docker_client() -> docker.DockerClient:
+    return docker.from_env()
 
 
-def cleanup_network() -> None:
-    """Cleanup networking by removing tap devices and network namespace"""
-    for namespace in list_net_ns():
-        if namespace.startswith("test-"):
-            subprocess.check_output(["ip", "netns", "delete", namespace])
+@pytest.fixture(scope="session")
+def free_image_tag(docker_client: docker.DockerClient) -> Generator[str, None, None]:
+    """
+    This fixture ensures that we have a tag that we can use to build our image
+    and that the image will be deleted once we are done with it.
+    """
+    new_id = str(uuid.uuid4()) + ":tmp"
 
-    for link in list_interfaces():
-        if link.startswith("test"):
-            subprocess.check_output(["ip", "link", "delete", link])
+    try:
+        docker_client.images.remove(new_id)
+    except ImageNotFound:
+        pass
 
+    yield new_id
 
-def create_test_interface(name: str) -> str:
-    """Create an interface with the given name and return its mac address"""
-    subprocess.check_output(["ip", "tuntap", "add", name, "mode", "tap"])
-    return get_mac(name)
-
-
-@pytest.fixture
-def setup_networking():
-    """Create multiple tap devices and a matching configuration file for running tests"""
-    cleanup_network()
-
-    # create network devices
-    mac = {}
-    for i in range(0, 8):
-        mac[f"test{i}"] = create_test_interface(f"test{i}")
-
-    # set mac on test1
-    subprocess.check_output(["ip", "link", "set", "address", "fa:16:3e:31:c8:d8", "dev", "test7"])
-
-    # create network namespaces
-    for i in range(0, 5):
-        create_namespace(f"test-ns-{i}")
-
-    # move interfaces into the namespace
-    move_interface("test-ns-1", "test0", "eth0")
-    move_interface("test-ns-2", "test1", "eth0")
-    move_interface("test-ns-2", "test2", "eth1")
-    move_interface("test-ns-3", "test3", "eth0")
-    move_interface("test-ns-3", "test4", "eth1")
-    move_interface("test-ns-3", "test5", "eth2")
-    move_interface("test-ns-4", "test6", "eth0")
-
-    # set an ip on test 6
-    run_in_ns("test-ns-4", ["ip", "link", "set", "up", "dev", "eth0"])
-    run_in_ns("test-ns-4", ["ip", "address", "add", "192.0.2.1/24", "dev", "eth0"])
-
-    yield
-
-    cleanup_network()
+    try:
+        docker_client.images.remove(new_id)
+    except ImageNotFound:
+        pass
 
 
-@pytest.fixture
-def pre_post_cleanup():
-    cleanup_network()
-    yield
-    cleanup_network()
+@pytest.fixture(scope="session")
+def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) -> Generator[images.Image, None, None]:
+    """
+    This fixture builds a container image containing the nfv-test-api server.
+    """
+    docker_client.images.build(
+        path=os.getcwd(),
+        rm=True,
+        tag=free_image_tag,
+    )
+
+    image = docker_client.images.get(free_image_tag)
+    assert isinstance(image, images.Image)
+    return image
+
+
+@pytest.fixture(scope="function")
+def nfv_test_api_instance(docker_client: docker.DockerClient, nfv_test_api_image: images.Image) -> Generator[str, None, None]:
+    """
+    This fixture create and starts a container running the nfv-test-api, it waits for the api to be reachable
+    then returns the url it can be reached at.
+    """
+    container = docker_client.containers.run(
+        image=nfv_test_api_image.id,
+        remove=True,
+        detach=True,
+    )
+    assert isinstance(container, containers.Container)
+
+    # Waiting for the container to be started
+    while container.status == "created":
+        time.sleep(1)
+        container_info = docker_client.containers.get(container.id)
+        assert isinstance(container_info, containers.Container)
+        container = container_info
+
+    # Waiting for the server to be up
+    container_ip = ip_address(container.attrs["NetworkSettings"]["IPAddress"])
+    api = f"http://{container_ip}:8080/api/v2"
+
+    max_attempts = 10
+    while requests.get(f"{api}/docs", timeout=0.5).status_code != 200 and max_attempts > 0:
+        time.sleep(1)
+        max_attempts -= 1
+
+    if max_attempts == 0:
+        raise RuntimeError("Failed to start server")
+
+    yield api
+
+    container.kill()
+    try:
+        container.wait(condition="removed")
+    except NotFound:
+        # The container is already removed
+        pass

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nfv-test-api"
-version = "2.0.0"
+version = "2.0.1"
 description = "API for testing network functions."
 authors = ["Inmanta <code@inmanta.com>"]
 license = "Apache-2.0"
@@ -8,6 +8,9 @@ include=["misc/*"]
 packages = [
     { include = "nfv_test_api", from = "src" },
 ]
+
+[tool.poetry.plugins.console_scripts]
+nfv-test-api = "nfv_test_api.main:main"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
@@ -29,6 +32,9 @@ mypy = "*"
 lxml = "*"
 pytest-flask = "^1.0.0"
 inmanta-dev-dependencies = {extras = ["module"], version = "^1.59.0"}
+types-PyYAML = "^6.0.4"
+docker = "^5.0.3"
+types-requests = "^2.27.11"
 
 [tool.black]
 line-length = 128

@@ -15,32 +15,12 @@
 """
 import logging
 
-import click  # type: ignore
-from flask import Flask  # type: ignore
-from flask_cors import CORS  # type: ignore
-
-from nfv_test_api.config import get_config
-from nfv_test_api.v2 import blueprint as controllers
-
-app = Flask(__name__)
-app.simulate = False
-CORS(app)
-app.config["RESTPLUS_MASK_SWAGGER"] = False
-app.register_blueprint(controllers)
-
-# Notes:
-#   * Static content available on /static
-
+import requests
 
 LOGGER = logging.getLogger(__name__)
 
 
-@click.command()
-@click.option("--config", help="The configuration file to use")
-def main(config):
-    cfg = get_config(config)
-    app.run(host=cfg.host, port=cfg.port)
-
-
-if __name__ == "__main__":
-    main()
+def test_get_interfaces(nfv_test_api_instance: str) -> None:
+    # Get all the interfaces of the container
+    response = requests.get(f"{nfv_test_api_instance}/interfaces")
+    response.raise_for_status()
