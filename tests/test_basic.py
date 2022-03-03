@@ -20,7 +20,7 @@ import requests
 LOGGER = logging.getLogger(__name__)
 
 
-def test_get_interfaces(nfv_test_api_instance: str) -> None:
+def test_get_interfaces(nfv_test_api_endpoint: str) -> None:
     # Get all the interfaces of the container
-    response = requests.get(f"{nfv_test_api_instance}/interfaces")
+    response = requests.get(f"{nfv_test_api_endpoint}/interfaces")
     response.raise_for_status()

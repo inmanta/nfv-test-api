@@ -17,7 +17,6 @@ from enum import Enum
 from ipaddress import IPv4Address, IPv4Interface, IPv6Address, IPv6Interface
 from typing import List, Optional, Union
 
-from pydantic import BaseModel
 from typing_extensions import Literal
 
 from .base_model import IpBaseModel
@@ -93,7 +92,7 @@ class InterfaceState(str, Enum):
     LOWERLAYERDOWN = "LOWERLAYERDOWN"
 
 
-class InterfaceCreate(BaseModel):
+class InterfaceCreate(IpBaseModel):
     """
     Input schema for creating an interface
     """
@@ -104,10 +103,11 @@ class InterfaceCreate(BaseModel):
     address: Optional[Union[IPv4Interface, IPv6Interface]]
     broadcast: Optional[Union[IPv4Address, IPv6Address]]
     type: LinkInfo.Kind = LinkInfo.Kind.VETH
+    peer: Optional[SafeName]  # type: ignore
     slave_interfaces: Optional[List[SafeName]]  # type: ignore
 
 
-class InterfaceUpdate(BaseModel):
+class InterfaceUpdate(IpBaseModel):
     """
     Input schema for updating an interface.
 
