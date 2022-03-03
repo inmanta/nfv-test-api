@@ -15,8 +15,6 @@
 """
 from typing import Optional
 
-from pydantic import BaseModel
-
 from .base_model import IpBaseModel
 from .common import SafeName
 

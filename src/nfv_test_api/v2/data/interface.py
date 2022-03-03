@@ -17,7 +17,6 @@ from enum import Enum
 from ipaddress import IPv4Address, IPv4Interface, IPv6Address, IPv6Interface
 from typing import List, Optional, Union
 
-from pydantic import BaseModel
 from typing_extensions import Literal
 
 from .base_model import IpBaseModel
@@ -104,6 +103,7 @@ class InterfaceCreate(IpBaseModel):
     address: Optional[Union[IPv4Interface, IPv6Interface]]
     broadcast: Optional[Union[IPv4Address, IPv6Address]]
     type: LinkInfo.Kind = LinkInfo.Kind.VETH
+    peer: Optional[SafeName]  # type: ignore
     slave_interfaces: Optional[List[SafeName]]  # type: ignore
 
 

@@ -15,7 +15,6 @@
 """
 import logging
 import os
-import subprocess
 import threading
 import time
 import uuid
@@ -74,7 +73,9 @@ def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) 
 
 
 @pytest.fixture(scope="function")
-def nfv_test_api_instance(docker_client: docker.DockerClient, nfv_test_api_image: images.Image) -> Generator[containers.Container, None, None]:
+def nfv_test_api_instance(
+    docker_client: docker.DockerClient, nfv_test_api_image: images.Image
+) -> Generator[containers.Container, None, None]:
     """
     This fixture create and starts a container running the nfv-test-api and returns it api object.
     """
