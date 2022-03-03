@@ -24,32 +24,29 @@ from nfv_test_api.v2.data.namespace import NamespaceCreate, Namespace
 LOGGER = logging.getLogger(__name__)
 
 
-def test_25_move_interface(nfv_test_api_instance: str) -> None:
+def test_25_move_interface(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     # Create a new interface
     new_interface = InterfaceCreate(
         name="test",
-        address=IPv4Interface("255.255.255.1/2"),
     )
-    response = requests.post(f"{nfv_test_api_instance}/interfaces", json=new_interface.json_dict())
+    response = requests.post(f"{nfv_test_api_endpoint}/interfaces", json=new_interface.json_dict())
     response.raise_for_status()
 
     created_interface = Interface(**response.json())
 
-    # Bring the interface up
+    # Set the interface address and bring the interface up
     patch_interface = InterfaceUpdate(
+        addresses=[IPv4Interface("192.168.15.2/24")],
         state=InterfaceState.UP,
     )
-    response = requests.patch(f"{nfv_test_api_instance}/interfaces/{created_interface.if_name}", json=patch_interface.json_dict())
+    response = requests.patch(f"{nfv_test_api_endpoint}/interfaces/{created_interface.if_name}", json=patch_interface.json_dict())
     response.raise_for_status()
-
-    updated_interface = Interface(**response.json())
-    assert updated_interface.oper_state == patch_interface.state
 
     # Create a new namespace
     new_namespace = NamespaceCreate(
         name="test",
     )
-    response = requests.post(f"{nfv_test_api_instance}/namespaces", json=new_namespace.json_dict())
+    response = requests.post(f"{nfv_test_api_endpoint}/namespaces", json=new_namespace.json_dict())
     response.raise_for_status()
 
     created_namespace = Namespace(**response.json())
@@ -58,5 +55,5 @@ def test_25_move_interface(nfv_test_api_instance: str) -> None:
     patch_interface = InterfaceUpdate(
         netns=created_namespace.ns_id,
     )
-    response = requests.patch(f"{nfv_test_api_instance}/interfaces/{created_interface.if_name}", json=patch_interface.json_dict())
+    response = requests.patch(f"{nfv_test_api_endpoint}/interfaces/{created_interface.if_name}", json=patch_interface.json_dict())
     response.raise_for_status()
