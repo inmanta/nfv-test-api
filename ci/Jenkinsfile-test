@@ -51,7 +51,7 @@ pipeline {
             steps {
                 sh '''
                     source env/bin/activate
-                    pytest -vs --junitxml=junit.xml
+                    pytest -vs --log-cli-level=DEBUG --junitxml=junit.xml
                 '''
             }
         }
