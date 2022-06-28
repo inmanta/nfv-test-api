@@ -69,7 +69,7 @@ def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) 
         )
     except docker.errors.BuildError as e:
         # Ensure that the build log is outputted on failure to allow troubleshooting the issue
-        LOGGER.error(f"Docker build log:\n%s", e.build_log)
+        LOGGER.error("Docker build log:\n%s", e.build_log)
         raise e
 
     image = docker_client.images.get(free_image_tag)
