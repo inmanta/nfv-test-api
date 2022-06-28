@@ -61,11 +61,16 @@ def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) 
     """
     This fixture builds a container image containing the nfv-test-api server.
     """
-    docker_client.images.build(
-        path=os.getcwd(),
-        rm=True,
-        tag=free_image_tag,
-    )
+    try:
+        docker_client.images.build(
+            path=os.getcwd(),
+            rm=True,
+            tag=free_image_tag,
+        )
+    except docker.errors.BuildError as e:
+        # Ensure that the build log is outputted on failure to allow troubleshooting the issue
+        LOGGER.error(f"Docker build log:\n%s", e.build_log)
+        raise e
 
     image = docker_client.images.get(free_image_tag)
     assert isinstance(image, images.Image)
