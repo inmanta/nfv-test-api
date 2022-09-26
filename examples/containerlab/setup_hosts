@@ -1,0 +1,2 @@
+sudo docker exec -ti clab-bonding-R1 bash config_bounding 10.0.1.1/30 
+sudo docker exec -ti clab-bonding-R2 bash config_bounding 10.0.1.2/30 
