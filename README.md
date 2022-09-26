@@ -33,7 +33,7 @@ source ./env/bin/activate
 or (if you have virtualenvwrapper)
 
 ```
-mkvirtualenv env
+mkvirtualenv -p 3.9 env
 workon env
 ```
 
