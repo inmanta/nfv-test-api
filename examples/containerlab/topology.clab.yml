@@ -4,18 +4,14 @@ mgmt:
   ipv4_subnet: 10.0.0.0/24
 topology:
   nodes:
-    R1:
+    C1:
       kind: linux
-      image: nfv-test-api:latest
+      image: inmantaci/nfv-test-api:latest
       mgmt_ipv4: 10.0.0.2
-      binds:
-        - ./scripts/:/opt/app-root/src/
-    R2:
+    C2:
       kind: linux
-      image: nfv-test-api:latest
+      image: inmantaci/nfv-test-api:latest
       mgmt_ipv4: 10.0.0.3
-      binds:
-        - ./scripts/:/opt/app-root/src/
   links:
-    - endpoints: ["R1:eth1", "R2:eth1"]
-    - endpoints: ["R1:eth2", "R2:eth2"]
+    - endpoints: ["C1:eth1", "C2:eth1"]
+    - endpoints: ["C1:eth2", "C2:eth2"]

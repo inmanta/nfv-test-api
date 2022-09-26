@@ -57,6 +57,12 @@ poetry install
 python3 -m nfv_test_api.main --config config.yaml
 ```
 
+You can see the swagger interface at this url :
+
+```
+http://0.0.0.0:8080/api/v2/docs
+```
+
 ### Or start the server within container
 
 We first need to build the docker image (make sure your current directory is the root of the repo, where the dockerfile is located):
@@ -65,12 +71,18 @@ We first need to build the docker image (make sure your current directory is the
 sudo docker build -t nfv-test-api .
 ```
 
-To run a container with the image:
+To run a container with the image, make sure you use the privileged flag to be able to use all the functionalities of the container:
 
 ```
-sudo docker run -d nfv-test-api
+sudo docker run -d --name client --privileged nfv-test-api
 ```
 
 The server will automatically start with the container.
+
+To get the ip address of the container :
+
+```
+docker inspect client -f "{{ .NetworkSettings.Networks.bridge.IPAddress }}"
+```
 
 You can also use the image with containerlab as done in the `examples/containerlab` folder.

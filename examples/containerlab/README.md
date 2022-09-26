@@ -11,14 +11,6 @@ Deploy the topology:
 sudo clab deploy -t topology.clab.yml
 ```
 
-## Manual setup
-
-The `setup_hosts` script configure the bonding automatically, and assign an ip address for the `bond0` interface on each side.
-
-```
-bash setup_hosts
-```
-
 ## Setup through API
 
 The following instructions should be done for both container `R1` and `R2`.
@@ -42,6 +34,14 @@ Then create a new interface for the POST method `/interfaces` with the following
   ]
 }
 ```
+
+You can also directly curl the following URL to post the same request :
+
+```
+curl -X POST "http://CONTAINER_IP:8080/api/v2/interfaces" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{\"name\":\"bond0\",\"parent_dev\":null,\"mtu\":1500,\"type\":\"bond\",\"peer\":null,\"slave_interfaces\":[\"eth1\",\"eth2\"]}"
+```
+
+If the request succeeded, you should see the json response with your interface.
 
 You still need to assign an ip address to the `bond0` interface, which can be done with the PATCH method `/interfaces/{name}`.
 
