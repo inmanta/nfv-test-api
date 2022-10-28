@@ -47,3 +47,10 @@ Start the server in simulation mode:
 ```
 python3 -m nfv_test_api.main --config config.yaml --simulate
 ```
+
+## Use the testing fixtures somewhere else
+
+The package contains on the side of the server source, a few helper fixtures, in the package named `pytest_nfv_test_api`.  To install all the dependencies required by this package, install the `nfv-test-api` python package with the `pytest` extra option:
+```
+pip install nfv-test-api[pytest]
+```
