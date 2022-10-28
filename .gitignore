@@ -7,3 +7,5 @@ dist
 .venv
 .vscode
 mypy/
+examples/containerlab/.topology.clab.yml.bak
+examples/containerlab/clab-bonding/

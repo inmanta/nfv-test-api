@@ -12,9 +12,9 @@ The process requires iproute2 with full json support (>=4.15) and needs to run a
 
 For testing purposes the service can also be started with the simulate option. The API will then use the configuration in the config file to create API responses without actually making changes to the system. In simulation mode, only a ping to 1.1.1.1 will return a result.
 
-The test api requires python 3.6 or higher.
+The test api works with python 3.9, python 3.10 is not supported.
 
-## Developing and simulation mode
+## Installation
 
 Clone the source:
 
@@ -30,6 +30,13 @@ python3 -m venv env
 source ./env/bin/activate
 ```
 
+or (if you have virtualenvwrapper)
+
+```
+mkvirtualenv -p 3.9 env
+workon env
+```
+
 Install poetry
 
 ```
@@ -42,11 +49,43 @@ Install all dependencies and the project:
 poetry install
 ```
 
-Start the server in simulation mode:
+## Start the server
+
+### Either start the server directly on your host
 
 ```
-python3 -m nfv_test_api.main --config config.yaml --simulate
+python3 -m nfv_test_api.main --config config.yaml
 ```
+
+You can see the swagger interface at this url :
+
+```
+http://0.0.0.0:8080/api/v2/docs
+```
+
+### Or start the server within container
+
+We first need to build the docker image (make sure your current directory is the root of the repo, where the dockerfile is located):
+
+```
+sudo docker build -t nfv-test-api .
+```
+
+To run a container with the image, make sure you use the privileged flag to be able to use all the functionalities of the container:
+
+```
+sudo docker run -d --name client --privileged nfv-test-api
+```
+
+The server will automatically start with the container.
+
+To get the ip address of the container :
+
+```
+docker inspect client -f "{{ .NetworkSettings.Networks.bridge.IPAddress }}"
+```
+
+You can also use the image with containerlab as done in the `examples/containerlab` folder.
 
 ## Use the testing fixtures somewhere else
 
