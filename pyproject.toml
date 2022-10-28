@@ -7,6 +7,7 @@ license = "Apache-2.0"
 include=["misc/*"]
 packages = [
     { include = "nfv_test_api", from = "src" },
+    { include = "pytest_nfv_test_api", from = "src" },
 ]
 
 [tool.poetry.plugins.console_scripts]
@@ -27,13 +28,22 @@ apispec = "^5.1.1"
 requests = "^2.23.0"
 pydantic = "^1.8.2"
 
+docker = { version = "^5.0.3", optional = true }
+MarkupSafe = "2.0.1"
+
+[tool.poetry.extras]
+pytest = ["docker"]
+
+[tool.poetry.plugins.pytest11]
+nfv_test_api = "pytest_nfv_test_api"
+
 [tool.poetry.dev-dependencies]
 mypy = "*"
 lxml = "*"
 pytest-flask = "^1.0.0"
-inmanta-dev-dependencies = {extras = ["module"], version = "^1.59.0"}
+inmanta-dev-dependencies = { extras = ["module"], version = "^1.59.0"}
+nfv-test-api = { extras = ["pytest"], path = ".", develop = true }
 types-PyYAML = "^6.0.4"
-docker = "^5.0.3"
 types-requests = "^2.27.11"
 
 [tool.black]
