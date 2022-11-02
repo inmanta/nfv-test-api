@@ -29,10 +29,11 @@ requests = "^2.23.0"
 pydantic = "^1.8.2"
 
 docker = { version = "^5.0.3", optional = true }
+pytest = { optional = true }
 MarkupSafe = "2.0.1"
 
 [tool.poetry.extras]
-pytest = ["docker"]
+pytest = ["docker", "pytest"]
 
 [tool.poetry.plugins.pytest11]
 nfv_test_api = "pytest_nfv_test_api"
