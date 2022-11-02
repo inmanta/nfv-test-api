@@ -63,7 +63,7 @@ def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) 
     """
     try:
         docker_client.images.build(
-            path=os.getcwd(),
+            path=os.path.realpath(os.path.join(__file__, "../../..")),
             rm=True,
             tag=free_image_tag,
         )
