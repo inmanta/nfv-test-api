@@ -29,7 +29,7 @@ requests = "^2.23.0"
 pydantic = "^1.8.2"
 
 docker = { version = "^5.0.3", optional = true }
-pytest = { optional = true }
+pytest = { version = "^6.2.5", optional = true }
 MarkupSafe = "2.0.1"
 
 [tool.poetry.extras]
