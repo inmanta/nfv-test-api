@@ -8,6 +8,7 @@ pipeline {
     environment {
         REPO_NAME="inmanta-nfv-test-api"
         PIP_INDEX_URL='https://artifacts.internal.inmanta.com/inmanta/dev'
+        PYTHON_KEYRING_BACKEND = 'keyring.backends.null.Keyring'
     }
 
     options {
