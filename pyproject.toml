@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "nfv-test-api"
+name = "inmanta-nfv-test-api"
 version = "2.1.0"
 description = "API for testing network functions."
 authors = ["Inmanta <code@inmanta.com>"]
@@ -43,7 +43,7 @@ mypy = "*"
 lxml = "*"
 pytest-flask = "^1.0.0"
 inmanta-dev-dependencies = { extras = ["module"], version = "^1.59.0"}
-nfv-test-api = { extras = ["pytest"], path = ".", develop = true }
+inmanta-nfv-test-api = { extras = ["pytest"], path = ".", develop = true }
 types-PyYAML = "^6.0.4"
 types-requests = "^2.27.11"
 
