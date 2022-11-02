@@ -24,7 +24,7 @@ from typing import Generator
 import docker  # type: ignore
 import pytest
 import requests
-from docker.errors import ImageNotFound, NotFound  # type: ignore
+import docker.errors  # type: ignore
 from docker.models import containers, images  # type: ignore
 
 LOGGER = logging.getLogger(__name__)
@@ -47,19 +47,19 @@ def free_image_tag(docker_client: docker.DockerClient) -> Generator[str, None, N
 
     try:
         docker_client.images.remove(new_id)
-    except ImageNotFound:
+    except docker.errors.ImageNotFound:
         pass
 
     yield new_id
 
     try:
         docker_client.images.remove(new_id)
-    except ImageNotFound:
+    except docker.errors.ImageNotFound:
         pass
 
 
 @pytest.fixture(scope="session")
-def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) -> Generator[images.Image, None, None]:
+def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) -> images.Image:
     """
     This fixture builds a container image containing the nfv-test-api server.
     """
@@ -106,7 +106,7 @@ def nfv_test_api_instance(
     container.kill()
     try:
         container.wait(condition="removed")
-    except NotFound:
+    except docker.errors.NotFound:
         # The container is already removed
         pass
 
