@@ -22,9 +22,9 @@ from ipaddress import ip_address
 from typing import Generator
 
 import docker  # type: ignore
+import docker.errors  # type: ignore
 import pytest
 import requests
-import docker.errors  # type: ignore
 from docker.models import containers, images  # type: ignore
 
 LOGGER = logging.getLogger(__name__)
