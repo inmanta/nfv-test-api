@@ -14,7 +14,7 @@
    limitations under the License.
 """
 import logging
-import os
+import pathlib
 import threading
 import time
 import uuid
@@ -65,7 +65,7 @@ def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) 
     """
     try:
         docker_client.images.build(
-            path=os.path.realpath(os.path.join(__file__, "../../..")),
+            path=str(pathlib.Path(__file__).parent.parent.parent),
             rm=True,
             tag=free_image_tag,
         )
