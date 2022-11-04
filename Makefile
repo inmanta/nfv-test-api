@@ -21,4 +21,5 @@ pep8:
 .PHONY: mypy
 mypy:
 	MYPYPATH=src python -m mypy --html-report mypy -p nfv_test_api
+	MYPYPATH=src python -m mypy --html-report mypy -p pytest_nfv_test_api
 	MYPYPATH=. python -m mypy --html-report mypy tests

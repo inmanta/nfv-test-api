@@ -86,3 +86,12 @@ docker inspect client -f "{{ .NetworkSettings.Networks.bridge.IPAddress }}"
 ```
 
 You can also use the image with containerlab as done in the `examples/containerlab` folder.
+
+## Use the testing fixtures somewhere else
+
+The package contains on the side of the server source, a few helper fixtures, in the package named `pytest_nfv_test_api`.  To install all the dependencies required by this package, install the `nfv-test-api` python package with the `pytest` extra option:
+```
+pip install inmanta-nfv-test-api[pytest]
+```
+
+The fixture `nfv_test_api_endpoint` can then be used to spin up a container running the nfv-test-api.  The fixture returns a string, which will be the base api endpoint, it has the form: `http://<container-ip>:8080/api/v2/`.

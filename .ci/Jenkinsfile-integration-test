@@ -1,0 +1,109 @@
+pipeline {
+    agent any
+
+    triggers {
+        cron(BRANCH_NAME == "master" ? "H H(2-5) * * *": "")
+    }
+
+    environment {
+        REPO_NAME="inmanta-nfv-test-api"
+        PIP_INDEX_URL='https://artifacts.internal.inmanta.com/inmanta/dev'
+        PYTHON_KEYRING_BACKEND = 'keyring.backends.null.Keyring'
+    }
+
+    options {
+        disableConcurrentBuilds()
+        checkoutToSubdirectory(env.REPO_NAME)
+        skipDefaultCheckout()
+    }
+
+    stages {
+
+        stage('Setup') {
+            steps {
+                deleteDir()
+                dir(env.REPO_NAME) {
+                    checkout scm
+                    sh '''
+                    rm -rf ${WORKSPACE}/env
+                    python3 -m venv ${WORKSPACE}/env
+                    . ${WORKSPACE}/env/bin/activate
+                    make install
+                    '''
+                }
+            }
+        }
+
+        stage('Code linting') {
+            steps {
+                dir(env.REPO_NAME) {
+                    sh'''
+                    . ${WORKSPACE}/env/bin/activate
+                    make pep8
+                    '''
+                }
+            }
+        }
+
+        stage('Code static typing check') {
+            steps {
+                dir(env.REPO_NAME) {
+                    sh'''
+                    . ${WORKSPACE}/env/bin/activate
+                    make mypy
+                    '''
+                }
+            }
+        }
+
+        stage('Tests') {
+            steps {
+                dir(env.REPO_NAME) {
+                    sh '''
+                    . ${WORKSPACE}/env/bin/activate
+                    pytest \
+                        --junitxml=junit.xml \
+                        --log-cli-level DEBUG \
+                        --basetemp=${WORKSPACE}/tmp \
+                        -s -vvv \
+                        tests
+                    '''
+                    junit "junit.xml"
+                }
+            }
+        }
+
+        stage('Publish to devpi') {
+            when {
+                expression { BRANCH_NAME == 'master' }
+            }
+            steps {
+                dir(env.REPO_NAME) {
+                    withCredentials([
+                    usernamePassword(
+                        credentialsId: 'devpi-user',
+                        passwordVariable: 'DEVPI_PASS',
+                        usernameVariable: 'DEVPI_USER'
+                    )
+                    ]) {
+                    sh '''
+                        ${WORKSPACE}/env/bin/pip3 install -U devpi-client
+                        ${WORKSPACE}/env/bin/devpi use https://artifacts.internal.inmanta.com/inmanta/dev
+                        ${WORKSPACE}/env/bin/devpi login ${DEVPI_USER} --password=${DEVPI_PASS}
+                        rm -f dist/*
+                        ${WORKSPACE}/env/bin/python3 -m poetry build
+                        ${WORKSPACE}/env/bin/devpi upload dist/*
+                        ${WORKSPACE}/env/bin/devpi logoff
+                        '''
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            deleteDir()
+        }
+    }
+}

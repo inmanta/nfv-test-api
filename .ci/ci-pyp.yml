@@ -1,0 +1,4 @@
+pipeline_template: ci/inmanta-tools/Jenkinsfile-pyp
+repo_name: inmanta-nfv-test-api
+public: true
+build_system: generic
