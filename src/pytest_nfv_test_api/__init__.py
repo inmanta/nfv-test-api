@@ -32,11 +32,18 @@ __version__ = "2.1.0"
 
 @pytest.fixture(scope="session")
 def docker_client() -> docker.DockerClient:
+    """
+    Build a docker client object.
+    """
     return docker.from_env()
 
 
 @pytest.fixture(scope="session")
 def nfv_test_api_image(docker_client: docker.DockerClient) -> images.Image:
+    """
+    Pull the latest version of the nfv-test-api container published on dockerhub
+    and return an object representing it.
+    """
     return docker_client.images.pull("inmantaci/nfv-test-api")
 
 
@@ -97,7 +104,7 @@ def nfv_test_api_logs(
     nfv_test_api_instance: containers.Container, nfv_test_api_endpoint: str
 ) -> typing.Generator[None, None, None]:
     """
-    Starts a thread that will log all the logs from the container
+    Starts a thread that will log all the logs from the container.
     """
     stop = False
 
