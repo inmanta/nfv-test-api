@@ -14,12 +14,10 @@
    limitations under the License.
 """
 import logging
-import pathlib
 import threading
 import time
-import uuid
+import typing
 from ipaddress import ip_address
-from typing import Generator
 
 import docker  # type: ignore
 import docker.errors  # type: ignore
@@ -38,51 +36,14 @@ def docker_client() -> docker.DockerClient:
 
 
 @pytest.fixture(scope="session")
-def free_image_tag(docker_client: docker.DockerClient) -> Generator[str, None, None]:
-    """
-    This fixture ensures that we have a tag that we can use to build our image
-    and that the image will be deleted once we are done with it.
-    """
-    new_id = str(uuid.uuid4()) + ":tmp"
-
-    try:
-        docker_client.images.remove(new_id)
-    except docker.errors.ImageNotFound:
-        pass
-
-    yield new_id
-
-    try:
-        docker_client.images.remove(new_id)
-    except docker.errors.ImageNotFound:
-        pass
-
-
-@pytest.fixture(scope="session")
-def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) -> images.Image:
-    """
-    This fixture builds a container image containing the nfv-test-api server.
-    """
-    try:
-        docker_client.images.build(
-            path=str(pathlib.Path(__file__).parent.parent.parent),
-            rm=True,
-            tag=free_image_tag,
-        )
-    except docker.errors.BuildError as e:
-        # Ensure that the build log is outputted on failure to allow troubleshooting the issue
-        LOGGER.error("Docker build log:\n%s", e.build_log)
-        raise e
-
-    image = docker_client.images.get(free_image_tag)
-    assert isinstance(image, images.Image)
-    return image
+def nfv_test_api_image(docker_client: docker.DockerClient) -> images.Image:
+    return docker_client.images.pull("inmantaci/nfv-test-api")
 
 
 @pytest.fixture(scope="function")
 def nfv_test_api_instance(
     docker_client: docker.DockerClient, nfv_test_api_image: images.Image
-) -> Generator[containers.Container, None, None]:
+) -> typing.Generator[containers.Container, None, None]:
     """
     This fixture create and starts a container running the nfv-test-api and returns it api object.
     """
@@ -132,7 +93,9 @@ def nfv_test_api_endpoint(nfv_test_api_instance: containers.Container) -> str:
 
 
 @pytest.fixture(scope="function")
-def nfv_test_api_logs(nfv_test_api_instance: containers.Container, nfv_test_api_endpoint: str) -> Generator[None, None, None]:
+def nfv_test_api_logs(
+    nfv_test_api_instance: containers.Container, nfv_test_api_endpoint: str
+) -> typing.Generator[None, None, None]:
     """
     Starts a thread that will log all the logs from the container
     """
