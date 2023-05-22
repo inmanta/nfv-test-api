@@ -30,9 +30,6 @@ pydantic = "^1.8.2"
 
 MarkupSafe = "2.0.1"
 
-[tool.poetry.extras]
-pytest = ["docker", "pytest"]
-
 [tool.poetry.plugins.pytest11]
 nfv_test_api = "pytest_nfv_test_api"
 
