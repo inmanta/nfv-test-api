@@ -16,16 +16,18 @@
 from typing import Any, Dict, Optional
 
 import yaml
+import pathlib
 from pydantic import BaseModel
 
 
 class Config(BaseModel):
     host: str = "127.0.0.1"
     port: int = 8080
+    gnb_config_folder: str = "gnb_config/"
+    gnb_log_folder: str = "gnb_log/"
 
 
 CONFIG = None
-
 
 def get_config(config_file: Optional[str] = None, config_dict: Optional[Dict[str, Any]] = None) -> Config:
     global CONFIG
@@ -39,4 +41,13 @@ def get_config(config_file: Optional[str] = None, config_dict: Optional[Dict[str
             config_dict = yaml.safe_load(stream)
 
     CONFIG = Config(**config_dict)
+        
+    gnb_config_folder = pathlib.Path(CONFIG.gnb_config_folder)
+    if not gnb_config_folder.exists():
+        gnb_config_folder.mkdir()
+
+    gnb_log_folder = pathlib.Path(CONFIG.gnb_log_folder)
+    if not gnb_log_folder.exists():
+        gnb_log_folder.mkdir()
+        
     return CONFIG
