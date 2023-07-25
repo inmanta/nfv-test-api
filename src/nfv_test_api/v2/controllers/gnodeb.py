@@ -109,7 +109,7 @@ class OneGNodeB(Resource):
 
     @namespace.response(HTTPStatus.OK, "The gNodeB config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND, "The gNodeB config could not be found.")
-    @namespace.response(HTTPStatus.CONFLICT, "The gNodeB client should be stopped before removing config.")  # TODO
+    @namespace.response(HTTPStatus.CONFLICT, "The gNodeB client should be stopped before removing config.")
     def delete(self, nci: str):
         """
         Delete a gNodeB configuration.

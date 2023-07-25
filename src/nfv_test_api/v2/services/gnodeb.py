@@ -136,6 +136,12 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
     def delete(self, identifier: str) -> None:
         existing_gnb = self.get_one(identifier)
 
+        try:
+            self.status(identifier)
+            raise Conflict(f"The gNodeB client {identifier} is still running !")
+        except NotFound:
+            pass
+
         filename = "gnb_" + identifier + ".yml"
         config_file = pathlib.Path(Config().gnb_config_folder + filename)
         try:
