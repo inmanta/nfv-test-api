@@ -14,7 +14,6 @@
    limitations under the License.
 """
 from http import HTTPStatus
-from typing import Dict
 
 from flask import request  # type: ignore
 from flask_restplus import Namespace, Resource  # type: ignore
@@ -24,10 +23,7 @@ from werkzeug.exceptions import BadRequest  # type: ignore
 from nfv_test_api.host import Host
 from nfv_test_api.v2.controllers.common import add_model_schema
 from nfv_test_api.v2.data.common import InputSafeName
-from nfv_test_api.v2.data.gnodeb import (
-    GNodeB,
-    GNodeBCreate,
-)
+from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate
 from nfv_test_api.v2.services.gnodeb import GNodeBService, GNodeBServiceHandler
 
 namespace = Namespace(name="gnodeb", description="Basic gnodeb management")
@@ -35,6 +31,7 @@ namespace = Namespace(name="gnodeb", description="Basic gnodeb management")
 gnodeb_model = add_model_schema(namespace, GNodeB)
 gnodeb_create_model = add_model_schema(namespace, GNodeBCreate)
 gnodeb_service_handler = GNodeBServiceHandler()
+
 
 @namespace.route("")
 @namespace.response(
@@ -57,7 +54,7 @@ class AllGNodeB(Resource):
         Get all gNodeBs
         """
         return [gnodeb.json_dict() for gnodeb in self.gnb_service.get_all()], HTTPStatus.OK
-    
+
     @namespace.expect(gnodeb_create_model)
     @namespace.response(HTTPStatus.CREATED, "A new gNodeB configuration has been created", gnodeb_model)
     @namespace.response(HTTPStatus.CONFLICT, "Another gNodeB with the same nci already exists")
@@ -110,10 +107,9 @@ class OneGNodeB(Resource):
 
         return self.gnb_service.get_one(nci).json_dict(exclude_none=True), HTTPStatus.OK
 
-
     @namespace.response(HTTPStatus.OK, "The gNodeB config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND, "The gNodeB config could not be found.")
-    @namespace.response(HTTPStatus.CONFLICT, "The gNodeB client should be stopped before removing config.") # TODO
+    @namespace.response(HTTPStatus.CONFLICT, "The gNodeB client should be stopped before removing config.")  # TODO
     def delete(self, nci: str):
         """
         Delete a gNodeB configuration.
@@ -129,6 +125,7 @@ class OneGNodeB(Resource):
 
         self.gnb_service.delete(nci)
 
+
 @namespace.route("/<nci>/start")
 @namespace.param("nci", description="The radio cell identifier, identify the cell of the gNodeB.")
 @namespace.response(
@@ -136,11 +133,10 @@ class OneGNodeB(Resource):
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class StartGNodeB(Resource):
-
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.gnb_service = GNodeBService(Host(), gnodeb_service_handler)
-    
+
     @namespace.response(HTTPStatus.OK, "gNodeB started", gnodeb_model)
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
     def post(self, nci: str):
@@ -154,6 +150,7 @@ class StartGNodeB(Resource):
 
         return HTTPStatus.OK
 
+
 @namespace.route("/<nci>/stop")
 @namespace.param("nci", description="The radio cell identifier, identify the cell of the gNodeB.")
 @namespace.response(
@@ -161,11 +158,10 @@ class StartGNodeB(Resource):
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class StopGNodeB(Resource):
-
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.gnb_service = GNodeBService(Host(), gnodeb_service_handler)
-    
+
     @namespace.response(HTTPStatus.OK, "gNodeB stopped", gnodeb_model)
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
     def post(self, nci: str):
@@ -179,6 +175,7 @@ class StopGNodeB(Resource):
 
         return HTTPStatus.OK
 
+
 @namespace.route("/<nci>/status")
 @namespace.param("nci", description="The radio cell identifier, identify the cell of the gNodeB.")
 @namespace.response(
@@ -186,7 +183,6 @@ class StopGNodeB(Resource):
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class GNodeBStatus(Resource):
-
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.gnb_service = GNodeBService(Host(), gnodeb_service_handler)

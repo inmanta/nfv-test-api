@@ -14,41 +14,33 @@
    limitations under the License.
 """
 import logging
-import yaml
 import pathlib
-from typing import Any, Dict, List, Optional, Set, Union
 import subprocess
+from typing import Any, Dict, List, Optional, Union
 
 import pydantic
+import yaml
 from pydantic import ValidationError
-from werkzeug.exceptions import Conflict, NotFound, ServiceUnavailable  # type: ignore
+from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
-from nfv_test_api.host import Host
-from nfv_test_api.v2.data.common import CommandStatus
-from nfv_test_api.v2.data.gnodeb import (
-    GNodeB,
-    GNodeBCreate,
-    GNodeBUpdate,
-)
-from nfv_test_api.v2.services.base_service import BaseService, K
 from nfv_test_api.config import Config
+from nfv_test_api.host import Host
+from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBUpdate
+from nfv_test_api.v2.services.base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
+
 
 class GNodeBServiceHandler:
     def __init__(self) -> None:
         self.processes: Dict[subprocess.Popen] = {}
-    
-    def add(self, identifier: str) -> None:
-        config_file_path = Config().gnb_config_folder+"gnb_"+identifier+".yml"
-        command = [
-            "nr-gnb",
-            "-c",
-            config_file_path
-        ]
 
-        out_file_path = Config().gnb_log_folder+"gnb_"+identifier+".log"
-        out = open(out_file_path,"w")
+    def add(self, identifier: str) -> None:
+        config_file_path = Config().gnb_config_folder + "gnb_" + identifier + ".yml"
+        command = ["nr-gnb", "-c", config_file_path]
+
+        out_file_path = Config().gnb_log_folder + "gnb_" + identifier + ".log"
+        out = open(out_file_path, "w")
         self.processes[identifier] = subprocess.Popen(
             command,
             shell=False,
@@ -56,12 +48,13 @@ class GNodeBServiceHandler:
             stdout=out,
             stderr=out,
         )
-    
+
     def kill(self, identifier: str) -> None:
         if identifier in self.processes:
             self.processes[identifier].terminate()
             self.processes[identifier].wait()
             del self.processes[identifier]
+
 
 class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
     def __init__(self, host: Host, process_handler: GNodeBServiceHandler) -> None:
@@ -71,12 +64,12 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
     def get_one_raw(self, nci: Optional[str] = None, filename: Optional[str] = None) -> Dict:
         # Get gNodeB config using nci or directly the filename
         if not nci and not filename:
-            raise NotFound(f"Please specify either nci or filename to get the gNodeB config")
+            raise NotFound("Please specify either nci or filename to get the gNodeB config")
         elif nci:
-            filename = Config().gnb_config_folder+"gnb_"+nci+".yml"
+            filename = Config().gnb_config_folder + "gnb_" + nci + ".yml"
 
         try:
-            with open(filename, 'r') as stream:
+            with open(filename, "r") as stream:
                 try:
                     return yaml.safe_load(stream)
                 except yaml.YAMLError as e:
@@ -95,7 +88,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             configs.append(self.get_one_raw(filename=filename))
 
         return pydantic.parse_obj_as(List[Dict[str, Any]], configs)
-    
+
     def get_all(self) -> List[GNodeB]:
         gnodeb_list: List[GNodeB] = []
         for gnodeb_json in self.get_all_raw():
@@ -107,10 +100,8 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
                 LOGGER.error(f"Failed to parse a gNodeB configuration : {gnodeb_json}\n" f"{str(e)}")
 
         return gnodeb_list
-    
-    def get_one_or_default(
-        self, identifier: str, default: Optional[K] = None
-    ) -> Union[GNodeB, None, K]:
+
+    def get_one_or_default(self, identifier: str, default: Optional[K] = None) -> Union[GNodeB, None, K]:
         raw_gnb = self.get_one_raw(nci=identifier)
         if raw_gnb is None:
             return default
@@ -123,7 +114,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         gnb = self.get_one_or_default(identifier)
         if not gnb:
             raise NotFound(f"Could not find gNodeB with nci {identifier}")
-        
+
         return gnb
 
     def create(self, o: GNodeBCreate) -> GNodeB:
@@ -131,9 +122,9 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         if existing_gnb:
             raise Conflict("A gNodeB config with this nci already exists")
 
-        filename = "gnb_"+o.nci+".yml"
+        filename = "gnb_" + o.nci + ".yml"
 
-        with open(Config().gnb_config_folder+filename, 'w') as fh:
+        with open(Config().gnb_config_folder + filename, "w") as fh:
             yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
 
         existing_gnb = self.get_one_or_default(o.nci)
@@ -145,8 +136,8 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
     def delete(self, identifier: str) -> None:
         existing_gnb = self.get_one(identifier)
 
-        filename = "gnb_"+identifier+".yml"
-        config_file = pathlib.Path(Config().gnb_config_folder+filename)
+        filename = "gnb_" + identifier + ".yml"
+        config_file = pathlib.Path(Config().gnb_config_folder + filename)
         try:
             config_file.unlink()
         except FileNotFoundError:
@@ -158,19 +149,19 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
 
     def start(self, identifier: str) -> None:
         # make sure the config exists
-        gnb = self.get_one(identifier)
+        self.get_one(identifier)
         self.process_handler.add(identifier)
 
     def stop(self, identifier: str) -> None:
         # make sure the config exists
-        gnb = self.get_one(identifier)
+        self.get_one(identifier)
         self.process_handler.kill(identifier)
 
     def status(self, identifier: str) -> Dict:
         """
-        To be able to execute command on a running node, 
-        we use nr-cli command with the name generated internally by UERANSIM. 
-        
+        To be able to execute command on a running node,
+        we use nr-cli command with the name generated internally by UERANSIM.
+
         The pattern is "UERANSIM-gnb-x-y-z" where:
         - x is the mcc
         - y is the mnc
@@ -179,7 +170,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             idLength = 32,
             nci (36 bits)   : 0000 0000 0000 0000 0000 0000 0100 0010 0001
                               ^                                     ^ ^  ^
-                              |                  gnbId              | | cellId |  
+                              |                  gnbId              | | cellId |
 
             // Splitted values are as below
             gnbId (32 bits) : 0000 0000 0000 0000 0000 0000 0100 0010 = 66 = z
@@ -195,17 +186,16 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         command = [
             "nr-cli",
             node_name,
-            "--exec", 
+            "--exec",
             "status",
         ]
 
         stdout, stderr = self.host.exec(command)
         if stderr:
             raise NotFound(f"Failed to fetch gNodeB status: {stderr}")
-        
-        log_filename = Config().gnb_log_folder+"gnb_"+identifier+".log"
-        with open(log_filename, 'r') as out:
-            stdout += "\n".join(out.readlines())
-        
-        return stdout
 
+        log_filename = Config().gnb_log_folder + "gnb_" + identifier + ".log"
+        with open(log_filename, "r") as out:
+            stdout += "\n".join(out.readlines())
+
+        return stdout

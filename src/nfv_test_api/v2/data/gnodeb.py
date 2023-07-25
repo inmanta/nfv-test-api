@@ -14,37 +14,43 @@
    limitations under the License.
 """
 from ipaddress import IPv4Address, IPv6Address
-from typing import List, Optional, Union
+from typing import List, Union
 
-from .base_model import IpBaseModel, BaseModel
 from pydantic import Extra
+
+from .base_model import BaseModel, IpBaseModel
 from .common import Nci
+
 
 class AmfConfig(BaseModel):
     """
     AMF address information
     """
+
     address: Union[IPv4Address, IPv6Address]
     port: int
+
 
 class Slice(BaseModel):
     """
     S-NSSAIs
     """
+
     sst: int
     sd: int
+
 
 class GNodeB(IpBaseModel, extra=Extra.allow):
     """
     A gNodeB identified by its nci.
     """
 
-    mcc: str # Mobile Country Code value
-    mnc: str # Mobile Network Code value (2 or 3 digits)
+    mcc: str  # Mobile Country Code value
+    mnc: str  # Mobile Network Code value (2 or 3 digits)
 
-    nci: Nci # NR Cell Identity (36-bit)
-    idLength: int # NR gNB ID length in bits [22...32]
-    tac: int # Tracking Area Code
+    nci: Nci  # NR Cell Identity (36-bit)
+    idLength: int  # NR gNB ID length in bits [22...32]
+    tac: int  # Tracking Area Code
 
     # gNB's local IP address for Radio Link Simulation (Usually same with local IP)
     linkIp: Union[IPv4Address, IPv6Address]
@@ -59,12 +65,14 @@ class GNodeB(IpBaseModel, extra=Extra.allow):
     slices: List[Slice]
 
     # Indicates whether or not SCTP stream number errors should be ignored.
-    ignoreStreamIds: bool 
+    ignoreStreamIds: bool
+
 
 class GNodeBCreate(GNodeB):
     """
     Input schema for creating a gNodeB
     """
+
 
 class GNodeBUpdate(GNodeB):
     """

@@ -23,10 +23,10 @@ from requests.models import HTTPError  # type: ignore
 from werkzeug.exceptions import ServiceUnavailable  # type: ignore
 
 from nfv_test_api.v2.controllers.actions import namespace as actions_ns
+from nfv_test_api.v2.controllers.gnodeb import namespace as gnb_ns
 from nfv_test_api.v2.controllers.interface import namespace as interface_ns
 from nfv_test_api.v2.controllers.namespace import namespace as namespace_ns
 from nfv_test_api.v2.controllers.route import namespace as route_ns
-from nfv_test_api.v2.controllers.gnodeb import namespace as gnb_ns
 
 LOGGER = logging.getLogger(__name__)
 
