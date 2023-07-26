@@ -206,6 +206,9 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         # make sure the config exists
         gnb = self.get_one(identifier)
 
+        if identifier not in self.process_handler.processes:
+            raise NotFound(f"No gNodeB process found for nci {identifier}")
+
         status: Dict[str, Any] = {}
         node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], 0)}"  # type: ignore
         command = [

@@ -126,6 +126,8 @@ class OneGNodeB(Resource):
 
         self.gnb_service.delete(nci)
 
+        return HTTPStatus.OK
+
 
 @namespace.route("/<nci>/start")
 @namespace.param("nci", description="The radio cell identifier, identify the cell of the gNodeB.")
