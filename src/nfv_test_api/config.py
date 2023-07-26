@@ -13,6 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import pathlib
 from typing import Any, Dict, Optional
 
 import yaml
@@ -22,6 +23,8 @@ from pydantic import BaseModel
 class Config(BaseModel):
     host: str = "127.0.0.1"
     port: int = 8080
+    gnb_config_folder: str = "gnb_config/"
+    gnb_log_folder: str = "gnb_log/"
 
 
 CONFIG = None
@@ -39,4 +42,11 @@ def get_config(config_file: Optional[str] = None, config_dict: Optional[Dict[str
             config_dict = yaml.safe_load(stream)
 
     CONFIG = Config(**config_dict)
+
+    gnb_config_folder = pathlib.Path(CONFIG.gnb_config_folder)
+    gnb_config_folder.mkdir(parents=True, exist_ok=True)
+
+    gnb_log_folder = pathlib.Path(CONFIG.gnb_log_folder)
+    gnb_log_folder.mkdir(parents=True, exist_ok=True)
+
     return CONFIG

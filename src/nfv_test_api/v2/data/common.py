@@ -23,6 +23,7 @@ Hostname = constr(
     regex=r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
 )  # type: ignore
 SafeName = constr(regex=r"^[0-9A-Z-a-z@#$_\-.]{1,16}$")  # type: ignore
+Nci = constr(regex="0x[0-9a-fA-F]{9}")
 
 
 class InputSafeName(BaseModel):

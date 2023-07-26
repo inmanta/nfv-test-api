@@ -14,15 +14,21 @@ tags:
     description: Read routes on the host
   - name: actions
     description: Execute some actions on the host
+  - name: gnodeb
+    description: Basic gnodeb management
 paths:
   /actions/ns/{ns_name}/ping:
     post:
       tags:
         - actions
       summary: Send ping requests to a destination
-      description: |-
-        The server will synchronously send ping requests to the required address, and them reply
-        with the result.  It is the user responsibility not to set ping interval and count that would
+      description: >-
+        The server will synchronously send ping requests to the required
+        address, and them reply
+
+        with the result.  It is the user responsibility not to set ping interval
+        and count that would
+
         make the server request timeout.
       operationId: post_one_ping_in_namespace
       parameters:
@@ -51,9 +57,13 @@ paths:
       tags:
         - actions
       summary: Send ping requests to a destination
-      description: |-
-        The server will synchronously send ping requests to the required address, and them reply
-        with the result.  It is the user responsibility not to set ping interval and count that would
+      description: >-
+        The server will synchronously send ping requests to the required
+        address, and them reply
+
+        with the result.  It is the user responsibility not to set ping interval
+        and count that would
+
         make the server request timeout.
       operationId: post_one_ping
       requestBody:
@@ -70,6 +80,202 @@ paths:
               schema:
                 $ref: '#/components/schemas/Ping'
       x-codegen-request-body-name: payload
+  /gnodeb:
+    get:
+      tags:
+        - gnodeb
+      summary: Get all gNodeBs
+      operationId: get_all_g_node_b
+      responses:
+        '200':
+          description: Get all gNodeB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GNodeB'
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    post:
+      tags:
+        - gnodeb
+      summary: Create an gNodeB configuration
+      description: >-
+        The gNodeB is identified by its nci, if another gNodeB with the same nci
+        already exists, a
+
+        conflict error is raised.
+      operationId: post_all_g_node_b
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GNodeBCreate'
+        required: true
+      responses:
+        '201':
+          description: A new gNodeB configuration has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GNodeB'
+        '409':
+          description: Another gNodeB with the same nci already exists
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
+  /gnodeb/{nci}:
+    get:
+      tags:
+        - gnodeb
+      summary: Get a gNodeB configuration
+      description: The gNodeB is identified by its nci.
+      operationId: get_one_g_node_b
+      parameters:
+        - name: nci
+          in: path
+          description: The radio cell identifier, identify the cell of the gNodeB.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found a gNodeB config with a matching nci
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GNodeB'
+        '404':
+          description: Couldn't find any gNodeB with given nci
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    delete:
+      tags:
+        - gnodeb
+      summary: Delete a gNodeB configuration
+      description: >-
+        The gNodeB is identified by its nci. This method is idempotent, if the
+        gNodeB
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
+      operationId: delete_one_g_node_b
+      parameters:
+        - name: nci
+          in: path
+          description: The radio cell identifier, identify the cell of the gNodeB.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The gNodeB config doesn't exist anymore
+          content: {}
+        '404':
+          description: The gNodeB config could not be found.
+          content: {}
+        '409':
+          description: The gNodeB client should be stopped before removing config.
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+  /gnodeb/{nci}/start:
+    post:
+      tags:
+        - gnodeb
+      summary: Start a gNodeB configuration
+      description: The gNodeB is identified by its nci.
+      operationId: post_start_g_node_b
+      parameters:
+        - name: nci
+          in: path
+          description: The radio cell identifier, identify the cell of the gNodeB.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: gNodeB started
+          content: {}
+        '404':
+          description: Couldn't find any gNodeB with given nci
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+  /gnodeb/{nci}/status:
+    get:
+      tags:
+        - gnodeb
+      summary: Get the status of a gNodeB
+      description: The gNodeB is identified by its nci.
+      operationId: get_status_g_node_b
+      parameters:
+        - name: nci
+          in: path
+          description: The radio cell identifier, identify the cell of the gNodeB.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found a gNodeB config with a matching nci
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GNodeBStatus'
+        '404':
+          description: Couldn't find any gNodeB with given nci
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+  /gnodeb/{nci}/stop:
+    post:
+      tags:
+        - gnodeb
+      summary: Start a gNodeB configuration
+      description: The gNodeB is identified by its nci.
+      operationId: post_stop_g_node_b
+      parameters:
+        - name: nci
+          in: path
+          description: The radio cell identifier, identify the cell of the gNodeB.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: gNodeB stopped
+          content: {}
+        '404':
+          description: Couldn't find any gNodeB with given nci
+          content: {}
+        '409':
+          description: A gNodeB with given nci is already running
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
   /interfaces:
     get:
       tags:
@@ -84,14 +290,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Interface'
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
     post:
       tags:
         - interfaces
       summary: Create an interface on the host
-      description: |-
-        The interface is identified by its name, if another interface with the same name already exists, a
+      description: >-
+        The interface is identified by its name, if another interface with the
+        same name already exists, a
+
         conflict error is raised.
       operationId: post_all_interfaces
       requestBody:
@@ -111,7 +321,9 @@ paths:
           description: Another interface with the same name already exists
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
       x-codegen-request-body-name: payload
   /interfaces/ns/{ns_name}:
@@ -135,14 +347,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Interface'
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
     post:
       tags:
         - interfaces
       summary: Create an interface on the host
-      description: |-
-        The interface is identified by its name, if another interface with the same name already exists, a
+      description: >-
+        The interface is identified by its name, if another interface with the
+        same name already exists, a
+
         conflict error is raised.
       operationId: post_all_interfaces_in_namespace
       parameters:
@@ -169,7 +385,9 @@ paths:
           description: Another interface with the same name already exists
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
       x-codegen-request-body-name: payload
   /interfaces/ns/{ns_name}/{name}:
@@ -203,15 +421,20 @@ paths:
           description: Couldn't find any interface with given name
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
     delete:
       tags:
         - interfaces
       summary: Delete an interface from the host
-      description: |-
-        The interface is identified by its name. This method is idempotent, if the interface
-        doesn't exist it won't try to delete it again, and consider the deletion successful.
+      description: >-
+        The interface is identified by its name. This method is idempotent, if
+        the interface
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
       operationId: delete_one_interface_in_namespace
       parameters:
         - name: name
@@ -231,7 +454,9 @@ paths:
           description: The interface doesn't exist anymore
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
     patch:
       tags:
@@ -269,7 +494,9 @@ paths:
           description: Couldn't find any interface with given name
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
       x-codegen-request-body-name: payload
   /interfaces/{name}:
@@ -297,15 +524,20 @@ paths:
           description: Couldn't find any interface with given name
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
     delete:
       tags:
         - interfaces
       summary: Delete an interface from the host
-      description: |-
-        The interface is identified by its name. This method is idempotent, if the interface
-        doesn't exist it won't try to delete it again, and consider the deletion successful.
+      description: >-
+        The interface is identified by its name. This method is idempotent, if
+        the interface
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
       operationId: delete_one_interface
       parameters:
         - name: name
@@ -319,7 +551,9 @@ paths:
           description: The interface doesn't exist anymore
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
     patch:
       tags:
@@ -351,7 +585,9 @@ paths:
           description: Couldn't find any interface with given name
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
       x-codegen-request-body-name: payload
   /namespaces:
@@ -368,14 +604,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Namespace'
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
     post:
       tags:
         - namespaces
       summary: Create a namespace on the host
-      description: |-
-        The namespace is identified by its name, if another namespace with the same name already exists, a
+      description: >-
+        The namespace is identified by its name, if another namespace with the
+        same name already exists, a
+
         conflict error is raised.
       operationId: post_all_namespaces
       requestBody:
@@ -395,7 +635,9 @@ paths:
           description: Another namespace with the same name or id already exists
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
       x-codegen-request-body-name: payload
   /namespaces/{name}:
@@ -423,15 +665,20 @@ paths:
           description: Couldn't find any namespace with given name
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
     delete:
       tags:
         - namespaces
       summary: Delete a namespace from the host
-      description: |-
-        The namespace is identified by its name. This method is idempotent, if the namespace
-        doesn't exist it won't try to delete it again, and consider the deletion successful.
+      description: >-
+        The namespace is identified by its name. This method is idempotent, if
+        the namespace
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
       operationId: delete_one_namespace
       parameters:
         - name: name
@@ -445,7 +692,9 @@ paths:
           description: The namespace doesn't exist anymore
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
   /routes:
     get:
@@ -461,7 +710,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Route'
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
   /routes/ns/{ns_name}:
     get:
@@ -484,7 +735,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Route'
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
   /routes/ns/{ns_name}/{dst_addr}:
     get:
@@ -496,7 +749,9 @@ paths:
       parameters:
         - name: dst_addr
           in: path
-          description: The destination ("default" or any address with a prefix length) of the route we mean to select
+          description: >-
+            The destination ("default" or any address with a prefix length) of
+            the route we mean to select
           required: true
           schema:
             type: string
@@ -517,7 +772,9 @@ paths:
           description: Couldn't find any route with given destination
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
   /routes/ns/{ns_name}/{dst_addr}/{dst_prefix_len}:
     get:
@@ -556,7 +813,9 @@ paths:
           description: Couldn't find any route with given destination
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
   /routes/{dst_addr}:
     get:
@@ -568,7 +827,9 @@ paths:
       parameters:
         - name: dst_addr
           in: path
-          description: The destination ("default" or any address with a prefix length) of the route we mean to select
+          description: >-
+            The destination ("default" or any address with a prefix length) of
+            the route we mean to select
           required: true
           schema:
             type: string
@@ -583,7 +844,9 @@ paths:
           description: Couldn't find any route with given destination
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
   /routes/{dst_addr}/{dst_prefix_len}:
     get:
@@ -616,16 +879,20 @@ paths:
           description: Couldn't find any route with given destination
           content: {}
         '500':
-          description: An error occurred when trying to process the request, this can also be because of bad input from the user
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
           content: {}
 components:
   schemas:
     NamespaceCreate:
       title: NamespaceCreate
-      description: |-
+      description: >-
         Input for creating a network namespace
 
-        :param ns_id: The optional namespace id, if none is provided, one will be picked in the pool of available ids
+
+        :param ns_id: The optional namespace id, if none is provided, one will
+        be picked in the pool of available ids
       type: object
       properties:
         name:
@@ -633,7 +900,7 @@ components:
           pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
           type: string
         ns_id:
-          title: Ns Id
+          title: Nsid
           type: integer
       required:
         - name
@@ -661,7 +928,7 @@ components:
           pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
           type: string
         parent_dev:
-          title: Parent Dev
+          title: Parentdev
           pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
           type: string
         mtu:
@@ -685,8 +952,12 @@ components:
           default: veth
           allOf:
             - $ref: '#/components/schemas/Kind'
+        peer:
+          title: Peer
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
         slave_interfaces:
-          title: Slave Interfaces
+          title: Slaveinterfaces
           type: array
           items:
             type: string
@@ -892,7 +1163,8 @@ components:
           title: Destination
           anyOf:
             - type: string
-              pattern: ^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$
+              pattern: >-
+                ^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$
             - type: string
               format: ipv4
             - type: string
@@ -924,7 +1196,8 @@ components:
           title: Destination
           anyOf:
             - type: string
-              pattern: ^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$
+              pattern: >-
+                ^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$
             - type: string
               format: ipv4
             - type: string
@@ -966,6 +1239,158 @@ components:
         - packet_loss_rate
         - packet_receive
         - packet_transmit
+    GNodeBCreate:
+      title: GNodeBCreate
+      description: Input schema for creating a gNodeB
+      type: object
+      properties:
+        mcc:
+          title: Mcc
+          type: string
+        mnc:
+          title: Mnc
+          type: string
+        nci:
+          title: Nci
+          pattern: 0x[0-9a-fA-F]{9}
+          type: string
+        idLength:
+          title: Idlength
+          type: integer
+        tac:
+          title: Tac
+          type: integer
+        linkIp:
+          title: Linkip
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        ngapIp:
+          title: Ngapip
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        gtpIp:
+          title: Gtpip
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        amfConfigs:
+          title: Amfconfigs
+          type: array
+          items:
+            $ref: '#/components/schemas/AmfConfig'
+        slices:
+          title: Slices
+          type: array
+          items:
+            $ref: '#/components/schemas/Slice'
+        ignoreStreamIds:
+          title: Ignorestreamids
+          type: boolean
+      required:
+        - mcc
+        - mnc
+        - nci
+        - idLength
+        - tac
+        - linkIp
+        - ngapIp
+        - gtpIp
+        - amfConfigs
+        - slices
+        - ignoreStreamIds
+    GNodeB:
+      title: GNodeB
+      description: A gNodeB identified by its nci.
+      type: object
+      properties:
+        mcc:
+          title: Mcc
+          type: string
+        mnc:
+          title: Mnc
+          type: string
+        nci:
+          title: Nci
+          pattern: 0x[0-9a-fA-F]{9}
+          type: string
+        idLength:
+          title: Idlength
+          type: integer
+        tac:
+          title: Tac
+          type: integer
+        linkIp:
+          title: Linkip
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        ngapIp:
+          title: Ngapip
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        gtpIp:
+          title: Gtpip
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        amfConfigs:
+          title: Amfconfigs
+          type: array
+          items:
+            $ref: '#/components/schemas/AmfConfig'
+        slices:
+          title: Slices
+          type: array
+          items:
+            $ref: '#/components/schemas/Slice'
+        ignoreStreamIds:
+          title: Ignorestreamids
+          type: boolean
+      required:
+        - mcc
+        - mnc
+        - nci
+        - idLength
+        - tac
+        - linkIp
+        - ngapIp
+        - gtpIp
+        - amfConfigs
+        - slices
+        - ignoreStreamIds
+    GNodeBStatus:
+      title: GNodeBStatus
+      description: Input schema for creating a gNodeB
+      type: object
+      properties:
+        status:
+          title: Status
+          type: string
+        pid:
+          title: Pid
+          type: integer
+        logs:
+          title: Logs
+          type: string
+      required:
+        - status
+        - pid
+        - logs
     Kind:
       title: Kind
       description: An enumeration.
@@ -978,7 +1403,10 @@ components:
       type: string
     InterfaceState:
       title: InterfaceState
-      description: The different states an interface can be in
+      description: |2-
+
+            The different states an interface can be in
+            
       enum:
         - UP
         - DOWN
@@ -987,7 +1415,9 @@ components:
       type: string
     LinkInfo:
       title: LinkInfo
-      description: Information about a link, related to its specific kind, as returned by `ip addr`
+      description: >-
+        Information about a link, related to its specific kind, as returned by
+        `ip addr`
       type: object
       properties:
         info_kind:
@@ -1012,7 +1442,9 @@ components:
       type: string
     Addr4Info:
       title: Addr4Info
-      description: Information about an IPv4 address of an interface, as returned by `ip addr`
+      description: >-
+        Information about an IPv4 address of an interface, as returned by `ip
+        addr`
       type: object
       properties:
         family:
@@ -1063,7 +1495,9 @@ components:
         - local
     Addr6Info:
       title: Addr6Info
-      description: Information about an IPv6 address of an interface, as returned by `ip addr`
+      description: >-
+        Information about an IPv6 address of an interface, as returned by `ip
+        addr`
       type: object
       properties:
         family:
@@ -1152,6 +1586,38 @@ components:
         - redirect
         - ra
       type: string
+    AmfConfig:
+      title: AmfConfig
+      description: AMF address information
+      type: object
+      properties:
+        address:
+          title: Address
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        port:
+          title: Port
+          type: integer
+      required:
+        - address
+        - port
+    Slice:
+      title: Slice
+      description: S-NSSAIs
+      type: object
+      properties:
+        sst:
+          title: Sst
+          type: integer
+        sd:
+          title: Sd
+          type: integer
+      required:
+        - sst
+        - sd
   responses:
     MaskError:
       description: When any error occurs on mask
