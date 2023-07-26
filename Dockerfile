@@ -7,7 +7,7 @@ COPY misc/centos.repo /etc/yum.repos.d/centos.repo
 #RUN yum repolist all
 
 # Install required packages
-RUN yum install -y yum-utils curl nc iproute iputils git gcc lksctp-tools-devel 
+RUN yum install -y yum-utils curl nc iproute iputils git gcc lksctp-tools-devel traceroute nmap
 
 # Copying the source of this project
 COPY poetry.lock /opt/nfv-test-api/poetry.lock
