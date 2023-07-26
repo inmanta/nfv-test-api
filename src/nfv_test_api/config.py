@@ -44,11 +44,9 @@ def get_config(config_file: Optional[str] = None, config_dict: Optional[Dict[str
     CONFIG = Config(**config_dict)
 
     gnb_config_folder = pathlib.Path(CONFIG.gnb_config_folder)
-    if not gnb_config_folder.exists():
-        gnb_config_folder.mkdir()
+    gnb_config_folder.mkdir(parents=True, exist_ok=True)
 
     gnb_log_folder = pathlib.Path(CONFIG.gnb_log_folder)
-    if not gnb_log_folder.exists():
-        gnb_log_folder.mkdir()
+    gnb_log_folder.mkdir(parents=True, exist_ok=True)
 
     return CONFIG

@@ -16,6 +16,8 @@
 import logging
 import pathlib
 import subprocess
+from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import pydantic
@@ -31,16 +33,29 @@ from nfv_test_api.v2.services.base_service import BaseService, K
 LOGGER = logging.getLogger(__name__)
 
 
+class FileType(str, Enum):
+    CONFIG = "config"
+    LOG = "log"
+
+
+def get_file_path(identifier: str, type: FileType) -> Path:
+    if type == FileType.CONFIG:
+        filename = "gnb_" + identifier + ".yml"
+        path = Path(Config().gnb_config_folder) / filename
+    elif type == FileType.LOG:
+        filename = "gnb_" + identifier + ".log"
+        path = Path(Config().gnb_log_folder) / filename
+    return path
+
+
 class GNodeBServiceHandler:
     def __init__(self) -> None:
         self.processes: Dict[subprocess.Popen] = {}
 
     def add(self, identifier: str) -> None:
-        config_file_path = Config().gnb_config_folder + "gnb_" + identifier + ".yml"
-        command = ["nr-gnb", "-c", config_file_path]
+        command = ["nr-gnb", "-c", str(get_file_path(identifier, FileType.CONFIG))]
+        out = get_file_path(identifier, FileType.LOG).open(mode="w+")
 
-        out_file_path = Config().gnb_log_folder + "gnb_" + identifier + ".log"
-        out = open(out_file_path, "w")
         self.processes[identifier] = subprocess.Popen(
             command,
             shell=False,
@@ -66,10 +81,10 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         if not nci and not filename:
             raise NotFound("Please specify either nci or filename to get the gNodeB config")
         elif nci:
-            filename = Config().gnb_config_folder + "gnb_" + nci + ".yml"
+            filename = str(get_file_path(nci, FileType.CONFIG))
 
         try:
-            with open(filename, "r") as stream:
+            with Path(filename).open(mode="r") as stream:
                 try:
                     return yaml.safe_load(stream)
                 except yaml.YAMLError as e:
@@ -122,9 +137,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         if existing_gnb:
             raise Conflict("A gNodeB config with this nci already exists")
 
-        filename = "gnb_" + o.nci + ".yml"
-
-        with open(Config().gnb_config_folder + filename, "w") as fh:
+        with get_file_path(o.nci, FileType.CONFIG).open(mode="w+") as fh:
             yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
 
         existing_gnb = self.get_one_or_default(o.nci)
@@ -142,10 +155,8 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         except NotFound:
             pass
 
-        filename = "gnb_" + identifier + ".yml"
-        config_file = pathlib.Path(Config().gnb_config_folder + filename)
         try:
-            config_file.unlink()
+            get_file_path(identifier, FileType.CONFIG).unlink()
         except FileNotFoundError:
             raise RuntimeError(f"The configuration for gNodeB with nci {identifier} doesn't exist")
 
@@ -200,8 +211,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         if stderr:
             raise NotFound(f"Failed to fetch gNodeB status: {stderr}")
 
-        log_filename = Config().gnb_log_folder + "gnb_" + identifier + ".log"
-        with open(log_filename, "r") as out:
+        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
             stdout += "\n".join(out.readlines())
 
         return stdout
