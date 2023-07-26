@@ -45,30 +45,37 @@ def get_file_path(identifier: str, type: FileType) -> Path:
     elif type == FileType.LOG:
         filename = "gnb_" + identifier + ".log"
         path = Path(Config().gnb_log_folder) / filename
+    else:
+        raise RuntimeError(f"Unkown file type {str(type)}")
     return path
 
 
 class GNodeBServiceHandler:
     def __init__(self) -> None:
-        self.processes: Dict[subprocess.Popen] = {}
+        self.processes: Dict[str, subprocess.Popen] = {}
 
     def add(self, identifier: str) -> None:
-        command = ["nr-gnb", "-c", str(get_file_path(identifier, FileType.CONFIG))]
-        out = get_file_path(identifier, FileType.LOG).open(mode="w+")
+        if identifier not in self.processes:
+            command = ["nr-gnb", "-c", str(get_file_path(identifier, FileType.CONFIG))]
+            out = get_file_path(identifier, FileType.LOG).open(mode="w+")
 
-        self.processes[identifier] = subprocess.Popen(
-            command,
-            shell=False,
-            universal_newlines=True,
-            stdout=out,
-            stderr=out,
-        )
+            self.processes[identifier] = subprocess.Popen(
+                command,
+                shell=False,
+                universal_newlines=True,
+                stdout=out,
+                stderr=out,
+            )
+        else:
+            raise Conflict(f"a gNodeB with nci {identifier} is already running")
 
     def kill(self, identifier: str) -> None:
         if identifier in self.processes:
             self.processes[identifier].terminate()
             self.processes[identifier].wait()
             del self.processes[identifier]
+        else:
+            raise NotFound(f"No process running for gNodeB with nci {identifier}")
 
 
 class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
@@ -76,7 +83,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         super().__init__(host)
         self.process_handler = process_handler
 
-    def get_one_raw(self, nci: Optional[str] = None, filename: Optional[str] = None) -> Dict:
+    def get_one_raw(self, nci: Optional[str] = None, filename: Optional[str] = None) -> Any:
         # Get gNodeB config using nci or directly the filename
         if not nci and not filename:
             raise NotFound("Please specify either nci or filename to get the gNodeB config")
@@ -84,7 +91,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             filename = str(get_file_path(nci, FileType.CONFIG))
 
         try:
-            with Path(filename).open(mode="r") as stream:
+            with Path(filename).open(mode="r") as stream:  # type: ignore
                 try:
                     return yaml.safe_load(stream)
                 except yaml.YAMLError as e:
@@ -100,7 +107,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         configs = []
 
         for filename in config_files:
-            configs.append(self.get_one_raw(filename=filename))
+            configs.append(self.get_one_raw(filename=filename))  # type: ignore
 
         return pydantic.parse_obj_as(List[Dict[str, Any]], configs)
 
@@ -147,10 +154,10 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         return existing_gnb
 
     def delete(self, identifier: str) -> None:
-        existing_gnb = self.get_one(identifier)
+        self.get_one(identifier)
 
         try:
-            self.status(identifier)
+            self.node_status(identifier)
             raise Conflict(f"The gNodeB client {identifier} is still running !")
         except NotFound:
             pass
@@ -174,7 +181,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         self.get_one(identifier)
         self.process_handler.kill(identifier)
 
-    def status(self, identifier: str) -> Dict:
+    def node_status(self, identifier: str) -> Dict[str, Any]:
         """
         To be able to execute command on a running node,
         we use nr-cli command with the name generated internally by UERANSIM.
@@ -199,7 +206,8 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         # make sure the config exists
         gnb = self.get_one(identifier)
 
-        node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], 0)}"
+        status: Dict[str, Any] = {}
+        node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], 0)}"  # type: ignore
         command = [
             "nr-cli",
             node_name,
@@ -207,11 +215,12 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             "status",
         ]
 
-        stdout, stderr = self.host.exec(command)
+        status["pid"] = self.process_handler.processes[identifier].pid
+        status["status"], stderr = self.host.exec(command)
         if stderr:
             raise NotFound(f"Failed to fetch gNodeB status: {stderr}")
 
         with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
-            stdout += "\n".join(out.readlines())
+            status["logs"] = "\n".join(out.readlines())
 
-        return stdout
+        return status

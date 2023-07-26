@@ -209,10 +209,7 @@ paths:
       responses:
         '200':
           description: gNodeB started
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GNodeB'
+          content: {}
         '404':
           description: Couldn't find any gNodeB with given nci
           content: {}
@@ -227,7 +224,7 @@ paths:
         - gnodeb
       summary: Get the status of a gNodeB
       description: The gNodeB is identified by its nci.
-      operationId: get_g_node_b_status
+      operationId: get_status_g_node_b
       parameters:
         - name: nci
           in: path
@@ -241,7 +238,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GNodeB'
+                $ref: '#/components/schemas/GNodeBStatus'
         '404':
           description: Couldn't find any gNodeB with given nci
           content: {}
@@ -267,12 +264,12 @@ paths:
       responses:
         '200':
           description: gNodeB stopped
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GNodeB'
+          content: {}
         '404':
           description: Couldn't find any gNodeB with given nci
+          content: {}
+        '409':
+          description: A gNodeB with given nci is already running
           content: {}
         '500':
           description: >-
@@ -1376,6 +1373,24 @@ components:
         - amfConfigs
         - slices
         - ignoreStreamIds
+    GNodeBStatus:
+      title: GNodeBStatus
+      description: Input schema for creating a gNodeB
+      type: object
+      properties:
+        status:
+          title: Status
+          type: string
+        pid:
+          title: Pid
+          type: integer
+        logs:
+          title: Logs
+          type: string
+      required:
+        - status
+        - pid
+        - logs
     Kind:
       title: Kind
       description: An enumeration.

@@ -48,7 +48,8 @@ class GNodeB(IpBaseModel, extra=Extra.allow):
     mcc: str  # Mobile Country Code value
     mnc: str  # Mobile Network Code value (2 or 3 digits)
 
-    nci: Nci  # NR Cell Identity (36-bit)
+    # NR Cell Identity (36-bit)
+    nci: Nci  # type: ignore
     idLength: int  # NR gNB ID length in bits [22...32]
     tac: int  # Tracking Area Code
 
@@ -78,3 +79,13 @@ class GNodeBUpdate(GNodeB):
     """
     Input schema for creating a gNodeB
     """
+
+
+class GNodeBStatus(BaseModel):
+    """
+    Input schema for creating a gNodeB
+    """
+
+    status: str
+    pid: int
+    logs: str

@@ -23,13 +23,14 @@ from werkzeug.exceptions import BadRequest  # type: ignore
 from nfv_test_api.host import Host
 from nfv_test_api.v2.controllers.common import add_model_schema
 from nfv_test_api.v2.data.common import InputSafeName
-from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate
+from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBStatus
 from nfv_test_api.v2.services.gnodeb import GNodeBService, GNodeBServiceHandler
 
 namespace = Namespace(name="gnodeb", description="Basic gnodeb management")
 
 gnodeb_model = add_model_schema(namespace, GNodeB)
 gnodeb_create_model = add_model_schema(namespace, GNodeBCreate)
+gnodeb_status_model = add_model_schema(namespace, GNodeBStatus)
 gnodeb_service_handler = GNodeBServiceHandler()
 
 
@@ -137,7 +138,7 @@ class StartGNodeB(Resource):
         super().__init__(api=api, *args, **kwargs)
         self.gnb_service = GNodeBService(Host(), gnodeb_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "gNodeB started", gnodeb_model)
+    @namespace.response(HTTPStatus.OK, "gNodeB started")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
     def post(self, nci: str):
         """
@@ -162,8 +163,9 @@ class StopGNodeB(Resource):
         super().__init__(api=api, *args, **kwargs)
         self.gnb_service = GNodeBService(Host(), gnodeb_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "gNodeB stopped", gnodeb_model)
+    @namespace.response(HTTPStatus.OK, "gNodeB stopped")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
+    @namespace.response(HTTPStatus.CONFLICT, "A gNodeB with given nci is already running")
     def post(self, nci: str):
         """
         Start a gNodeB configuration
@@ -182,12 +184,12 @@ class StopGNodeB(Resource):
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
-class GNodeBStatus(Resource):
+class StatusGNodeB(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.gnb_service = GNodeBService(Host(), gnodeb_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "Found a gNodeB config with a matching nci", gnodeb_model)
+    @namespace.response(HTTPStatus.OK, "Found a gNodeB config with a matching nci", gnodeb_status_model)
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
     def get(self, nci: str):
         """
@@ -196,4 +198,4 @@ class GNodeBStatus(Resource):
         The gNodeB is identified by its nci.
         """
 
-        return self.gnb_service.status(nci), HTTPStatus.OK
+        return self.gnb_service.node_status(nci), HTTPStatus.OK
