@@ -47,14 +47,14 @@ class AllUE(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self._host = Host()
-        self.gnb_service = UEService(self._host, ue_service_handler)
+        self.ue_service = UEService(self._host, ue_service_handler)
 
     @namespace.response(code=HTTPStatus.OK, description="Get all UE", model=ue_model, as_list=True)
     def get(self):
         """
         Get all UEs
         """
-        return [ue.json_dict() for ue in self.gnb_service.get_all()], HTTPStatus.OK
+        return [ue.json_dict() for ue in self.ue_service.get_all()], HTTPStatus.OK
 
     @namespace.expect(ue_create_model)
     @namespace.response(HTTPStatus.CREATED, "A new UE configuration has been created", ue_model)
@@ -72,7 +72,7 @@ class AllUE(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.gnb_service.create(create_form).json_dict(), HTTPStatus.CREATED
+        return self.ue_service.create(create_form).json_dict(), HTTPStatus.CREATED
 
 
 @namespace.route("/<supi>")
@@ -90,7 +90,7 @@ class OneUE(Resource):
 
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
-        self.gnb_service = UEService(Host(), ue_service_handler)
+        self.ue_service = UEService(Host(), ue_service_handler)
 
     @namespace.response(HTTPStatus.OK, "Found a UE config with a matching supi", ue_model)
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
@@ -106,7 +106,7 @@ class OneUE(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.gnb_service.get_one(supi).json_dict(exclude_none=True), HTTPStatus.OK
+        return self.ue_service.get_one(supi).json_dict(exclude_none=True), HTTPStatus.OK
 
     @namespace.response(HTTPStatus.OK, "The UE config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND, "The UE config could not be found.")
@@ -124,7 +124,7 @@ class OneUE(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        self.gnb_service.delete(supi)
+        self.ue_service.delete(supi)
 
         return HTTPStatus.OK
 
@@ -138,7 +138,7 @@ class OneUE(Resource):
 class StartUE(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
-        self.gnb_service = UEService(Host(), ue_service_handler)
+        self.ue_service = UEService(Host(), ue_service_handler)
 
     @namespace.response(HTTPStatus.OK, "UE started")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
@@ -155,7 +155,7 @@ class StartUE(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        self.gnb_service.start(supi)
+        self.ue_service.start(supi)
 
         return HTTPStatus.OK
 
@@ -169,7 +169,7 @@ class StartUE(Resource):
 class StopUE(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
-        self.gnb_service = UEService(Host(), ue_service_handler)
+        self.ue_service = UEService(Host(), ue_service_handler)
 
     @namespace.response(HTTPStatus.OK, "UE stopped")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
@@ -187,7 +187,7 @@ class StopUE(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        self.gnb_service.stop(supi)
+        self.ue_service.stop(supi)
 
         return HTTPStatus.OK
 
@@ -201,7 +201,7 @@ class StopUE(Resource):
 class StatusUE(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
-        self.gnb_service = UEService(Host(), ue_service_handler)
+        self.ue_service = UEService(Host(), ue_service_handler)
 
     @namespace.response(HTTPStatus.OK, "Found a UE config with a matching supi", ue_status_model)
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
@@ -218,4 +218,4 @@ class StatusUE(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.gnb_service.node_status(supi), HTTPStatus.OK
+        return self.ue_service.node_status(supi), HTTPStatus.OK
