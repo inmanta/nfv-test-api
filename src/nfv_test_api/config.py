@@ -25,6 +25,8 @@ class Config(BaseModel):
     port: int = 8080
     gnb_config_folder: str = "gnb_config/"
     gnb_log_folder: str = "gnb_log/"
+    ue_config_folder: str = "ue_config/"
+    ue_log_folder: str = "ue_log/"
 
 
 CONFIG = None
@@ -43,10 +45,18 @@ def get_config(config_file: Optional[str] = None, config_dict: Optional[Dict[str
 
     CONFIG = Config(**config_dict)
 
+    # create gnb folders
     gnb_config_folder = pathlib.Path(CONFIG.gnb_config_folder)
     gnb_config_folder.mkdir(parents=True, exist_ok=True)
 
     gnb_log_folder = pathlib.Path(CONFIG.gnb_log_folder)
     gnb_log_folder.mkdir(parents=True, exist_ok=True)
+
+    # create ue folders
+    ue_config_folder = pathlib.Path(CONFIG.ue_config_folder)
+    ue_config_folder.mkdir(parents=True, exist_ok=True)
+
+    ue_log_folder = pathlib.Path(CONFIG.ue_log_folder)
+    ue_log_folder.mkdir(parents=True, exist_ok=True)
 
     return CONFIG

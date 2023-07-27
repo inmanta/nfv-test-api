@@ -19,7 +19,7 @@ from typing import List, Union
 from pydantic import Extra
 
 from .base_model import BaseModel, IpBaseModel
-from .common import Nci
+from .common import Nci, Slice
 
 
 class AmfConfig(BaseModel):
@@ -29,15 +29,6 @@ class AmfConfig(BaseModel):
 
     address: Union[IPv4Address, IPv6Address]
     port: int
-
-
-class Slice(BaseModel):
-    """
-    S-NSSAIs
-    """
-
-    sst: int
-    sd: int
 
 
 class GNodeB(IpBaseModel, extra=Extra.allow):
