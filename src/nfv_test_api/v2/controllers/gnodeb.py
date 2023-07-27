@@ -22,7 +22,7 @@ from werkzeug.exceptions import BadRequest  # type: ignore
 
 from nfv_test_api.host import Host
 from nfv_test_api.v2.controllers.common import add_model_schema
-from nfv_test_api.v2.data.common import InputSafeName
+from nfv_test_api.v2.data.common import InputSafeNci
 from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBStatus
 from nfv_test_api.v2.services.gnodeb import GNodeBService, GNodeBServiceHandler
 
@@ -102,7 +102,7 @@ class OneGNodeB(Resource):
         """
         try:
             # Validating input
-            InputSafeName(name=nci)
+            InputSafeNci(nci=nci)
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -120,7 +120,7 @@ class OneGNodeB(Resource):
         """
         try:
             # Validating input
-            InputSafeName(name=nci)
+            InputSafeNci(nci=nci)
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -149,6 +149,12 @@ class StartGNodeB(Resource):
         The gNodeB is identified by its nci.
         """
 
+        try:
+            # Validating input
+            InputSafeNci(nci=nci)
+        except ValidationError as e:
+            raise BadRequest(str(e))
+
         self.gnb_service.start(nci)
 
         return HTTPStatus.OK
@@ -175,6 +181,12 @@ class StopGNodeB(Resource):
         The gNodeB is identified by its nci.
         """
 
+        try:
+            # Validating input
+            InputSafeNci(nci=nci)
+        except ValidationError as e:
+            raise BadRequest(str(e))
+
         self.gnb_service.stop(nci)
 
         return HTTPStatus.OK
@@ -199,5 +211,11 @@ class StatusGNodeB(Resource):
 
         The gNodeB is identified by its nci.
         """
+
+        try:
+            # Validating input
+            InputSafeNci(nci=nci)
+        except ValidationError as e:
+            raise BadRequest(str(e))
 
         return self.gnb_service.node_status(nci), HTTPStatus.OK

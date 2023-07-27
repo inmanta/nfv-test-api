@@ -24,14 +24,23 @@ Hostname = constr(
 )  # type: ignore
 SafeName = constr(regex=r"^[0-9A-Z-a-z@#$_\-.]{1,16}$")  # type: ignore
 Nci = constr(regex="0x[0-9a-fA-F]{9}")
+Supi = constr(regex="imsi-[0-9]{15}")
 
 
 class InputSafeName(BaseModel):
-    name: SafeName  # type: ignore  # type: ignore
+    name: SafeName  # type: ignore
 
 
 class InputOptionalSafeName(BaseModel):
     name: Optional[SafeName]  # type: ignore
+
+
+class InputSafeNci(BaseModel):
+    nci: Nci  # type: ignore
+
+
+class InputSafeSupi(BaseModel):
+    supi: Supi  # type: ignore
 
 
 class Scope(str, Enum):
@@ -52,3 +61,12 @@ class CommandStatus(BaseModel):
     command: List[str]
     stdout: str
     stderr: str
+
+
+class Slice(BaseModel):
+    """
+    S-NSSAIs
+    """
+
+    sst: int
+    sd: Optional[int]

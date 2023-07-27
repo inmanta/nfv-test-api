@@ -27,6 +27,7 @@ from nfv_test_api.v2.controllers.gnodeb import namespace as gnb_ns
 from nfv_test_api.v2.controllers.interface import namespace as interface_ns
 from nfv_test_api.v2.controllers.namespace import namespace as namespace_ns
 from nfv_test_api.v2.controllers.route import namespace as route_ns
+from nfv_test_api.v2.controllers.ue import namespace as ue_ns
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,6 +46,7 @@ api_extension.add_namespace(interface_ns)
 api_extension.add_namespace(route_ns)
 api_extension.add_namespace(actions_ns)
 api_extension.add_namespace(gnb_ns)
+api_extension.add_namespace(ue_ns)
 
 # Ugly patches to force openapi 3.0
 from flask_restplus.swagger import Swagger  # type: ignore # noqa: E402
