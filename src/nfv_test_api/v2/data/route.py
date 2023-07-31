@@ -50,16 +50,23 @@ class InputDestination(BaseModel):
         return f"{self.dst_addr}/{self.dst_prefix_len}" if self.dst_addr != "default" else str(self.dst_addr)
 
 
-class RouteCreate(BaseModel):
+class RouteCreate(IpBaseModel):
     """
     Input for creating a route
     """
 
+    dst: Union[IPv4Interface, IPv6Interface, Literal["default"]]
+    gateway: Optional[Union[IPv4Address, IPv6Address]]
+    dev: SafeName  # type: ignore
 
-class RouteUpdate(BaseModel):
+
+class RouteUpdate(IpBaseModel):
     """
     Input for updating a route
     """
+
+    gateway: Optional[Union[IPv4Address, IPv6Address]]
+    dev: SafeName  # type: ignore
 
 
 class Route(IpBaseModel):

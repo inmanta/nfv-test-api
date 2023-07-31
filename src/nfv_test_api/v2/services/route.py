@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import pydantic
 from pydantic import ValidationError
-from werkzeug.exceptions import NotFound  # type: ignore
+from werkzeug.exceptions import Conflict, NotFound, UnprocessableEntity # type: ignore
 
 from nfv_test_api.host import Host
 from nfv_test_api.v2.data.common import CommandStatus
@@ -85,13 +85,46 @@ class RouteService(BaseService[Route, RouteCreate, RouteUpdate]):
         return route
 
     def create(self, o: RouteCreate) -> Route:
-        raise NotImplementedError("Creation of route is not supported yet")
+        existing_route = self.get_one_or_default(str(o.dst))
+        if existing_route:
+            raise Conflict("A route with this destination already exists")
+
+        command = ["ip", "route", "add", str(o.dst), "dev", o.dev]
+        if o.gateway is not None:
+            command += ["via", str(o.gateway)]
+
+        _, stderr = self.host.exec(command)
+        if stderr:
+            raise UnprocessableEntity(f"Failed to create route with command {command}: {stderr}")
+
+        existing_route = self.get_one_or_default(str(o.dst))
+        if not existing_route:
+            raise RuntimeError("The route should have been created but can not be found")
+
+        return existing_route
 
     def update(self, identifier: str, o: RouteUpdate) -> Route:
-        raise NotImplementedError("Updating of route is not supported yet")
+        existing_route = self.get_one(identifier)
+
+        command = ["ip", "route", "change", identifier, "dev", o.dev]
+        if o.gateway is not None:
+            command += ["via", str(o.gateway)]
+
+        _, stderr = self.host.exec(command)
+        if stderr:
+            raise UnprocessableEntity(f"Failed to update route with command {command}: {stderr}")
+
+        return existing_route
 
     def delete(self, identifier: str) -> None:
-        raise NotImplementedError("Deleting of route is not supported yet")
+        existing_route = self.get_one_or_default(identifier)
+        if not existing_route:
+            return
+
+        command = ["ip", "route", "del", identifier]
+        _, stderr = existing_route.host.exec(command)
+        if stderr:
+            raise RuntimeError(f"Failed to delete route with command {command}: {stderr}")
 
     def status(self) -> CommandStatus:
         command = ["ip", "-details", "route"]
