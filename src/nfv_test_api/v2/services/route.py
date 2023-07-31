@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import pydantic
 from pydantic import ValidationError
-from werkzeug.exceptions import Conflict, NotFound, UnprocessableEntity # type: ignore
+from werkzeug.exceptions import Conflict, NotFound, UnprocessableEntity  # type: ignore
 
 from nfv_test_api.host import Host
 from nfv_test_api.v2.data.common import CommandStatus
