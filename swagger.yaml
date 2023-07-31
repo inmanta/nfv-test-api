@@ -16,6 +16,8 @@ tags:
     description: Execute some actions on the host
   - name: gnodeb
     description: Basic gnodeb management
+  - name: ue
+    description: Basic user equipment management
 paths:
   /actions/ns/{ns_name}/ping:
     post:
@@ -714,6 +716,41 @@ paths:
             An error occurred when trying to process the request, this can also
             be because of bad input from the user
           content: {}
+    post:
+      tags:
+        - routes
+      summary: Create a route on the host
+      description: >-
+        The route is identified by its destination address, if another route
+        with the same destination
+
+        already exists, a conflict error is raised.
+      operationId: post_all_routes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteCreate'
+        required: true
+      responses:
+        '201':
+          description: A new route has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '409':
+          description: Another route with the same name already exists
+          content: {}
+        '422':
+          description: Couldn't update route because of invalid input
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
   /routes/ns/{ns_name}:
     get:
       tags:
@@ -739,6 +776,48 @@ paths:
             An error occurred when trying to process the request, this can also
             be because of bad input from the user
           content: {}
+    post:
+      tags:
+        - routes
+      summary: Create a route on the host
+      description: >-
+        The route is identified by its destination address, if another route
+        with the same destination
+
+        already exists, a conflict error is raised.
+      operationId: post_all_routes_in_namespace
+      parameters:
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which routes belong
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteCreate'
+        required: true
+      responses:
+        '201':
+          description: A new route has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '409':
+          description: Another route with the same name already exists
+          content: {}
+        '422':
+          description: Couldn't update route because of invalid input
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
   /routes/ns/{ns_name}/{dst_addr}:
     get:
       tags:
@@ -776,6 +855,87 @@ paths:
             An error occurred when trying to process the request, this can also
             be because of bad input from the user
           content: {}
+    delete:
+      tags:
+        - routes
+      summary: Delete a route from the host
+      description: >-
+        The route is identified by its destination. This method is idempotent,
+        if the route
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
+      operationId: delete_one_route_in_namespace
+      parameters:
+        - name: dst_addr
+          in: path
+          description: >-
+            The destination ("default" or any address with a prefix length) of
+            the route we mean to select
+          required: true
+          schema:
+            type: string
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which the route belong
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The route doesn't exist anymore
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    patch:
+      tags:
+        - routes
+      summary: Update a route on the host
+      description: The route is identified by its destination.
+      operationId: patch_one_route_in_namespace
+      parameters:
+        - name: dst_addr
+          in: path
+          description: >-
+            The destination ("default" or any address with a prefix length) of
+            the route we mean to select
+          required: true
+          schema:
+            type: string
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which the route belong
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteUpdate'
+        required: true
+      responses:
+        '200':
+          description: The route has been updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '404':
+          description: Couldn't find any route with given destination address
+          content: {}
+        '422':
+          description: Couldn't update route because of invalid input
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
   /routes/ns/{ns_name}/{dst_addr}/{dst_prefix_len}:
     get:
       tags:
@@ -817,6 +977,95 @@ paths:
             An error occurred when trying to process the request, this can also
             be because of bad input from the user
           content: {}
+    delete:
+      tags:
+        - routes
+      summary: Delete a route from the host
+      description: >-
+        The route is identified by its destination. This method is idempotent,
+        if the route
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
+      operationId: delete_one_route_with_prefix_in_namespace
+      parameters:
+        - name: dst_addr
+          in: path
+          description: The address of the destination of the route
+          required: true
+          schema:
+            type: string
+        - name: dst_prefix_len
+          in: path
+          description: The prefix length of the destination of the route
+          required: true
+          schema:
+            type: integer
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which the route belong
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The route doesn't exist anymore
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    patch:
+      tags:
+        - routes
+      summary: Update a route on the host
+      description: The route is identified by its destination.
+      operationId: patch_one_route_with_prefix_in_namespace
+      parameters:
+        - name: dst_addr
+          in: path
+          description: The address of the destination of the route
+          required: true
+          schema:
+            type: string
+        - name: dst_prefix_len
+          in: path
+          description: The prefix length of the destination of the route
+          required: true
+          schema:
+            type: integer
+        - name: ns_name
+          in: path
+          description: The name of the namespace in which the route belong
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteUpdate'
+        required: true
+      responses:
+        '200':
+          description: The route has been updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '404':
+          description: Couldn't find any route with given destination address
+          content: {}
+        '422':
+          description: Couldn't update route because of invalid input
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
   /routes/{dst_addr}:
     get:
       tags:
@@ -848,6 +1097,75 @@ paths:
             An error occurred when trying to process the request, this can also
             be because of bad input from the user
           content: {}
+    delete:
+      tags:
+        - routes
+      summary: Delete a route from the host
+      description: >-
+        The route is identified by its destination. This method is idempotent,
+        if the route
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
+      operationId: delete_one_route
+      parameters:
+        - name: dst_addr
+          in: path
+          description: >-
+            The destination ("default" or any address with a prefix length) of
+            the route we mean to select
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The route doesn't exist anymore
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    patch:
+      tags:
+        - routes
+      summary: Update a route on the host
+      description: The route is identified by its destination.
+      operationId: patch_one_route
+      parameters:
+        - name: dst_addr
+          in: path
+          description: >-
+            The destination ("default" or any address with a prefix length) of
+            the route we mean to select
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteUpdate'
+        required: true
+      responses:
+        '200':
+          description: The route has been updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '404':
+          description: Couldn't find any route with given destination address
+          content: {}
+        '422':
+          description: Couldn't update route because of invalid input
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
   /routes/{dst_addr}/{dst_prefix_len}:
     get:
       tags:
@@ -877,6 +1195,278 @@ paths:
                 $ref: '#/components/schemas/Route'
         '404':
           description: Couldn't find any route with given destination
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    delete:
+      tags:
+        - routes
+      summary: Delete a route from the host
+      description: >-
+        The route is identified by its destination. This method is idempotent,
+        if the route
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
+      operationId: delete_one_route_with_prefix
+      parameters:
+        - name: dst_addr
+          in: path
+          description: The address of the destination of the route
+          required: true
+          schema:
+            type: string
+        - name: dst_prefix_len
+          in: path
+          description: The prefix length of the destination of the route
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The route doesn't exist anymore
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    patch:
+      tags:
+        - routes
+      summary: Update a route on the host
+      description: The route is identified by its destination.
+      operationId: patch_one_route_with_prefix
+      parameters:
+        - name: dst_addr
+          in: path
+          description: The address of the destination of the route
+          required: true
+          schema:
+            type: string
+        - name: dst_prefix_len
+          in: path
+          description: The prefix length of the destination of the route
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteUpdate'
+        required: true
+      responses:
+        '200':
+          description: The route has been updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '404':
+          description: Couldn't find any route with given destination address
+          content: {}
+        '422':
+          description: Couldn't update route because of invalid input
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
+  /ue:
+    get:
+      tags:
+        - ue
+      summary: Get all UEs
+      operationId: get_all_ue
+      responses:
+        '200':
+          description: Get all UE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UE'
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    post:
+      tags:
+        - ue
+      summary: Create an UE configuration
+      description: >-
+        The UE is identified by its supi, if another UE with the same supi
+        already exists, a
+
+        conflict error is raised.
+      operationId: post_all_ue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UECreate'
+        required: true
+      responses:
+        '201':
+          description: A new UE configuration has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UE'
+        '409':
+          description: Another UE with the same supi already exists
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+      x-codegen-request-body-name: payload
+  /ue/{supi}:
+    get:
+      tags:
+        - ue
+      summary: Get a UE configuration
+      description: The UE is identified by its supi.
+      operationId: get_one_ue
+      parameters:
+        - name: supi
+          in: path
+          description: The radio cell identifier, identify the cell of the UE.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found a UE config with a matching supi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UE'
+        '404':
+          description: Couldn't find any UE with given supi
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+    delete:
+      tags:
+        - ue
+      summary: Delete a UE configuration
+      description: >-
+        The UE is identified by its supi. This method is idempotent, if the UE
+
+        doesn't exist it won't try to delete it again, and consider the deletion
+        successful.
+      operationId: delete_one_ue
+      parameters:
+        - name: supi
+          in: path
+          description: The radio cell identifier, identify the cell of the UE.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The UE config doesn't exist anymore
+          content: {}
+        '404':
+          description: The UE config could not be found.
+          content: {}
+        '409':
+          description: The UE client should be stopped before removing config.
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+  /ue/{supi}/start:
+    post:
+      tags:
+        - ue
+      summary: Start a UE configuration
+      description: The UE is identified by its supi.
+      operationId: post_start_ue
+      parameters:
+        - name: supi
+          in: path
+          description: The radio cell identifier, identify the cell of the UE.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: UE started
+          content: {}
+        '404':
+          description: Couldn't find any UE with given supi
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+  /ue/{supi}/status:
+    get:
+      tags:
+        - ue
+      summary: Get the status of a UE
+      description: The UE is identified by its supi.
+      operationId: get_status_ue
+      parameters:
+        - name: supi
+          in: path
+          description: The radio cell identifier, identify the cell of the UE.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found a UE config with a matching supi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UEStatus'
+        '404':
+          description: Couldn't find any UE with given supi
+          content: {}
+        '500':
+          description: >-
+            An error occurred when trying to process the request, this can also
+            be because of bad input from the user
+          content: {}
+  /ue/{supi}/stop:
+    post:
+      tags:
+        - ue
+      summary: Start a UE configuration
+      description: The UE is identified by its supi.
+      operationId: post_stop_ue
+      parameters:
+        - name: supi
+          in: path
+          description: The radio cell identifier, identify the cell of the UE.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: UE stopped
+          content: {}
+        '404':
+          description: Couldn't find any UE with given supi
+          content: {}
+        '409':
+          description: A UE with given supi is already running
           content: {}
         '500':
           description: >-
@@ -1092,6 +1682,35 @@ components:
             - type: string
               pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
             - type: integer
+    RouteCreate:
+      title: RouteCreate
+      description: Input for creating a route
+      type: object
+      properties:
+        dst:
+          title: Dst
+          anyOf:
+            - type: string
+              format: ipv4interface
+            - type: string
+              format: ipv6interface
+            - enum:
+                - default
+              type: string
+        gateway:
+          title: Gateway
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        dev:
+          title: Dev
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+      required:
+        - dst
+        - dev
     Route:
       title: Route
       description: A route as return by the command `ip route`
@@ -1155,6 +1774,24 @@ components:
         - protocol
         - scope
         - flags
+    RouteUpdate:
+      title: RouteUpdate
+      description: Input for updating a route
+      type: object
+      properties:
+        gateway:
+          title: Gateway
+          anyOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+        dev:
+          title: Dev
+          pattern: ^[0-9A-Z-a-z@#$_\-.]{1,16}$
+          type: string
+      required:
+        - dev
     PingRequest:
       title: PingRequest
       type: object
@@ -1376,6 +2013,194 @@ components:
     GNodeBStatus:
       title: GNodeBStatus
       description: Input schema for creating a gNodeB
+      type: object
+      properties:
+        status:
+          title: Status
+          type: string
+        pid:
+          title: Pid
+          type: integer
+        logs:
+          title: Logs
+          type: string
+      required:
+        - status
+        - pid
+        - logs
+    UECreate:
+      title: UECreate
+      description: Input schema for creating a UE
+      type: object
+      properties:
+        supi:
+          title: Supi
+          pattern: imsi-[0-9]{15}
+          type: string
+        mcc:
+          title: Mcc
+          type: string
+        mnc:
+          title: Mnc
+          type: string
+        key:
+          title: Key
+          type: string
+        op:
+          title: Op
+          type: string
+        opType:
+          $ref: '#/components/schemas/OpType'
+        amf:
+          title: Amf
+          type: string
+        imei:
+          title: Imei
+          type: string
+        imeiSv:
+          title: Imeisv
+          type: string
+        gnbSearchList:
+          title: Gnbsearchlist
+          type: array
+          items:
+            anyOf:
+              - type: string
+                format: ipv4
+              - type: string
+                format: ipv6
+        uacAic:
+          $ref: '#/components/schemas/UacAic'
+        uacAcc:
+          $ref: '#/components/schemas/UacAcc'
+        sessions:
+          title: Sessions
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+        configured_nssai:
+          title: Configured-Nssai
+          type: array
+          items:
+            $ref: '#/components/schemas/Slice'
+        default_nssai:
+          title: Default-Nssai
+          type: array
+          items:
+            $ref: '#/components/schemas/Slice'
+        integrity:
+          $ref: '#/components/schemas/Integrity'
+        ciphering:
+          $ref: '#/components/schemas/Ciphering'
+        integrityMaxRate:
+          $ref: '#/components/schemas/IntegrityMaxRate'
+      required:
+        - supi
+        - mcc
+        - mnc
+        - key
+        - op
+        - opType
+        - amf
+        - imei
+        - imeiSv
+        - gnbSearchList
+        - uacAic
+        - uacAcc
+        - sessions
+        - configured_nssai
+        - default_nssai
+        - integrity
+        - ciphering
+        - integrityMaxRate
+    UE:
+      title: UE
+      description: A UE identified by its supi.
+      type: object
+      properties:
+        supi:
+          title: Supi
+          pattern: imsi-[0-9]{15}
+          type: string
+        mcc:
+          title: Mcc
+          type: string
+        mnc:
+          title: Mnc
+          type: string
+        key:
+          title: Key
+          type: string
+        op:
+          title: Op
+          type: string
+        opType:
+          $ref: '#/components/schemas/OpType'
+        amf:
+          title: Amf
+          type: string
+        imei:
+          title: Imei
+          type: string
+        imeiSv:
+          title: Imeisv
+          type: string
+        gnbSearchList:
+          title: Gnbsearchlist
+          type: array
+          items:
+            anyOf:
+              - type: string
+                format: ipv4
+              - type: string
+                format: ipv6
+        uacAic:
+          $ref: '#/components/schemas/UacAic'
+        uacAcc:
+          $ref: '#/components/schemas/UacAcc'
+        sessions:
+          title: Sessions
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+        configured_nssai:
+          title: Configured-Nssai
+          type: array
+          items:
+            $ref: '#/components/schemas/Slice'
+        default_nssai:
+          title: Default-Nssai
+          type: array
+          items:
+            $ref: '#/components/schemas/Slice'
+        integrity:
+          $ref: '#/components/schemas/Integrity'
+        ciphering:
+          $ref: '#/components/schemas/Ciphering'
+        integrityMaxRate:
+          $ref: '#/components/schemas/IntegrityMaxRate'
+      required:
+        - supi
+        - mcc
+        - mnc
+        - key
+        - op
+        - opType
+        - amf
+        - imei
+        - imeiSv
+        - gnbSearchList
+        - uacAic
+        - uacAcc
+        - sessions
+        - configured_nssai
+        - default_nssai
+        - integrity
+        - ciphering
+        - integrityMaxRate
+    UEStatus:
+      title: UEStatus
+      description: Input schema for creating a UE
       type: object
       properties:
         status:
@@ -1617,7 +2442,132 @@ components:
           type: integer
       required:
         - sst
-        - sd
+    OpType:
+      title: OpType
+      description: An enumeration.
+      enum:
+        - OP
+        - OPC
+      type: string
+    UacAic:
+      title: UacAic
+      description: UAC Access Identities Configuration
+      type: object
+      properties:
+        mps:
+          title: Mps
+          type: boolean
+        mcs:
+          title: Mcs
+          type: boolean
+      required:
+        - mps
+        - mcs
+    UacAcc:
+      title: UacAcc
+      description: UAC Access Control Class
+      type: object
+      properties:
+        normalClass:
+          title: Normalclass
+          type: integer
+        class11:
+          title: Class11
+          type: boolean
+        class12:
+          title: Class12
+          type: boolean
+        class13:
+          title: Class13
+          type: boolean
+        class14:
+          title: Class14
+          type: boolean
+        class15:
+          title: Class15
+          type: boolean
+      required:
+        - normalClass
+        - class11
+        - class12
+        - class13
+        - class14
+        - class15
+    PDUSessionType:
+      title: PDUSessionType
+      description: An enumeration.
+      enum:
+        - IPv4
+      type: string
+    Session:
+      title: Session
+      description: Initial PDU session to be established
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/PDUSessionType'
+        apn:
+          title: Apn
+          type: string
+        slice:
+          $ref: '#/components/schemas/Slice'
+      required:
+        - type
+    Integrity:
+      title: Integrity
+      description: Supported integrity algorithms by this UE
+      type: object
+      properties:
+        IA1:
+          title: Ia1
+          type: boolean
+        IA2:
+          title: Ia2
+          type: boolean
+        IA3:
+          title: Ia3
+          type: boolean
+      required:
+        - IA1
+        - IA2
+        - IA3
+    Ciphering:
+      title: Ciphering
+      description: Supported encryption algorithms by this UE
+      type: object
+      properties:
+        EA1:
+          title: Ea1
+          type: boolean
+        EA2:
+          title: Ea2
+          type: boolean
+        EA3:
+          title: Ea3
+          type: boolean
+      required:
+        - EA1
+        - EA2
+        - EA3
+    MaxRate:
+      title: MaxRate
+      description: An enumeration.
+      enum:
+        - full
+        - 64kbps
+      type: string
+    IntegrityMaxRate:
+      title: IntegrityMaxRate
+      description: Integrity protection maximum data rate for user plane
+      type: object
+      properties:
+        uplink:
+          $ref: '#/components/schemas/MaxRate'
+        downlink:
+          $ref: '#/components/schemas/MaxRate'
+      required:
+        - uplink
+        - downlink
   responses:
     MaskError:
       description: When any error occurs on mask
