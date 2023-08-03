@@ -142,6 +142,7 @@ class StartUE(Resource):
 
     @namespace.response(HTTPStatus.OK, "UE started")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
+    @namespace.response(HTTPStatus.CONFLICT, "A UE with given supi is already running")
     def post(self, supi: str):
         """
         Start a UE configuration
@@ -173,10 +174,9 @@ class StopUE(Resource):
 
     @namespace.response(HTTPStatus.OK, "UE stopped")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
-    @namespace.response(HTTPStatus.CONFLICT, "A UE with given supi is already running")
     def post(self, supi: str):
         """
-        Start a UE configuration
+        Stop a UE configuration
 
         The UE is identified by its supi.
         """

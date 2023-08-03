@@ -142,6 +142,7 @@ class StartGNodeB(Resource):
 
     @namespace.response(HTTPStatus.OK, "gNodeB started")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
+    @namespace.response(HTTPStatus.CONFLICT, "A gNodeB with given nci is already running")
     def post(self, nci: str):
         """
         Start a gNodeB configuration
@@ -173,10 +174,9 @@ class StopGNodeB(Resource):
 
     @namespace.response(HTTPStatus.OK, "gNodeB stopped")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
-    @namespace.response(HTTPStatus.CONFLICT, "A gNodeB with given nci is already running")
     def post(self, nci: str):
         """
-        Start a gNodeB configuration
+        Stop a gNodeB configuration
 
         The gNodeB is identified by its nci.
         """
