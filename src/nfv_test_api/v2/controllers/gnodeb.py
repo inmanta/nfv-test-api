@@ -176,7 +176,7 @@ class StopGNodeB(Resource):
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
     def post(self, nci: str):
         """
-        Start a gNodeB configuration
+        Stop a gNodeB configuration
 
         The gNodeB is identified by its nci.
         """
