@@ -122,8 +122,8 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     response = requests.get(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001")
     LOGGER.debug(response.json())
     response.raise_for_status()
-    gnodeb = UE(**response.json())
-    assert created_ue.dict() == gnodeb.dict()
+    ue = UE(**response.json())
+    assert created_ue.dict() == ue.dict()
 
     # Start the ue
     requests.post(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/start").raise_for_status()
