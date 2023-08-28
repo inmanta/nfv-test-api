@@ -210,7 +210,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             raise NotFound(f"No gNodeB process found for nci {identifier}")
 
         status: Dict[str, Any] = {}
-        node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], 0)}"  # type: ignore
+        node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], base=0)}"  # type: ignore
         command = [
             "nr-cli",
             node_name,
@@ -224,7 +224,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             raise NotFound(f"Failed to fetch gNodeB status: {stderr}")
 
         # Parse the status response, it should be a yaml object
-        status["status"] = yaml.safe_load(stdout)
+        status["status"] = yaml.safe_load(stdout) or {}
 
         # Load the logs from the file
         with get_file_path(identifier, FileType.LOG).open(mode="r") as out:

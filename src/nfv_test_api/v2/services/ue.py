@@ -202,7 +202,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
             raise NotFound(f"Failed to fetch UE status: {stderr}")
 
         # Parse the status response, it should be a yaml object
-        status["status"] = yaml.safe_load(stdout)
+        status["status"] = yaml.safe_load(stdout) or {}
 
         # Load the logs from the file
         with get_file_path(identifier, FileType.LOG).open(mode="r") as out:

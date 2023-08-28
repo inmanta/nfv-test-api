@@ -34,7 +34,16 @@ class Host:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        return process.communicate()
+        try:
+            # Make sure our command terminates.
+            # We set a hard timeout of 10 seconds, it should work for all
+            # the commands we run.  If it doesn't, we can create a more
+            # elaborate mechanism.
+            return process.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            # Kill the process and return the output we had so far
+            process.terminate()
+            return process.communicate(timeout=1)
 
     def hostname(self) -> str:
         stdout, stderr = self.exec(["hostname"])
