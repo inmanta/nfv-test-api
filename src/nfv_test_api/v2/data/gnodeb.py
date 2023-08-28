@@ -74,9 +74,9 @@ class GNodeBUpdate(GNodeB):
 
 class GNodeBStatus(BaseModel):
     """
-    Input schema for creating a gNodeB
+    Response to a status call for a running gNobeB.
     """
 
-    status: str
+    status: dict
     pid: int
-    logs: str
+    logs: list[str]

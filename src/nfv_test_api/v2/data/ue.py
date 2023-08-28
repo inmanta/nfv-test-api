@@ -146,9 +146,9 @@ class UEUpdate(UE):
 
 class UEStatus(BaseModel):
     """
-    Input schema for creating a UE
+    Response to a status call for a running UE.
     """
 
-    status: str
+    status: dict
     pid: int
-    logs: str
+    logs: list[str]

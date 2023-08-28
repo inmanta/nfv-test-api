@@ -197,11 +197,15 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         ]
 
         status["pid"] = self.process_handler.processes[identifier].pid
-        status["status"], stderr = self.host.exec(command)
+        stdout, stderr = self.host.exec(command)
         if stderr:
             raise NotFound(f"Failed to fetch UE status: {stderr}")
 
+        # Parse the status response, it should be a yaml object
+        status["status"] = yaml.safe_load(stdout)
+
+        # Load the logs from the file
         with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
-            status["logs"] = "\n".join(out.readlines())
+            status["logs"] = [line.rstrip("\n") for line in out]
 
         return status
