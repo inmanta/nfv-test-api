@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import logging
+import time
 
 import requests
 
@@ -59,10 +60,17 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
     requests.post(f"{nfv_test_api_endpoint}/gnodeb/0x000000010/start").raise_for_status()
 
     # Get the status of the gnodeb
-    response = requests.get(f"{nfv_test_api_endpoint}/gnodeb/0x000000010/status")
-    LOGGER.debug(response.json())
-    response.raise_for_status()
-    GNodeBStatus(**response.json())
+    for _ in range(0, 5):
+        response = requests.get(f"{nfv_test_api_endpoint}/gnodeb/0x000000010/status")
+        LOGGER.debug(response.json())
+        if response.status_code == 404:
+            # Try again in a second, the gnodeb might not be running yet
+            time.sleep(1)
+            continue
+
+        response.raise_for_status()
+        GNodeBStatus(**response.json())
+        break
 
     # Stop the gnodeb
     requests.post(f"{nfv_test_api_endpoint}/gnodeb/0x000000010/stop").raise_for_status()
@@ -114,8 +122,8 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     response = requests.get(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001")
     LOGGER.debug(response.json())
     response.raise_for_status()
-    gnodeb = UE(**response.json())
-    assert created_ue.dict() == gnodeb.dict()
+    ue = UE(**response.json())
+    assert created_ue.dict() == ue.dict()
 
     # Start the ue
     requests.post(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/start").raise_for_status()
