@@ -17,16 +17,8 @@ import logging
 
 import requests
 
-from nfv_test_api.v2.data.gnodeb import (
-    GNodeB,
-    GNodeBCreate,
-    GNodeBStatus,
-)
-from nfv_test_api.v2.data.ue import (
-    UE,
-    UECreate,
-    UEStatus,
-)
+from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBStatus
+from nfv_test_api.v2.data.ue import UE, UECreate, UEStatus
 
 LOGGER = logging.getLogger(__name__)
 
@@ -102,9 +94,7 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
                 "class14": False,
                 "class15": False,
             },
-            "sessions": [
-                {"type": "IPv4", "apn": "intranet", "slice": {"sst": 1, "sd": 1}}
-            ],
+            "sessions": [{"type": "IPv4", "apn": "intranet", "slice": {"sst": 1, "sd": 1}}],
             "configured-nssai": [{"sst": 1, "sd": 1}],
             "default-nssai": [{"sst": 1, "sd": 1}],
             "integrity": {"IA1": True, "IA2": True, "IA3": True},
