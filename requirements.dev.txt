@@ -1,0 +1,5 @@
+docker
+pytest-flask
+inmanta-dev-dependencies[module]
+types-PyYAML
+types-requests

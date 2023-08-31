@@ -52,7 +52,7 @@ class IpBaseModel(BaseModel):
         include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,  # type: ignore # noqa: F821
         exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,  # type: ignore # noqa: F821
         by_alias: bool = False,
-        skip_defaults: bool = None,
+        skip_defaults: Optional[bool] = None,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,

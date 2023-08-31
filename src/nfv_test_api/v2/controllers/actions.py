@@ -17,7 +17,7 @@ from http import HTTPStatus
 from typing import Dict, Optional
 
 from flask import request  # type: ignore
-from flask_restplus import Namespace, Resource  # type: ignore
+from flask_restx import Namespace, Resource  # type: ignore
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest  # type: ignore
 
@@ -39,7 +39,7 @@ class OnePing(Resource):
     The scope of this controller is the ping action on the host, not in a namespace.
     """
 
-    def __init__(self, api=None, *args, **kwargs):
+    def __init__(self, api=None, *args: object, **kwargs: object):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = ActionsService(Host())
         self._interface_services: Dict[str, ActionsService] = dict()
@@ -66,7 +66,7 @@ class OnePing(Resource):
         try:
             # Validating input
             InputOptionalSafeName(name=ns_name)
-            request_form = PingRequest(**request.json)
+            request_form = PingRequest(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -74,7 +74,9 @@ class OnePing(Resource):
 
 
 @namespace.route("/ns/<ns_name>/ping")
-@namespace.param("ns_name", description="The name of the namespace in which to execute the ping")
+@namespace.param(
+    "ns_name", description="The name of the namespace in which to execute the ping"
+)
 class OnePingInNamespace(OnePing):
     """
     The scope of this controller is the ping action in a namespace on the host.

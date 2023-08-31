@@ -58,4 +58,6 @@ class NamespaceHost(Host):
         super().__init__(shell_entry_point=["ip", "netns", "exec", namespace])
 
     def get_raw_namespaces(self) -> List[object]:
-        raise NotImplementedError("You shouldn't try to interact with namespaces from inside another one")
+        raise NotImplementedError(
+            "You shouldn't try to interact with namespaces from inside another one"
+        )

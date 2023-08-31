@@ -14,11 +14,11 @@
    limitations under the License.
 """
 import logging
-from typing import Dict, List, Optional, Set, TypeVar
+from typing import Optional, TypeVar
 
 import requests  # type: ignore
 from flask import Blueprint  # type: ignore
-from flask_restplus import Api  # type: ignore
+from flask_restx import Api  # type: ignore
 from requests.models import HTTPError  # type: ignore
 from werkzeug.exceptions import ServiceUnavailable  # type: ignore
 
@@ -49,11 +49,11 @@ api_extension.add_namespace(gnb_ns)
 api_extension.add_namespace(ue_ns)
 
 # Ugly patches to force openapi 3.0
-from flask_restplus.swagger import Swagger  # type: ignore # noqa: E402
+from flask_restx.swagger import Swagger  # type: ignore # noqa: E402
 
 as_dict = Swagger.as_dict
 
-T = TypeVar("T", List, Dict, Set, str, int, float, bool, bytes, object)
+T = TypeVar("T", list, dict, str, int, float, bool, bytes, object)
 """
 This type var will be used in replace_ref function.  It indicates that for any input
 type given the :param schema:, the same type will be returned.  This is not true for
@@ -72,15 +72,17 @@ def replace_ref(schema: T, schema_prefix: str) -> T:
     :param schema: A schema to recursively search references in
     :param schema_prefix: The new prefix to set
     """
-    if isinstance(schema, List):
+    if isinstance(schema, list):
         return [replace_ref(item, schema_prefix) for item in schema]
 
-    if isinstance(schema, Dict):
+    if isinstance(schema, dict):
         if "$ref" in schema:
             schema["$ref"] = schema_prefix + schema["$ref"].split("/")[-1]
             return schema
 
-        return {key: replace_ref(value, schema_prefix) for key, value in schema.items()}
+        return {  # type: ignore
+            key: replace_ref(value, schema_prefix) for key, value in schema.items()
+        }
 
     return schema
 
@@ -93,7 +95,9 @@ def as_dict_overwrite(self):
 
     def extract_definitions(definition: dict, title: Optional[str] = None) -> None:
         if title and title not in definitions:
-            definitions[title] = {key: value for key, value in definition.items() if key != "definitions"}
+            definitions[title] = {
+                key: value for key, value in definition.items() if key != "definitions"
+            }
 
         for t, d in definition.get("definitions", dict()).items():
             extract_definitions(d, t)
@@ -110,7 +114,9 @@ def as_dict_overwrite(self):
     try:
         # Converting the model to openapi 3 using swagger converter
         response = requests.post(
-            "https://converter.swagger.io/api/convert", json=new_dict, headers={"content-type": "application/json"}
+            "https://converter.swagger.io/api/convert",
+            json=new_dict,
+            headers={"content-type": "application/json"},
         )
         response.raise_for_status()
     except HTTPError as e:

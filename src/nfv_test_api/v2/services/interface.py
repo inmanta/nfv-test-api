@@ -56,12 +56,18 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
                 interface.attach_host(host or self.host)
                 interfaces.append(interface)
             except ValidationError as e:
-                LOGGER.error(f"Failed to parse an interface: {raw_interface}\n" f"{str(e)}")
+                LOGGER.error(
+                    f"Failed to parse an interface: {raw_interface}\n" f"{str(e)}"
+                )
 
         return interfaces
 
-    def get_one_raw(self, identifier: str, host: Optional[Host] = None) -> Optional[Dict[str, Any]]:
-        stdout, stderr = (host or self.host).exec(["ip", "-j", "-details", "addr", "show", identifier])
+    def get_one_raw(
+        self, identifier: str, host: Optional[Host] = None
+    ) -> Optional[Dict[str, Any]]:
+        stdout, stderr = (host or self.host).exec(
+            ["ip", "-j", "-details", "addr", "show", identifier]
+        )
         if stderr.strip() == f'Device "{identifier}" does not exist.':
             return None
 
@@ -69,12 +75,16 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
             raise RuntimeError(f"Failed to get an addr on host: {stderr}")
 
         raw_interfaces = json.loads(stdout or "[]")
-        raw_interfaces_list = pydantic.parse_obj_as(List[Dict[str, Any]], raw_interfaces)
+        raw_interfaces_list = pydantic.parse_obj_as(
+            List[Dict[str, Any]], raw_interfaces
+        )
         if not raw_interfaces_list:
             return None
 
         if len(raw_interfaces_list) > 1:
-            LOGGER.error(f"Expected to get one interface here but got multiple ones: {raw_interfaces_list}")
+            LOGGER.error(
+                f"Expected to get one interface here but got multiple ones: {raw_interfaces_list}"
+            )
 
         return raw_interfaces_list[0]
 
@@ -127,11 +137,15 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
 
         _, stderr = self.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to create interface with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to create interface with command {command}: {stderr}"
+            )
 
         existing_interface = self.get_one_or_default(o.name)
         if not existing_interface:
-            raise RuntimeError("The interface should have been created but can not be found")
+            raise RuntimeError(
+                "The interface should have been created but can not be found"
+            )
 
         return existing_interface
 
@@ -149,9 +163,12 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
 
         if o.addresses is not None:
             existing_addresses: Set[Union[IPv4Interface, IPv6Interface]] = {
-                ip_interface(f"{str(addr_info.local)}/{addr_info.prefix_len}") for addr_info in interface.addr_info
+                ip_interface(f"{str(addr_info.local)}/{addr_info.prefix_len}")
+                for addr_info in interface.addr_info
             }
-            desired_addresses: Set[Union[IPv4Interface, IPv6Interface]] = {addr for addr in o.addresses}
+            desired_addresses: Set[Union[IPv4Interface, IPv6Interface]] = {
+                addr for addr in o.addresses
+            }
 
             extra_addresses = existing_addresses - desired_addresses
             missing_addresses = desired_addresses - existing_addresses
@@ -180,7 +197,9 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         ]
         _, stderr = interface.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to set link state with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to set link state with command {command}: {stderr}"
+            )
 
         return self.get_one(interface.if_name, host=interface.host)
 
@@ -195,7 +214,9 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         ]
         _, stderr = interface.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to set link mtu with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to set link mtu with command {command}: {stderr}"
+            )
 
         return self.get_one(interface.if_name, host=interface.host)
 
@@ -215,11 +236,15 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
 
         _, stderr = interface.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to set link master with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to set link master with command {command}: {stderr}"
+            )
 
         return self.get_one(interface.if_name, host=interface.host)
 
-    def add_address(self, interface: Interface, address: Union[IPv4Interface, IPv6Interface]) -> Interface:
+    def add_address(
+        self, interface: Interface, address: Union[IPv4Interface, IPv6Interface]
+    ) -> Interface:
         command = [
             "ip",
             "address",
@@ -230,11 +255,15 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         ]
         _, stderr = interface.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to add address with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to add address with command {command}: {stderr}"
+            )
 
         return self.get_one(interface.if_name, host=interface.host)
 
-    def del_address(self, interface: Interface, address: Union[IPv4Interface, IPv6Interface]) -> Interface:
+    def del_address(
+        self, interface: Interface, address: Union[IPv4Interface, IPv6Interface]
+    ) -> Interface:
         command = [
             "ip",
             "address",
@@ -245,7 +274,9 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         ]
         _, stderr = interface.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to delete address with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to delete address with command {command}: {stderr}"
+            )
 
         return self.get_one(interface.if_name, host=interface.host)
 
@@ -266,7 +297,9 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         ]
         _, stderr = interface.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to rename interface with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to rename interface with command {command}: {stderr}"
+            )
 
         interface = self.get_one(new_name, host=interface.host)
         if previous_state == InterfaceState.UP:
@@ -304,9 +337,13 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         ]
         _, stderr = interface.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to move interface to new namespace with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to move interface to new namespace with command {command}: {stderr}"
+            )
 
-        interface = InterfaceService(NamespaceHost(namespace_name)).get_one(interface.if_name)
+        interface = InterfaceService(NamespaceHost(namespace_name)).get_one(
+            interface.if_name
+        )
         if previous_state == InterfaceState.UP:
             interface = self.set_state(interface, InterfaceState.UP)
 
@@ -320,7 +357,9 @@ class InterfaceService(BaseService[Interface, InterfaceCreate, InterfaceUpdate])
         command = ["ip", "link", "del", identifier]
         _, stderr = existing_interface.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to delete interface with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to delete interface with command {command}: {stderr}"
+            )
 
     def status(self) -> CommandStatus:
         command = ["ip", "-details", "addr"]

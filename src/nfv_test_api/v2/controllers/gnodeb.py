@@ -16,7 +16,7 @@
 from http import HTTPStatus
 
 from flask import request  # type: ignore
-from flask_restplus import Namespace, Resource  # type: ignore
+from flask_restx import Namespace, Resource  # type: ignore
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest  # type: ignore
 
@@ -49,16 +49,27 @@ class AllGNodeB(Resource):
         self._host = Host()
         self.gnb_service = GNodeBService(self._host, gnodeb_service_handler)
 
-    @namespace.response(code=HTTPStatus.OK, description="Get all gNodeB", model=gnodeb_model, as_list=True)
+    @namespace.response(
+        code=HTTPStatus.OK,
+        description="Get all gNodeB",
+        model=gnodeb_model,
+        as_list=True,
+    )
     def get(self):
         """
         Get all gNodeBs
         """
-        return [gnodeb.json_dict() for gnodeb in self.gnb_service.get_all()], HTTPStatus.OK
+        return [
+            gnodeb.json_dict() for gnodeb in self.gnb_service.get_all()
+        ], HTTPStatus.OK
 
     @namespace.expect(gnodeb_create_model)
-    @namespace.response(HTTPStatus.CREATED, "A new gNodeB configuration has been created", gnodeb_model)
-    @namespace.response(HTTPStatus.CONFLICT, "Another gNodeB with the same nci already exists")
+    @namespace.response(
+        HTTPStatus.CREATED, "A new gNodeB configuration has been created", gnodeb_model
+    )
+    @namespace.response(
+        HTTPStatus.CONFLICT, "Another gNodeB with the same nci already exists"
+    )
     def post(self):
         """
         Create an gNodeB configuration
@@ -68,7 +79,7 @@ class AllGNodeB(Resource):
         """
         try:
             # Validating input
-            create_form = GNodeBCreate(**request.json)
+            create_form = GNodeBCreate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -76,7 +87,9 @@ class AllGNodeB(Resource):
 
 
 @namespace.route("/<nci>")
-@namespace.param("nci", description="The radio cell identifier, identify the cell of the gNodeB.")
+@namespace.param(
+    "nci", description="The radio cell identifier, identify the cell of the gNodeB."
+)
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
@@ -92,7 +105,9 @@ class OneGNodeB(Resource):
         super().__init__(api=api, *args, **kwargs)
         self.gnb_service = GNodeBService(Host(), gnodeb_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "Found a gNodeB config with a matching nci", gnodeb_model)
+    @namespace.response(
+        HTTPStatus.OK, "Found a gNodeB config with a matching nci", gnodeb_model
+    )
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
     def get(self, nci: str):
         """
@@ -110,7 +125,10 @@ class OneGNodeB(Resource):
 
     @namespace.response(HTTPStatus.OK, "The gNodeB config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND, "The gNodeB config could not be found.")
-    @namespace.response(HTTPStatus.CONFLICT, "The gNodeB client should be stopped before removing config.")
+    @namespace.response(
+        HTTPStatus.CONFLICT,
+        "The gNodeB client should be stopped before removing config.",
+    )
     def delete(self, nci: str):
         """
         Delete a gNodeB configuration.
@@ -130,7 +148,9 @@ class OneGNodeB(Resource):
 
 
 @namespace.route("/<nci>/start")
-@namespace.param("nci", description="The radio cell identifier, identify the cell of the gNodeB.")
+@namespace.param(
+    "nci", description="The radio cell identifier, identify the cell of the gNodeB."
+)
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
@@ -142,7 +162,9 @@ class StartGNodeB(Resource):
 
     @namespace.response(HTTPStatus.OK, "gNodeB started")
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
-    @namespace.response(HTTPStatus.CONFLICT, "A gNodeB with given nci is already running")
+    @namespace.response(
+        HTTPStatus.CONFLICT, "A gNodeB with given nci is already running"
+    )
     def post(self, nci: str):
         """
         Start a gNodeB configuration
@@ -162,7 +184,9 @@ class StartGNodeB(Resource):
 
 
 @namespace.route("/<nci>/stop")
-@namespace.param("nci", description="The radio cell identifier, identify the cell of the gNodeB.")
+@namespace.param(
+    "nci", description="The radio cell identifier, identify the cell of the gNodeB."
+)
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
@@ -193,7 +217,9 @@ class StopGNodeB(Resource):
 
 
 @namespace.route("/<nci>/status")
-@namespace.param("nci", description="The radio cell identifier, identify the cell of the gNodeB.")
+@namespace.param(
+    "nci", description="The radio cell identifier, identify the cell of the gNodeB."
+)
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
@@ -203,7 +229,9 @@ class StatusGNodeB(Resource):
         super().__init__(api=api, *args, **kwargs)
         self.gnb_service = GNodeBService(Host(), gnodeb_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "Found a gNodeB config with a matching nci", gnodeb_status_model)
+    @namespace.response(
+        HTTPStatus.OK, "Found a gNodeB config with a matching nci", gnodeb_status_model
+    )
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any gNodeB with given nci")
     def get(self, nci: str):
         """

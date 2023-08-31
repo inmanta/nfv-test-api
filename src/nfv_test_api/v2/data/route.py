@@ -33,12 +33,16 @@ class InputDestination(BaseModel):
     dst_prefix_len: Optional[int]
 
     @validator("dst_prefix_len")
-    def default_if_prefix_none(cls, v: Optional[int], values, **kwargs) -> Optional[int]:
+    def default_if_prefix_none(
+        cls, v: Optional[int], values: dict, **kwargs: object
+    ) -> Optional[int]:
         if "dst_addr" not in values:
             return v
 
         if v is None and values["dst_addr"] != "default":
-            raise ValueError("A prefix length has to be provided for any destination address (except default)")
+            raise ValueError(
+                "A prefix length has to be provided for any destination address (except default)"
+            )
 
         if v is not None and values["dst_addr"] == "default":
             raise ValueError("The default destination doesn't take any prefix length")
@@ -47,7 +51,11 @@ class InputDestination(BaseModel):
 
     @property
     def destination_name(self) -> str:
-        return f"{self.dst_addr}/{self.dst_prefix_len}" if self.dst_addr != "default" else str(self.dst_addr)
+        return (
+            f"{self.dst_addr}/{self.dst_prefix_len}"
+            if self.dst_addr != "default"
+            else str(self.dst_addr)
+        )
 
 
 class RouteCreate(IpBaseModel):

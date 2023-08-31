@@ -4,9 +4,10 @@ flake8 = flake8 src tests
 
 .PHONY: install
 install:
-	pip install -U pip wheel
-	pip install -U poetry
-	poetry install
+	pip install -e . -r requirements.dev.txt
+
+image:
+	docker build -t inmantaci/nfv-test-api:latest .
 
 .PHONY: format
 format:

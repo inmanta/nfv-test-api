@@ -83,10 +83,14 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         super().__init__(host)
         self.process_handler = process_handler
 
-    def get_one_raw(self, supi: Optional[str] = None, filename: Optional[str] = None) -> Any:
+    def get_one_raw(
+        self, supi: Optional[str] = None, filename: Optional[str] = None
+    ) -> Any:
         # Get UE config using supi or directly the filename
         if not supi and not filename:
-            raise NotFound("Please specify either supi or filename to get the UE config")
+            raise NotFound(
+                "Please specify either supi or filename to get the UE config"
+            )
         elif supi:
             filename = str(get_file_path(supi, FileType.CONFIG))
 
@@ -95,7 +99,9 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
                 try:
                     return yaml.safe_load(stream)
                 except yaml.YAMLError as e:
-                    raise RuntimeError(f"Failed to load UE config: {filename}\n" f"{str(e)}")
+                    raise RuntimeError(
+                        f"Failed to load UE config: {filename}\n" f"{str(e)}"
+                    )
         except FileNotFoundError:
             if not supi:
                 # raise exception only if filename specified
@@ -119,11 +125,15 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
                 ue.attach_host(self.host)
                 ue_list.append(ue)
             except ValidationError as e:
-                LOGGER.error(f"Failed to parse a UE configuration : {ue_json}\n" f"{str(e)}")
+                LOGGER.error(
+                    f"Failed to parse a UE configuration : {ue_json}\n" f"{str(e)}"
+                )
 
         return ue_list
 
-    def get_one_or_default(self, identifier: str, default: Optional[K] = None) -> Union[UE, None, K]:
+    def get_one_or_default(
+        self, identifier: str, default: Optional[K] = None
+    ) -> Union[UE, None, K]:
         raw_ue = self.get_one_raw(supi=identifier)
         if raw_ue is None:
             return default
@@ -149,7 +159,9 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
 
         existing_ue = self.get_one_or_default(o.supi)
         if not existing_ue:
-            raise RuntimeError("The UE config should have been created but can not be found")
+            raise RuntimeError(
+                "The UE config should have been created but can not be found"
+            )
 
         return existing_ue
 
@@ -165,11 +177,15 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         try:
             get_file_path(identifier, FileType.CONFIG).unlink()
         except FileNotFoundError:
-            raise RuntimeError(f"The configuration for UE with supi {identifier} doesn't exist")
+            raise RuntimeError(
+                f"The configuration for UE with supi {identifier} doesn't exist"
+            )
 
         existing_ue = self.get_one_or_default(identifier)
         if existing_ue:
-            raise RuntimeError("The UE should have been deleted but could not be deleted")
+            raise RuntimeError(
+                "The UE should have been deleted but could not be deleted"
+            )
 
     def start(self, identifier: str) -> None:
         # make sure the config exists

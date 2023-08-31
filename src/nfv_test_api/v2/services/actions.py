@@ -51,7 +51,7 @@ class ActionsService:
 
         ping_result = self.ping_parser.parse(stdout).as_dict()
         try:
-            return Ping(**ping_result)
+            return Ping(**ping_result)  # type: ignore
         except ValidationError as e:
             LOGGER.error(f"Failed to parse ping response: {ping_result}")
             raise e

@@ -45,7 +45,9 @@ class BaseService(Generic[T, TC, TU]):
         pass
 
     @abstractmethod
-    def get_one_or_default(self, identifier: str, default: Optional[K] = None) -> Union[T, None, K]:
+    def get_one_or_default(
+        self, identifier: str, default: Optional[K] = None
+    ) -> Union[T, None, K]:
         pass
 
     @abstractmethod

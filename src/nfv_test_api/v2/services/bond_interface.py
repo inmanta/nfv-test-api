@@ -35,12 +35,18 @@ class BondInterfaceService(InterfaceService):
 
     def create(self, o: InterfaceCreate) -> Interface:
         if o.type != LinkInfo.Kind.BOND:
-            raise BadRequest(f"You can only create a bond interface with a type bond, got {o.type.name} instead")
+            raise BadRequest(
+                f"You can only create a bond interface with a type bond, got {o.type.name} instead"
+            )
 
         if o.slave_interfaces is None:
-            raise BadRequest("You need to specify the slave interfaces for the bond interface you create")
+            raise BadRequest(
+                "You need to specify the slave interfaces for the bond interface you create"
+            )
 
-        slave_interfaces = [self.get_one(identifier) for identifier in o.slave_interfaces]
+        slave_interfaces = [
+            self.get_one(identifier) for identifier in o.slave_interfaces
+        ]
 
         interface = super().create(o)
         interface = self.set_state(interface, InterfaceState.DOWN)
@@ -48,7 +54,9 @@ class BondInterfaceService(InterfaceService):
             slave_interface = self.set_state(slave_interface, InterfaceState.DOWN)
             slave_interface = self.set_master(slave_interface, "nomaster")
 
-        _, stderr = self.host.exec(["sh", "-c", f"echo 4 > /sys/class/net/{interface.if_name}/bonding/mode"])
+        _, stderr = self.host.exec(
+            ["sh", "-c", f"echo 4 > /sys/class/net/{interface.if_name}/bonding/mode"]
+        )
         if stderr:
             raise RuntimeError(f"Failed to change bonding mode of interface: {stderr}")
 

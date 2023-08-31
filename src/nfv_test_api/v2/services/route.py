@@ -54,7 +54,9 @@ class RouteService(BaseService[Route, RouteCreate, RouteUpdate]):
         return routes
 
     def get_one_raw(self, identifier: str) -> Optional[Dict[str, Any]]:
-        stdout, stderr = self.host.exec(["ip", "-j", "-details", "route", "show", identifier])
+        stdout, stderr = self.host.exec(
+            ["ip", "-j", "-details", "route", "show", identifier]
+        )
         if stderr:
             raise RuntimeError(f"Failed to get a route on host: {stderr}")
 
@@ -64,11 +66,15 @@ class RouteService(BaseService[Route, RouteCreate, RouteUpdate]):
             return None
 
         if len(raw_routes_list) > 1:
-            LOGGER.error(f"Expected to get one interface here but got multiple ones: {raw_routes_list}")
+            LOGGER.error(
+                f"Expected to get one interface here but got multiple ones: {raw_routes_list}"
+            )
 
         return raw_routes_list[0]
 
-    def get_one_or_default(self, identifier: str, default: Optional[K] = None) -> Union[Route, None, K]:
+    def get_one_or_default(
+        self, identifier: str, default: Optional[K] = None
+    ) -> Union[Route, None, K]:
         raw_route = self.get_one_raw(identifier)
         if raw_route is None:
             return default
@@ -95,11 +101,15 @@ class RouteService(BaseService[Route, RouteCreate, RouteUpdate]):
 
         _, stderr = self.host.exec(command)
         if stderr:
-            raise UnprocessableEntity(f"Failed to create route with command {command}: {stderr}")
+            raise UnprocessableEntity(
+                f"Failed to create route with command {command}: {stderr}"
+            )
 
         existing_route = self.get_one_or_default(str(o.dst))
         if not existing_route:
-            raise RuntimeError("The route should have been created but can not be found")
+            raise RuntimeError(
+                "The route should have been created but can not be found"
+            )
 
         return existing_route
 
@@ -112,7 +122,9 @@ class RouteService(BaseService[Route, RouteCreate, RouteUpdate]):
 
         _, stderr = self.host.exec(command)
         if stderr:
-            raise UnprocessableEntity(f"Failed to update route with command {command}: {stderr}")
+            raise UnprocessableEntity(
+                f"Failed to update route with command {command}: {stderr}"
+            )
 
         return existing_route
 
@@ -124,7 +136,9 @@ class RouteService(BaseService[Route, RouteCreate, RouteUpdate]):
         command = ["ip", "route", "del", identifier]
         _, stderr = existing_route.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to delete route with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to delete route with command {command}: {stderr}"
+            )
 
     def status(self) -> CommandStatus:
         command = ["ip", "-details", "route"]

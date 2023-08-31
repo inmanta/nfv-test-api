@@ -27,7 +27,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")
-def free_image_tag(docker_client: docker.DockerClient) -> typing.Generator[str, None, None]:
+def free_image_tag(
+    docker_client: docker.DockerClient,
+) -> typing.Generator[str, None, None]:
     """
     This fixture ensures that we have a tag that we can use to build our image
     and that the image will be deleted once we are done with it.
@@ -48,14 +50,15 @@ def free_image_tag(docker_client: docker.DockerClient) -> typing.Generator[str, 
 
 
 @pytest.fixture(scope="session")
-def nfv_test_api_image(docker_client: docker.DockerClient, free_image_tag: str) -> images.Image:
+def nfv_test_api_image(
+    docker_client: docker.DockerClient, free_image_tag: str
+) -> images.Image:
     """
     This fixture builds a container image containing the nfv-test-api server.
     """
     try:
         docker_client.images.build(
             path=str(pathlib.Path(__file__).parent.parent),
-            rm=True,
             tag=free_image_tag,
         )
     except docker.errors.BuildError as e:
