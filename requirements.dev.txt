@@ -1,8 +1,5 @@
-docker==5.0.3
-mypy
-lxml
-pytest==6.2.5
-pytest-flask==1.0.0
-inmanta-dev-dependencies[module]==1.59.0
-types-PyYAML==6.0.4
-types-requests==2.27.11
+docker
+pytest-flask
+inmanta-dev-dependencies[module]
+types-PyYAML
+types-requests
