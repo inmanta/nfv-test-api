@@ -54,7 +54,7 @@ class AllInterfaces(Resource):
     With it you can either get them all, or create a new one in that scope.
     """
 
-    def __init__(self, api=None, *args, **kwargs):
+    def __init__(self, api=None, *args: object, **kwargs: object):
         super().__init__(api=api, *args, **kwargs)
         self._default_host = Host()
         self._hosts: Dict[str, Host] = dict()
@@ -109,7 +109,7 @@ class AllInterfaces(Resource):
         try:
             # Validating input
             InputOptionalSafeName(name=ns_name)
-            create_form = InterfaceCreate(**request.json)
+            create_form = InterfaceCreate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -152,7 +152,7 @@ class OneInterface(Resource):
     With it you can either get it, update it or delete it.
     """
 
-    def __init__(self, api=None, *args, **kwargs):
+    def __init__(self, api=None, *args: object, **kwargs: object):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = InterfaceService(Host())
         self._interface_services: Dict[str, InterfaceService] = dict()
@@ -207,7 +207,7 @@ class OneInterface(Resource):
             # Validating input
             InputSafeName(name=name)
             InputOptionalSafeName(name=ns_name)
-            update_form = InterfaceUpdate(**request.json)
+            update_form = InterfaceUpdate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
         return (

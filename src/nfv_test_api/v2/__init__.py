@@ -14,7 +14,7 @@
    limitations under the License.
 """
 import logging
-from typing import Dict, List, Optional, Set, TypeVar
+from typing import Optional, TypeVar
 
 import requests  # type: ignore
 from flask import Blueprint  # type: ignore
@@ -53,7 +53,7 @@ from flask_restx.swagger import Swagger  # type: ignore # noqa: E402
 
 as_dict = Swagger.as_dict
 
-T = TypeVar("T", List, Dict, Set, str, int, float, bool, bytes, object)
+T = TypeVar("T", list, dict, str, int, float, bool, bytes, object)
 """
 This type var will be used in replace_ref function.  It indicates that for any input
 type given the :param schema:, the same type will be returned.  This is not true for
@@ -72,15 +72,17 @@ def replace_ref(schema: T, schema_prefix: str) -> T:
     :param schema: A schema to recursively search references in
     :param schema_prefix: The new prefix to set
     """
-    if isinstance(schema, List):
+    if isinstance(schema, list):
         return [replace_ref(item, schema_prefix) for item in schema]
 
-    if isinstance(schema, Dict):
+    if isinstance(schema, dict):
         if "$ref" in schema:
             schema["$ref"] = schema_prefix + schema["$ref"].split("/")[-1]
             return schema
 
-        return {key: replace_ref(value, schema_prefix) for key, value in schema.items()}
+        return {  # type: ignore
+            key: replace_ref(value, schema_prefix) for key, value in schema.items()
+        }
 
     return schema
 

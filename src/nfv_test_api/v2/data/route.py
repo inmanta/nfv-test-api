@@ -34,7 +34,7 @@ class InputDestination(BaseModel):
 
     @validator("dst_prefix_len")
     def default_if_prefix_none(
-        cls, v: Optional[int], values, **kwargs
+        cls, v: Optional[int], values: dict, **kwargs: object
     ) -> Optional[int]:
         if "dst_addr" not in values:
             return v

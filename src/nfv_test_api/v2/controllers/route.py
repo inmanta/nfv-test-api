@@ -47,7 +47,7 @@ class AllRoutes(Resource):
     With it you can get them all.
     """
 
-    def __init__(self, api=None, *args, **kwargs):
+    def __init__(self, api=None, *args: object, **kwargs: object):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = RouteService(Host())
         self._route_services: Dict[str, RouteService] = dict()
@@ -103,7 +103,7 @@ class AllRoutes(Resource):
         try:
             # Validating input
             InputOptionalSafeName(name=ns_name)
-            create_form = RouteCreate(**request.json)
+            create_form = RouteCreate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -145,7 +145,7 @@ class OneRoute(Resource):
     With it you can get it.
     """
 
-    def __init__(self, api=None, *args, **kwargs):
+    def __init__(self, api=None, *args: object, **kwargs: object):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = RouteService(Host())
         self._route_services: Dict[str, RouteService] = dict()
@@ -179,7 +179,8 @@ class OneRoute(Resource):
         try:
             # Validating input
             destination = InputDestination(
-                dst_addr=dst_addr, dst_prefix_len=dst_prefix_len
+                dst_addr=dst_addr,  # type: ignore
+                dst_prefix_len=dst_prefix_len,  # type: ignore
             ).destination_name
             InputOptionalSafeName(name=ns_name)
         except ValidationError as e:
@@ -213,10 +214,11 @@ class OneRoute(Resource):
         try:
             # Validating input
             destination = InputDestination(
-                dst_addr=dst_addr, dst_prefix_len=dst_prefix_len
+                dst_addr=dst_addr,  # type: ignore
+                dst_prefix_len=dst_prefix_len,  # type: ignore
             ).destination_name
             InputOptionalSafeName(name=ns_name)
-            update_form = RouteUpdate(**request.json)
+            update_form = RouteUpdate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -243,7 +245,8 @@ class OneRoute(Resource):
         try:
             # Validating input
             destination = InputDestination(
-                dst_addr=dst_addr, dst_prefix_len=dst_prefix_len
+                dst_addr=dst_addr,  # type: ignore
+                dst_prefix_len=dst_prefix_len,  # type: ignore
             ).destination_name
             InputOptionalSafeName(name=ns_name)
         except ValidationError as e:

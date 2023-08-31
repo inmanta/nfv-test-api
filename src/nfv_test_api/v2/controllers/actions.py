@@ -39,7 +39,7 @@ class OnePing(Resource):
     The scope of this controller is the ping action on the host, not in a namespace.
     """
 
-    def __init__(self, api=None, *args, **kwargs):
+    def __init__(self, api=None, *args: object, **kwargs: object):
         super().__init__(api=api, *args, **kwargs)
         self._default_service = ActionsService(Host())
         self._interface_services: Dict[str, ActionsService] = dict()
@@ -66,7 +66,7 @@ class OnePing(Resource):
         try:
             # Validating input
             InputOptionalSafeName(name=ns_name)
-            request_form = PingRequest(**request.json)
+            request_form = PingRequest(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 

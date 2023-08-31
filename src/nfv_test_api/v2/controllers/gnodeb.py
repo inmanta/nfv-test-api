@@ -79,7 +79,7 @@ class AllGNodeB(Resource):
         """
         try:
             # Validating input
-            create_form = GNodeBCreate(**request.json)
+            create_form = GNodeBCreate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 

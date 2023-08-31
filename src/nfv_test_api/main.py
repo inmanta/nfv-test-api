@@ -23,7 +23,6 @@ from nfv_test_api.config import get_config
 from nfv_test_api.v2 import blueprint as controllers
 
 app = Flask(__name__)
-app.simulate = False
 CORS(app)
 app.config["RESTPLUS_MASK_SWAGGER"] = False
 app.register_blueprint(controllers)

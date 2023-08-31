@@ -27,7 +27,7 @@ LOGGER = logging.getLogger(__name__)
 def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     # Create a new gnodeb
     new_gnodeb = GNodeBCreate(
-        **{
+        **{  # type: ignore
             "mcc": "001",
             "mnc": "01",
             "nci": "0x000000010",
@@ -86,7 +86,7 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
 def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     # Create a new ue
     new_ue = UECreate(
-        **{
+        **{  # type: ignore
             "supi": "imsi-001010000000001",
             "mcc": "001",
             "mnc": "01",
