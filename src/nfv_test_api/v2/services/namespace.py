@@ -49,23 +49,31 @@ class NamespaceService(BaseService[Namespace, NamespaceCreate, NamespaceUpdate])
                 namespace.attach_host(self.host)
                 namespaces.append(namespace)
             except ValidationError as e:
-                LOGGER.error(f"Failed to parse a namespace: {raw_namespace}\n" f"{str(e)}")
+                LOGGER.error(
+                    f"Failed to parse a namespace: {raw_namespace}\n" f"{str(e)}"
+                )
 
         return namespaces
 
     def get_one_raw(self, identifier: str) -> Optional[Dict[str, Any]]:
         raw_namespaces_list = [
-            raw_namespace for raw_namespace in self.get_all_raw() if raw_namespace.get("name", "") == identifier
+            raw_namespace
+            for raw_namespace in self.get_all_raw()
+            if raw_namespace.get("name", "") == identifier
         ]
         if not raw_namespaces_list:
             return None
 
         if len(raw_namespaces_list) > 1:
-            LOGGER.error(f"Expected to get one namespace here but got multiple ones: {raw_namespaces_list}")
+            LOGGER.error(
+                f"Expected to get one namespace here but got multiple ones: {raw_namespaces_list}"
+            )
 
         return raw_namespaces_list[0]
 
-    def get_one_or_default(self, identifier: str, default: Optional[K] = None) -> Union[Namespace, None, K]:
+    def get_one_or_default(
+        self, identifier: str, default: Optional[K] = None
+    ) -> Union[Namespace, None, K]:
         raw_namespace = self.get_one_raw(identifier)
         if raw_namespace is None:
             return default
@@ -94,7 +102,9 @@ class NamespaceService(BaseService[Namespace, NamespaceCreate, NamespaceUpdate])
         if stderr:
             raise RuntimeError(f"Failed to create namespace: {stderr}")
 
-        _, stderr = self.host.exec(["ip", "netns", "set", o.name, str(o.ns_id or "auto")])
+        _, stderr = self.host.exec(
+            ["ip", "netns", "set", o.name, str(o.ns_id or "auto")]
+        )
         if stderr:
             raise RuntimeError(f"Failed to set namespace id: {stderr}")
 
@@ -102,7 +112,9 @@ class NamespaceService(BaseService[Namespace, NamespaceCreate, NamespaceUpdate])
         if existing_namespace:
             return existing_namespace
 
-        raise RuntimeError("The namespace should have been created but can not be found")
+        raise RuntimeError(
+            "The namespace should have been created but can not be found"
+        )
 
     def update(self, identifier: str, o: NamespaceUpdate) -> Namespace:
         raise NotImplementedError("Updating namespaces is not supported")
@@ -120,7 +132,9 @@ class NamespaceService(BaseService[Namespace, NamespaceCreate, NamespaceUpdate])
         if not existing_namespace:
             return
 
-        raise RuntimeError("The namespace should have been deleted but can still be found")
+        raise RuntimeError(
+            "The namespace should have been deleted but can still be found"
+        )
 
     def status(self) -> CommandStatus:
         command = ["ip", "-details", "netns", "list-id"]

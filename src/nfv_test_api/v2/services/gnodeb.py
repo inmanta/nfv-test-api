@@ -83,10 +83,14 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         super().__init__(host)
         self.process_handler = process_handler
 
-    def get_one_raw(self, nci: Optional[str] = None, filename: Optional[str] = None) -> Any:
+    def get_one_raw(
+        self, nci: Optional[str] = None, filename: Optional[str] = None
+    ) -> Any:
         # Get gNodeB config using nci or directly the filename
         if not nci and not filename:
-            raise NotFound("Please specify either nci or filename to get the gNodeB config")
+            raise NotFound(
+                "Please specify either nci or filename to get the gNodeB config"
+            )
         elif nci:
             filename = str(get_file_path(nci, FileType.CONFIG))
 
@@ -95,7 +99,9 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
                 try:
                     return yaml.safe_load(stream)
                 except yaml.YAMLError as e:
-                    raise RuntimeError(f"Failed to load gNodeB config: {filename}\n" f"{str(e)}")
+                    raise RuntimeError(
+                        f"Failed to load gNodeB config: {filename}\n" f"{str(e)}"
+                    )
         except FileNotFoundError:
             if not nci:
                 # raise exception only if filename specified
@@ -119,11 +125,16 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
                 gnodeb.attach_host(self.host)
                 gnodeb_list.append(gnodeb)
             except ValidationError as e:
-                LOGGER.error(f"Failed to parse a gNodeB configuration : {gnodeb_json}\n" f"{str(e)}")
+                LOGGER.error(
+                    f"Failed to parse a gNodeB configuration : {gnodeb_json}\n"
+                    f"{str(e)}"
+                )
 
         return gnodeb_list
 
-    def get_one_or_default(self, identifier: str, default: Optional[K] = None) -> Union[GNodeB, None, K]:
+    def get_one_or_default(
+        self, identifier: str, default: Optional[K] = None
+    ) -> Union[GNodeB, None, K]:
         raw_gnb = self.get_one_raw(nci=identifier)
         if raw_gnb is None:
             return default
@@ -149,7 +160,9 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
 
         existing_gnb = self.get_one_or_default(o.nci)
         if not existing_gnb:
-            raise RuntimeError("The gNodeB config should have been created but can not be found")
+            raise RuntimeError(
+                "The gNodeB config should have been created but can not be found"
+            )
 
         return existing_gnb
 
@@ -165,11 +178,15 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         try:
             get_file_path(identifier, FileType.CONFIG).unlink()
         except FileNotFoundError:
-            raise RuntimeError(f"The configuration for gNodeB with nci {identifier} doesn't exist")
+            raise RuntimeError(
+                f"The configuration for gNodeB with nci {identifier} doesn't exist"
+            )
 
         existing_gnb = self.get_one_or_default(identifier)
         if existing_gnb:
-            raise RuntimeError("The gNodeB should have been deleted but could not be deleted")
+            raise RuntimeError(
+                "The gNodeB should have been deleted but could not be deleted"
+            )
 
     def start(self, identifier: str) -> None:
         # make sure the config exists

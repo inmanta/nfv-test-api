@@ -32,7 +32,10 @@ class Config(BaseModel):
 CONFIG = None
 
 
-def get_config(config_file: Optional[str] = None, config_dict: Optional[Dict[str, Any]] = None) -> Config:
+def get_config(
+    config_file: Optional[str] = None,
+    config_dict: Optional[Dict[str, Any]] = None,
+) -> Config:
     global CONFIG
     if CONFIG is not None:
         return CONFIG

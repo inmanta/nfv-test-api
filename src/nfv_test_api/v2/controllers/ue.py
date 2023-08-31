@@ -16,7 +16,7 @@
 from http import HTTPStatus
 
 from flask import request  # type: ignore
-from flask_restplus import Namespace, Resource  # type: ignore
+from flask_restx import Namespace, Resource  # type: ignore
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest  # type: ignore
 
@@ -49,7 +49,9 @@ class AllUE(Resource):
         self._host = Host()
         self.ue_service = UEService(self._host, ue_service_handler)
 
-    @namespace.response(code=HTTPStatus.OK, description="Get all UE", model=ue_model, as_list=True)
+    @namespace.response(
+        code=HTTPStatus.OK, description="Get all UE", model=ue_model, as_list=True
+    )
     def get(self):
         """
         Get all UEs
@@ -57,8 +59,12 @@ class AllUE(Resource):
         return [ue.json_dict() for ue in self.ue_service.get_all()], HTTPStatus.OK
 
     @namespace.expect(ue_create_model)
-    @namespace.response(HTTPStatus.CREATED, "A new UE configuration has been created", ue_model)
-    @namespace.response(HTTPStatus.CONFLICT, "Another UE with the same supi already exists")
+    @namespace.response(
+        HTTPStatus.CREATED, "A new UE configuration has been created", ue_model
+    )
+    @namespace.response(
+        HTTPStatus.CONFLICT, "Another UE with the same supi already exists"
+    )
     def post(self):
         """
         Create an UE configuration
@@ -76,7 +82,9 @@ class AllUE(Resource):
 
 
 @namespace.route("/<supi>")
-@namespace.param("supi", description="The radio cell identifier, identify the cell of the UE.")
+@namespace.param(
+    "supi", description="The radio cell identifier, identify the cell of the UE."
+)
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
@@ -92,7 +100,9 @@ class OneUE(Resource):
         super().__init__(api=api, *args, **kwargs)
         self.ue_service = UEService(Host(), ue_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "Found a UE config with a matching supi", ue_model)
+    @namespace.response(
+        HTTPStatus.OK, "Found a UE config with a matching supi", ue_model
+    )
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
     def get(self, supi: str):
         """
@@ -110,7 +120,9 @@ class OneUE(Resource):
 
     @namespace.response(HTTPStatus.OK, "The UE config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND, "The UE config could not be found.")
-    @namespace.response(HTTPStatus.CONFLICT, "The UE client should be stopped before removing config.")
+    @namespace.response(
+        HTTPStatus.CONFLICT, "The UE client should be stopped before removing config."
+    )
     def delete(self, supi: str):
         """
         Delete a UE configuration.
@@ -130,7 +142,9 @@ class OneUE(Resource):
 
 
 @namespace.route("/<supi>/start")
-@namespace.param("supi", description="The radio cell identifier, identify the cell of the UE.")
+@namespace.param(
+    "supi", description="The radio cell identifier, identify the cell of the UE."
+)
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
@@ -162,7 +176,9 @@ class StartUE(Resource):
 
 
 @namespace.route("/<supi>/stop")
-@namespace.param("supi", description="The radio cell identifier, identify the cell of the UE.")
+@namespace.param(
+    "supi", description="The radio cell identifier, identify the cell of the UE."
+)
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
@@ -193,7 +209,9 @@ class StopUE(Resource):
 
 
 @namespace.route("/<supi>/status")
-@namespace.param("supi", description="The radio cell identifier, identify the cell of the UE.")
+@namespace.param(
+    "supi", description="The radio cell identifier, identify the cell of the UE."
+)
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
@@ -203,7 +221,9 @@ class StatusUE(Resource):
         super().__init__(api=api, *args, **kwargs)
         self.ue_service = UEService(Host(), ue_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "Found a UE config with a matching supi", ue_status_model)
+    @namespace.response(
+        HTTPStatus.OK, "Found a UE config with a matching supi", ue_status_model
+    )
     @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
     def get(self, supi: str):
         """

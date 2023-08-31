@@ -16,8 +16,8 @@
 from http import HTTPStatus
 
 from flask import request  # type: ignore
-from flask_restplus import Namespace as ApiNamespace  # type: ignore
-from flask_restplus import Resource
+from flask_restx import Namespace as ApiNamespace  # type: ignore
+from flask_restx import Resource
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest  # type: ignore
 
@@ -50,16 +50,27 @@ class AllNamespaces(Resource):
         self.host = Host()
         self.service = NamespaceService(self.host)
 
-    @namespace.response(code=HTTPStatus.OK, description="Get all namespaces on the host", model=namespace_model, as_list=True)
+    @namespace.response(
+        code=HTTPStatus.OK,
+        description="Get all namespaces on the host",
+        model=namespace_model,
+        as_list=True,
+    )
     def get(self):
         """
         Get all namespaces on the host
         """
-        return [namespace.json_dict() for namespace in self.service.get_all()], HTTPStatus.OK
+        return [
+            namespace.json_dict() for namespace in self.service.get_all()
+        ], HTTPStatus.OK
 
     @namespace.expect(namespace_create_model)
-    @namespace.response(HTTPStatus.CREATED, "A new namespace has been created", namespace_model)
-    @namespace.response(HTTPStatus.CONFLICT, "Another namespace with the same name or id already exists")
+    @namespace.response(
+        HTTPStatus.CREATED, "A new namespace has been created", namespace_model
+    )
+    @namespace.response(
+        HTTPStatus.CONFLICT, "Another namespace with the same name or id already exists"
+    )
     def post(self):
         """
         Create a namespace on the host
@@ -92,8 +103,12 @@ class OneNamespace(Resource):
         self.host = Host()
         self.service = NamespaceService(self.host)
 
-    @namespace.response(HTTPStatus.OK, "Found a namespace with a matching name", namespace_model)
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any namespace with given name")
+    @namespace.response(
+        HTTPStatus.OK, "Found a namespace with a matching name", namespace_model
+    )
+    @namespace.response(
+        HTTPStatus.NOT_FOUND, "Couldn't find any namespace with given name"
+    )
     def get(self, name: str):
         """
         Get a namespace on the host

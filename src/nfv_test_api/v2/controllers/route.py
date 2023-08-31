@@ -17,7 +17,7 @@ from http import HTTPStatus
 from typing import Dict, Optional
 
 from flask import request  # type: ignore
-from flask_restplus import Namespace, Resource  # type: ignore
+from flask_restx import Namespace, Resource  # type: ignore
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest  # type: ignore
 
@@ -64,7 +64,12 @@ class AllRoutes(Resource):
 
         return self._route_services[ns_name]
 
-    @namespace.response(code=HTTPStatus.OK, description="Get all routes on the host", model=route_model, as_list=True)
+    @namespace.response(
+        code=HTTPStatus.OK,
+        description="Get all routes on the host",
+        model=route_model,
+        as_list=True,
+    )
     def get(self, ns_name: Optional[str] = None):
         """
         Get all routes on the host
@@ -75,12 +80,19 @@ class AllRoutes(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return [route.json_dict() for route in self.get_service(ns_name).get_all()], HTTPStatus.OK
+        return [
+            route.json_dict() for route in self.get_service(ns_name).get_all()
+        ], HTTPStatus.OK
 
     @namespace.expect(route_create_model)
     @namespace.response(HTTPStatus.CREATED, "A new route has been created", route_model)
-    @namespace.response(HTTPStatus.CONFLICT, "Another route with the same name already exists")
-    @namespace.response(HTTPStatus.UNPROCESSABLE_ENTITY, "Couldn't update route because of invalid input")
+    @namespace.response(
+        HTTPStatus.CONFLICT, "Another route with the same name already exists"
+    )
+    @namespace.response(
+        HTTPStatus.UNPROCESSABLE_ENTITY,
+        "Couldn't update route because of invalid input",
+    )
     def post(self, ns_name: Optional[str] = None):
         """
         Create a route on the host
@@ -95,11 +107,16 @@ class AllRoutes(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.get_service(ns_name).create(create_form).json_dict(), HTTPStatus.CREATED
+        return (
+            self.get_service(ns_name).create(create_form).json_dict(),
+            HTTPStatus.CREATED,
+        )
 
 
 @namespace.route("/ns/<ns_name>")
-@namespace.param("ns_name", description="The name of the namespace in which routes belong")
+@namespace.param(
+    "ns_name", description="The name of the namespace in which routes belong"
+)
 class AllRoutesInNamespace(AllRoutes):
     """
     The scope of this controller is all the routes that are in a namespace.
@@ -114,7 +131,8 @@ class AllRoutesInNamespace(AllRoutes):
 
 @namespace.route("/<dst_addr>")
 @namespace.param(
-    "dst_addr", description='The destination ("default" or any address with a prefix length) of the route we mean to select'
+    "dst_addr",
+    description='The destination ("default" or any address with a prefix length) of the route we mean to select',
 )
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -141,9 +159,18 @@ class OneRoute(Resource):
 
         return self._route_services[ns_name]
 
-    @namespace.response(HTTPStatus.OK, "Found an route with a matching destination", route_model)
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any route with given destination")
-    def get(self, dst_addr: str, dst_prefix_len: Optional[int] = None, ns_name: Optional[str] = None):
+    @namespace.response(
+        HTTPStatus.OK, "Found an route with a matching destination", route_model
+    )
+    @namespace.response(
+        HTTPStatus.NOT_FOUND, "Couldn't find any route with given destination"
+    )
+    def get(
+        self,
+        dst_addr: str,
+        dst_prefix_len: Optional[int] = None,
+        ns_name: Optional[str] = None,
+    ):
         """
         Get a route on the host
 
@@ -151,18 +178,33 @@ class OneRoute(Resource):
         """
         try:
             # Validating input
-            destination = InputDestination(dst_addr=dst_addr, dst_prefix_len=dst_prefix_len).destination_name
+            destination = InputDestination(
+                dst_addr=dst_addr, dst_prefix_len=dst_prefix_len
+            ).destination_name
             InputOptionalSafeName(name=ns_name)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.get_service(ns_name).get_one(destination).json_dict(exclude_none=True), HTTPStatus.OK
+        return (
+            self.get_service(ns_name).get_one(destination).json_dict(exclude_none=True),
+            HTTPStatus.OK,
+        )
 
     @namespace.expect(route_update_model)
     @namespace.response(HTTPStatus.OK, "The route has been updated", route_model)
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any route with given destination address")
-    @namespace.response(HTTPStatus.UNPROCESSABLE_ENTITY, "Couldn't update route because of invalid input")
-    def patch(self, dst_addr: str, dst_prefix_len: Optional[int] = None, ns_name: Optional[str] = None):
+    @namespace.response(
+        HTTPStatus.NOT_FOUND, "Couldn't find any route with given destination address"
+    )
+    @namespace.response(
+        HTTPStatus.UNPROCESSABLE_ENTITY,
+        "Couldn't update route because of invalid input",
+    )
+    def patch(
+        self,
+        dst_addr: str,
+        dst_prefix_len: Optional[int] = None,
+        ns_name: Optional[str] = None,
+    ):
         """
         Update a route on the host
 
@@ -170,16 +212,28 @@ class OneRoute(Resource):
         """
         try:
             # Validating input
-            destination = InputDestination(dst_addr=dst_addr, dst_prefix_len=dst_prefix_len).destination_name
+            destination = InputDestination(
+                dst_addr=dst_addr, dst_prefix_len=dst_prefix_len
+            ).destination_name
             InputOptionalSafeName(name=ns_name)
             update_form = RouteUpdate(**request.json)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.get_service(ns_name).update(destination, update_form).json_dict(exclude_none=True), HTTPStatus.OK
+        return (
+            self.get_service(ns_name)
+            .update(destination, update_form)
+            .json_dict(exclude_none=True),
+            HTTPStatus.OK,
+        )
 
     @namespace.response(HTTPStatus.OK, "The route doesn't exist anymore")
-    def delete(self, dst_addr: str, dst_prefix_len: Optional[int] = None, ns_name: Optional[str] = None):
+    def delete(
+        self,
+        dst_addr: str,
+        dst_prefix_len: Optional[int] = None,
+        ns_name: Optional[str] = None,
+    ):
         """
         Delete a route from the host
 
@@ -188,7 +242,9 @@ class OneRoute(Resource):
         """
         try:
             # Validating input
-            destination = InputDestination(dst_addr=dst_addr, dst_prefix_len=dst_prefix_len).destination_name
+            destination = InputDestination(
+                dst_addr=dst_addr, dst_prefix_len=dst_prefix_len
+            ).destination_name
             InputOptionalSafeName(name=ns_name)
         except ValidationError as e:
             raise BadRequest(str(e))
@@ -198,7 +254,9 @@ class OneRoute(Resource):
 
 @namespace.route("/<dst_addr>/<int:dst_prefix_len>")
 @namespace.param("dst_addr", description="The address of the destination of the route")
-@namespace.param("dst_prefix_len", description="The prefix length of the destination of the route")
+@namespace.param(
+    "dst_prefix_len", description="The prefix length of the destination of the route"
+)
 class OneRouteWithPrefix(OneRoute):
     """
     The scope of this controller is any route that is not in a namespace.
@@ -215,7 +273,9 @@ class OneRouteWithPrefix(OneRoute):
 
 
 @namespace.route("/ns/<ns_name>/<dst_addr>")
-@namespace.param("ns_name", description="The name of the namespace in which the route belong")
+@namespace.param(
+    "ns_name", description="The name of the namespace in which the route belong"
+)
 class OneRouteInNamespace(OneRoute):
     """
     The scope of this controller is any route that is in a namespace.
@@ -229,7 +289,9 @@ class OneRouteInNamespace(OneRoute):
 
 
 @namespace.route("/ns/<ns_name>/<dst_addr>/<int:dst_prefix_len>")
-@namespace.param("ns_name", description="The name of the namespace in which the route belong")
+@namespace.param(
+    "ns_name", description="The name of the namespace in which the route belong"
+)
 class OneRouteWithPrefixInNamespace(OneRouteWithPrefix, OneRouteInNamespace):
     """
     The scope of this controller is any route that is in a namespace.

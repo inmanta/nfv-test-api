@@ -30,10 +30,14 @@ class VlanInterfaceService(InterfaceService):
 
     def create(self, o: InterfaceCreate) -> Interface:
         if o.type != LinkInfo.Kind.VLAN:
-            raise BadRequest(f"You can only create a vlan interface with a type vlan, got {o.type.name} instead")
+            raise BadRequest(
+                f"You can only create a vlan interface with a type vlan, got {o.type.name} instead"
+            )
 
         if o.parent_dev is None:
-            raise BadRequest("You need to specify the parent interface for the vlan interface you create")
+            raise BadRequest(
+                "You need to specify the parent interface for the vlan interface you create"
+            )
 
         existing_interface = self.get_one_or_default(o.name)
         if existing_interface:
@@ -52,7 +56,9 @@ class VlanInterfaceService(InterfaceService):
             vlan_id = int(remainder[1:])
         except ValueError as e:
             LOGGER.error(str(e))
-            raise BadRequest("A vlan type interface should be named with the following format: <parent_dev>.<vlan_id>")
+            raise BadRequest(
+                "A vlan type interface should be named with the following format: <parent_dev>.<vlan_id>"
+            )
 
         command = [
             "ip",
@@ -76,10 +82,14 @@ class VlanInterfaceService(InterfaceService):
         command += ["type", "vlan", "id", str(vlan_id)]
         _, stderr = self.host.exec(command)
         if stderr:
-            raise RuntimeError(f"Failed to create interface with command {command}: {stderr}")
+            raise RuntimeError(
+                f"Failed to create interface with command {command}: {stderr}"
+            )
 
         existing_interface = self.get_one_or_default(o.name)
         if not existing_interface:
-            raise RuntimeError("The interface should have been created but can not be found")
+            raise RuntimeError(
+                "The interface should have been created but can not be found"
+            )
 
         return existing_interface

@@ -17,7 +17,7 @@ from http import HTTPStatus
 from typing import Dict, Optional
 
 from flask import request  # type: ignore
-from flask_restplus import Namespace, Resource  # type: ignore
+from flask_restx import Namespace, Resource  # type: ignore
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest  # type: ignore
 
@@ -74,7 +74,9 @@ class OnePing(Resource):
 
 
 @namespace.route("/ns/<ns_name>/ping")
-@namespace.param("ns_name", description="The name of the namespace in which to execute the ping")
+@namespace.param(
+    "ns_name", description="The name of the namespace in which to execute the ping"
+)
 class OnePingInNamespace(OnePing):
     """
     The scope of this controller is the ping action in a namespace on the host.

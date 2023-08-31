@@ -17,7 +17,7 @@ from http import HTTPStatus
 from typing import Dict, Optional
 
 from flask import request  # type: ignore
-from flask_restplus import Namespace, Resource  # type: ignore
+from flask_restx import Namespace, Resource  # type: ignore
 from pydantic import ValidationError
 from werkzeug.exceptions import BadRequest  # type: ignore
 
@@ -71,7 +71,12 @@ class AllInterfaces(Resource):
 
         return self._hosts[ns_name]
 
-    @namespace.response(code=HTTPStatus.OK, description="Get all interfaces on the host", model=interface_model, as_list=True)
+    @namespace.response(
+        code=HTTPStatus.OK,
+        description="Get all interfaces on the host",
+        model=interface_model,
+        as_list=True,
+    )
     def get(self, ns_name: Optional[str] = None):
         """
         Get all interfaces on the host
@@ -82,11 +87,18 @@ class AllInterfaces(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return [interface.json_dict() for interface in InterfaceService(self.get_host(ns_name)).get_all()], HTTPStatus.OK
+        return [
+            interface.json_dict()
+            for interface in InterfaceService(self.get_host(ns_name)).get_all()
+        ], HTTPStatus.OK
 
     @namespace.expect(interface_create_model)
-    @namespace.response(HTTPStatus.CREATED, "A new interface has been created", interface_model)
-    @namespace.response(HTTPStatus.CONFLICT, "Another interface with the same name already exists")
+    @namespace.response(
+        HTTPStatus.CREATED, "A new interface has been created", interface_model
+    )
+    @namespace.response(
+        HTTPStatus.CONFLICT, "Another interface with the same name already exists"
+    )
     def post(self, ns_name: Optional[str] = None):
         """
         Create an interface on the host
@@ -112,7 +124,9 @@ class AllInterfaces(Resource):
 
 
 @namespace.route("/ns/<ns_name>")
-@namespace.param("ns_name", description="The name of the namespace in which interfaces belong")
+@namespace.param(
+    "ns_name", description="The name of the namespace in which interfaces belong"
+)
 class AllInterfacesInNamespace(AllInterfaces):
     """
     The scope of this controller is all the interfaces that are in a namespace.
@@ -152,8 +166,12 @@ class OneInterface(Resource):
 
         return self._interface_services[ns_name]
 
-    @namespace.response(HTTPStatus.OK, "Found an interface with a matching name", interface_model)
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name")
+    @namespace.response(
+        HTTPStatus.OK, "Found an interface with a matching name", interface_model
+    )
+    @namespace.response(
+        HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name"
+    )
     def get(self, name: str, ns_name: Optional[str] = None):
         """
         Get an interface on the host
@@ -167,11 +185,18 @@ class OneInterface(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.get_service(ns_name).get_one(name).json_dict(exclude_none=True), HTTPStatus.OK
+        return (
+            self.get_service(ns_name).get_one(name).json_dict(exclude_none=True),
+            HTTPStatus.OK,
+        )
 
     @namespace.expect(interface_update_model)
-    @namespace.response(HTTPStatus.OK, "The interface has been updated", interface_model)
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name")
+    @namespace.response(
+        HTTPStatus.OK, "The interface has been updated", interface_model
+    )
+    @namespace.response(
+        HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name"
+    )
     def patch(self, name: str, ns_name: Optional[str] = None):
         """
         Update an interface on the host
@@ -185,7 +210,10 @@ class OneInterface(Resource):
             update_form = InterfaceUpdate(**request.json)
         except ValidationError as e:
             raise BadRequest(str(e))
-        return self.get_service(ns_name).update(name, update_form).json_dict(), HTTPStatus.OK
+        return (
+            self.get_service(ns_name).update(name, update_form).json_dict(),
+            HTTPStatus.OK,
+        )
 
     @namespace.response(HTTPStatus.OK, "The interface doesn't exist anymore")
     def delete(self, name: str, ns_name: Optional[str] = None):
@@ -206,7 +234,9 @@ class OneInterface(Resource):
 
 
 @namespace.route("/ns/<ns_name>/<name>")
-@namespace.param("ns_name", description="The name of the namespace in which interfaces belong")
+@namespace.param(
+    "ns_name", description="The name of the namespace in which interfaces belong"
+)
 class OneInterfaceInNamespace(OneInterface):
     """
     The scope of this controller is any interface that is in a namespace.
