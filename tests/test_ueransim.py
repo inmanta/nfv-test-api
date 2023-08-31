@@ -41,7 +41,9 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
             "ignoreStreamIds": True,
         }
     )
-    response = requests.post(f"{nfv_test_api_endpoint}/gnodeb", json=new_gnodeb.json_dict())
+    response = requests.post(
+        f"{nfv_test_api_endpoint}/gnodeb", json=new_gnodeb.json_dict()
+    )
     LOGGER.debug(response.json())
     response.raise_for_status()
 
@@ -57,7 +59,9 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
     assert created_gnodeb.dict() == gnodeb.dict()
 
     # Start the gnodeb
-    requests.post(f"{nfv_test_api_endpoint}/gnodeb/0x000000010/start").raise_for_status()
+    requests.post(
+        f"{nfv_test_api_endpoint}/gnodeb/0x000000010/start"
+    ).raise_for_status()
 
     # Get the status of the gnodeb
     for _ in range(0, 5):
@@ -102,7 +106,9 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
                 "class14": False,
                 "class15": False,
             },
-            "sessions": [{"type": "IPv4", "apn": "intranet", "slice": {"sst": 1, "sd": 1}}],
+            "sessions": [
+                {"type": "IPv4", "apn": "intranet", "slice": {"sst": 1, "sd": 1}}
+            ],
             "configured-nssai": [{"sst": 1, "sd": 1}],
             "default-nssai": [{"sst": 1, "sd": 1}],
             "integrity": {"IA1": True, "IA2": True, "IA3": True},
@@ -126,7 +132,9 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     assert created_ue.dict() == ue.dict()
 
     # Start the ue
-    requests.post(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/start").raise_for_status()
+    requests.post(
+        f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/start"
+    ).raise_for_status()
 
     # Get the status of the ue
     response = requests.get(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/status")
@@ -135,7 +143,11 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     UEStatus(**response.json())
 
     # Stop the ue
-    requests.post(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/stop").raise_for_status()
+    requests.post(
+        f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/stop"
+    ).raise_for_status()
 
     # Delete the ue config
-    requests.delete(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001").raise_for_status()
+    requests.delete(
+        f"{nfv_test_api_endpoint}/ue/imsi-001010000000001"
+    ).raise_for_status()

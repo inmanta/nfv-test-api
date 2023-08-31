@@ -48,30 +48,23 @@ def nfv_test_api_image(docker_client: docker.DockerClient) -> images.Image:
 
 
 @pytest.fixture(scope="function")
-def nfv_test_api_instance(
+def nfv_test_api_instance_pre(
     docker_client: docker.DockerClient, nfv_test_api_image: images.Image
 ) -> typing.Generator[containers.Container, None, None]:
     """
-    This fixture create and starts a container running the nfv-test-api and returns it api object.
+    Create the container and make sure it is removed after the test.  The container
+    is not started or stopped.
     """
-    container = docker_client.containers.run(
+    container = docker_client.containers.create(
         image=nfv_test_api_image.id,
-        remove=True,
         detach=True,
         privileged=True,
     )
-    assert isinstance(container, containers.Container)
-
-    # Waiting for the container to be started
-    while container.status == "created":
-        time.sleep(1)
-        container_info = docker_client.containers.get(container.id)
-        assert isinstance(container_info, containers.Container)
-        container = container_info
+    assert isinstance(container, containers.Container), type(container)
 
     yield container
 
-    container.kill()
+    container.remove()
     try:
         container.wait(condition="removed")
     except docker.errors.NotFound:
@@ -80,16 +73,48 @@ def nfv_test_api_instance(
 
 
 @pytest.fixture(scope="function")
+def nfv_test_api_instance(
+    docker_client: docker.DockerClient,
+    nfv_test_api_instance_pre: containers.Container,
+) -> typing.Generator[containers.Container, None, None]:
+    """
+    This fixture create and starts a container running the nfv-test-api and returns it api object.
+    """
+    container = nfv_test_api_instance_pre
+    container.start()
+
+    # Waiting for the container to be started
+    while container.status == "created":
+        time.sleep(1)
+        container_info = docker_client.containers.get(container.id)
+        assert isinstance(container_info, containers.Container)
+        container = container_info
+
+    if container.status != "running":
+        LOGGER.error("%s", container.logs().decode("utf-8"))
+        raise RuntimeError("Failed to start container")
+
+    yield container
+
+    container.kill()
+    container.wait(condition="not-running")
+
+
+@pytest.fixture(scope="function")
 def nfv_test_api_endpoint(nfv_test_api_instance: containers.Container) -> str:
     """
     This fixture waits for the api to be reachable then returns the url it can be reached at.
     """
     # Waiting for the server to be up
-    container_ip = ip_address(nfv_test_api_instance.attrs["NetworkSettings"]["IPAddress"])
+    container_ip = ip_address(
+        nfv_test_api_instance.attrs["NetworkSettings"]["IPAddress"]
+    )
     api = f"http://{container_ip}:8080/api/v2"
 
     max_attempts = 10
-    while requests.get(f"{api}/docs", timeout=0.5).status_code != 200 and max_attempts > 0:
+    while (
+        requests.get(f"{api}/docs", timeout=0.5).status_code != 200 and max_attempts > 0
+    ):
         time.sleep(1)
         max_attempts -= 1
 

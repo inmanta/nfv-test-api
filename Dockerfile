@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/python-311:latest
+FROM registry.access.redhat.com/ubi8/python-311:latest
 
 # We need to be root to setup the container image
 USER root
