@@ -91,7 +91,7 @@ pipeline {
                         ${WORKSPACE}/env/bin/devpi use https://artifacts.internal.inmanta.com/inmanta/dev
                         ${WORKSPACE}/env/bin/devpi login ${DEVPI_USER} --password=${DEVPI_PASS}
                         rm -f dist/*
-                        ${WORKSPACE}/env/bin/python3 -m poetry build
+                        ${WORKSPACE}/env/bin/python3 -m build
                         ${WORKSPACE}/env/bin/devpi upload dist/*
                         ${WORKSPACE}/env/bin/devpi logoff
                         '''
