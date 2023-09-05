@@ -122,7 +122,7 @@ class OneNamespace(Resource):
 
         return self.service.get_one(name).json_dict(), HTTPStatus.OK
 
-    @namespace.response(HTTPStatus.OK, "The namespace doesn't exist anymore")
+    @namespace.response(HTTPStatus.OK.value, "The namespace doesn't exist anymore")
     def delete(self, name: str):
         """
         Delete a namespace from the host

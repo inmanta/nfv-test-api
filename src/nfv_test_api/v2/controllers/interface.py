@@ -215,7 +215,7 @@ class OneInterface(Resource):
             HTTPStatus.OK,
         )
 
-    @namespace.response(HTTPStatus.OK, "The interface doesn't exist anymore")
+    @namespace.response(HTTPStatus.OK.value, "The interface doesn't exist anymore")
     def delete(self, name: str, ns_name: Optional[str] = None):
         """
         Delete an interface from the host

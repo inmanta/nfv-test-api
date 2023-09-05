@@ -103,7 +103,9 @@ class OneUE(Resource):
     @namespace.response(
         HTTPStatus.OK, "Found a UE config with a matching supi", ue_model
     )
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
+    @namespace.response(
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+    )
     def get(self, supi: str):
         """
         Get a UE configuration
@@ -118,8 +120,8 @@ class OneUE(Resource):
 
         return self.ue_service.get_one(supi).json_dict(exclude_none=True), HTTPStatus.OK
 
-    @namespace.response(HTTPStatus.OK, "The UE config doesn't exist anymore")
-    @namespace.response(HTTPStatus.NOT_FOUND, "The UE config could not be found.")
+    @namespace.response(HTTPStatus.OK.value, "The UE config doesn't exist anymore")
+    @namespace.response(HTTPStatus.NOT_FOUND.value, "The UE config could not be found.")
     @namespace.response(
         HTTPStatus.CONFLICT, "The UE client should be stopped before removing config."
     )
@@ -154,9 +156,13 @@ class StartUE(Resource):
         super().__init__(api=api, *args, **kwargs)
         self.ue_service = UEService(Host(), ue_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "UE started")
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
-    @namespace.response(HTTPStatus.CONFLICT, "A UE with given supi is already running")
+    @namespace.response(HTTPStatus.OK.value, "UE started")
+    @namespace.response(
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+    )
+    @namespace.response(
+        HTTPStatus.CONFLICT.value, "A UE with given supi is already running"
+    )
     def post(self, supi: str):
         """
         Start a UE configuration
@@ -188,8 +194,10 @@ class StopUE(Resource):
         super().__init__(api=api, *args, **kwargs)
         self.ue_service = UEService(Host(), ue_service_handler)
 
-    @namespace.response(HTTPStatus.OK, "UE stopped")
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
+    @namespace.response(HTTPStatus.OK.value, "UE stopped")
+    @namespace.response(
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+    )
     def post(self, supi: str):
         """
         Stop a UE configuration
@@ -224,7 +232,9 @@ class StatusUE(Resource):
     @namespace.response(
         HTTPStatus.OK, "Found a UE config with a matching supi", ue_status_model
     )
-    @namespace.response(HTTPStatus.NOT_FOUND, "Couldn't find any UE with given supi")
+    @namespace.response(
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+    )
     def get(self, supi: str):
         """
         Get the status of a UE.

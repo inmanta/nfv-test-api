@@ -47,11 +47,12 @@ class ActionsService:
             if not stdout:
                 raise RuntimeError(f"Failed to execute ping command: {stderr}")
 
-            LOGGER.warning(stderr)
+            LOGGER.warning("%s", stderr)
 
         ping_result = self.ping_parser.parse(stdout).as_dict()
         try:
             return Ping(**ping_result)  # type: ignore
         except ValidationError as e:
-            LOGGER.error(f"Failed to parse ping response: {ping_result}")
+            LOGGER.error("Failed to parse ping response: %s", ping_result)
+            LOGGER.error("Failed to ping: %s", stdout)
             raise e

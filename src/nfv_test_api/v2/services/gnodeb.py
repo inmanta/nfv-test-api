@@ -223,10 +223,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         # make sure the config exists
         gnb = self.get_one(identifier)
 
-        if identifier not in self.process_handler.processes:
-            raise NotFound(f"No gNodeB process found for nci {identifier}")
-
-        status: Dict[str, Any] = {}
+        status: Dict[str, Any] = {"pid": None, "status": {}}
         node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], base=0)}"  # type: ignore
         command = [
             "nr-cli",
@@ -234,14 +231,24 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             "--exec",
             "status",
         ]
+        if identifier in self.process_handler.processes:
+            return_code = self.process_handler.processes[identifier].poll()
+            if return_code is not None:
+                # if process is terminated, it means it has crashed
+                self.process_handler.kill(identifier)  # handle zombie process
+                status["status"] = {
+                    "state": f"The gnodeB process failed with return code {return_code}.",
+                    "information": "Killing zombie process.",
+                }
+            else:
+                # Fetch gnodeB client status only if it is still running
+                status["pid"] = self.process_handler.processes[identifier].pid
+                stdout, stderr = self.host.exec(command)
+                if stderr:
+                    raise NotFound(f"Failed to fetch gNodeB status: {stderr}")
 
-        status["pid"] = self.process_handler.processes[identifier].pid
-        stdout, stderr = self.host.exec(command)
-        if stderr:
-            raise NotFound(f"Failed to fetch gNodeB status: {stderr}")
-
-        # Parse the status response, it should be a yaml object
-        status["status"] = yaml.safe_load(stdout) or {}
+                # Parse the status response, it should be a yaml object
+                status["status"] = yaml.safe_load(stdout) or {}
 
         # Load the logs from the file
         with get_file_path(identifier, FileType.LOG).open(mode="r") as out:

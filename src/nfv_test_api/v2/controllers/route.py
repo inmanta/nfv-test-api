@@ -85,7 +85,9 @@ class AllRoutes(Resource):
         ], HTTPStatus.OK
 
     @namespace.expect(route_create_model)
-    @namespace.response(HTTPStatus.CREATED, "A new route has been created", route_model)
+    @namespace.response(
+        HTTPStatus.CREATED.value, "A new route has been created", route_model
+    )
     @namespace.response(
         HTTPStatus.CONFLICT, "Another route with the same name already exists"
     )
@@ -192,7 +194,7 @@ class OneRoute(Resource):
         )
 
     @namespace.expect(route_update_model)
-    @namespace.response(HTTPStatus.OK, "The route has been updated", route_model)
+    @namespace.response(HTTPStatus.OK.value, "The route has been updated", route_model)
     @namespace.response(
         HTTPStatus.NOT_FOUND, "Couldn't find any route with given destination address"
     )
@@ -229,7 +231,7 @@ class OneRoute(Resource):
             HTTPStatus.OK,
         )
 
-    @namespace.response(HTTPStatus.OK, "The route doesn't exist anymore")
+    @namespace.response(HTTPStatus.OK.value, "The route doesn't exist anymore")
     def delete(
         self,
         dst_addr: str,
