@@ -69,7 +69,8 @@ class AllNamespaces(Resource):
         HTTPStatus.CREATED.value, "A new namespace has been created", namespace_model
     )
     @namespace.response(
-        HTTPStatus.CONFLICT.value, "Another namespace with the same name or id already exists"
+        HTTPStatus.CONFLICT.value,
+        "Another namespace with the same name or id already exists",
     )
     def post(self):
         """

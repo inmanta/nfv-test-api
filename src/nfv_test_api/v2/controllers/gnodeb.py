@@ -65,7 +65,9 @@ class AllGNodeB(Resource):
 
     @namespace.expect(gnodeb_create_model)
     @namespace.response(
-        HTTPStatus.CREATED.value, "A new gNodeB configuration has been created", gnodeb_model
+        HTTPStatus.CREATED.value,
+        "A new gNodeB configuration has been created",
+        gnodeb_model,
     )
     @namespace.response(
         HTTPStatus.CONFLICT.value, "Another gNodeB with the same nci already exists"

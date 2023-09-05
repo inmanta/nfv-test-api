@@ -123,7 +123,8 @@ class OneUE(Resource):
     @namespace.response(HTTPStatus.OK.value, "The UE config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND.value, "The UE config could not be found.")
     @namespace.response(
-        HTTPStatus.CONFLICT.value, "The UE client should be stopped before removing config."
+        HTTPStatus.CONFLICT.value,
+        "The UE client should be stopped before removing config.",
     )
     def delete(self, supi: str):
         """

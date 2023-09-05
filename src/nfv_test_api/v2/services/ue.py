@@ -217,7 +217,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
                 self.process_handler.kill(identifier)  # handle zombie process
                 errors = [
                     f"The ue process failed with return code {return_code}.",
-                    "Killing zombie process, next call to status will raise Not Found."
+                    "Killing zombie process, next call to status will raise Not Found.",
                 ]
             else:
                 # Fetch ue client status only if it is still running

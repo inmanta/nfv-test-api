@@ -196,7 +196,8 @@ class OneRoute(Resource):
     @namespace.expect(route_update_model)
     @namespace.response(HTTPStatus.OK.value, "The route has been updated", route_model)
     @namespace.response(
-        HTTPStatus.NOT_FOUND.value, "Couldn't find any route with given destination address"
+        HTTPStatus.NOT_FOUND.value,
+        "Couldn't find any route with given destination address",
     )
     @namespace.response(
         HTTPStatus.UNPROCESSABLE_ENTITY.value,
