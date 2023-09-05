@@ -233,7 +233,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         ]
         if identifier not in self.process_handler.processes:
             raise NotFound(f"No gNodeB process found for nci {identifier}")
-        
+
         errors = []
         return_code = self.process_handler.processes[identifier].poll()
         if return_code is not None:
