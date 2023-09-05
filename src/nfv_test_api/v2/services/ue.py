@@ -212,6 +212,8 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         if identifier not in self.process_handler.processes:
             raise NotFound(f"No gNodeB process found for nci {identifier}")
 
+        status["pid"] = self.process_handler.processes[identifier].pid
+
         errors = []
         return_code = self.process_handler.processes[identifier].poll()
         if return_code is not None:
@@ -223,7 +225,6 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
             ]
         else:
             # Fetch ue client status only if it is still running
-            status["pid"] = self.process_handler.processes[identifier].pid
             stdout, stderr = self.host.exec(command)
             if stderr:
                 raise NotFound(f"Failed to fetch UE status: {stderr}")
