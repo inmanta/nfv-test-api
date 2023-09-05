@@ -214,27 +214,29 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
 
         status["pid"] = self.process_handler.processes[identifier].pid
 
-        errors = []
+        # Load the logs from the file
+        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
+            status["logs"] = [line.rstrip("\n") for line in out]
+
         return_code = self.process_handler.processes[identifier].poll()
         if return_code is not None:
             # If the process is still in self.process_handler but has terminated then it is a zombie process
             self.process_handler.kill(identifier)  # handle zombie process
-            errors = [
-                f"The ue process failed with return code {return_code}.",
-                "Killing zombie process, next call to status will raise Not Found.",
-            ]
-        else:
-            # Fetch ue client status only if it is still running
-            stdout, stderr = self.host.exec(command)
-            if stderr:
-                raise NotFound(f"Failed to fetch UE status: {stderr}")
+            status["logs"].extend(
+                [
+                    f"The ue process failed with return code {return_code}.",
+                    "Killing zombie process, next call to status will raise Not Found.",
+                ]
+            )
 
-            # Parse the status response, it should be a yaml object
-            status["status"] = yaml.safe_load(stdout) or {}
+            return status
 
-        # Load the logs from the file
-        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
-            status["logs"] = [line.rstrip("\n") for line in out]
-            status["logs"].extend(errors)
+        # Fetch ue client status only if it is still running
+        stdout, stderr = self.host.exec(command)
+        if stderr:
+            raise NotFound(f"Failed to fetch UE status: {stderr}")
+
+        # Parse the status response, it should be a yaml object
+        status["status"] = yaml.safe_load(stdout) or {}
 
         return status
