@@ -251,9 +251,9 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
                     "Killing zombie process, next call to status will raise Not Found.",
                 ]
             )
-            
+
             return status
-        
+
         # Fetch gnodeB client status only if it is still running
         stdout, stderr = self.host.exec(command)
         if stderr:
