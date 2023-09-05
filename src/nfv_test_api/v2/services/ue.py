@@ -201,6 +201,9 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         # make sure the config exists
         self.get_one(identifier)
 
+        if identifier not in self.process_handler.processes:
+            raise NotFound(f"No gNodeB process found for nci {identifier}")
+
         status: Dict[str, Any] = {"pid": None, "status": {}}
         command = [
             "nr-cli",
@@ -208,9 +211,6 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
             "--exec",
             "status",
         ]
-
-        if identifier not in self.process_handler.processes:
-            raise NotFound(f"No gNodeB process found for nci {identifier}")
 
         status["pid"] = self.process_handler.processes[identifier].pid
 
