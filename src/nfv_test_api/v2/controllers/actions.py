@@ -54,7 +54,9 @@ class OnePing(Resource):
         return self._interface_services[ns_name]
 
     @namespace.expect(ping_request_model)
-    @namespace.response(HTTPStatus.OK, "The ping request has been executed", ping_model)
+    @namespace.response(
+        HTTPStatus.OK.value, "The ping request has been executed", ping_model
+    )
     def post(self, ns_name: Optional[str] = None):
         """
         Send ping requests to a destination

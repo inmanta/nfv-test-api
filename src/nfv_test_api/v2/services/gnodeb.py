@@ -226,7 +226,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         if identifier not in self.process_handler.processes:
             raise NotFound(f"No gNodeB process found for nci {identifier}")
 
-        status: Dict[str, Any] = {}
+        status: Dict[str, Any] = {"pid": None, "status": {}, "terminated": False}
         node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], base=0)}"  # type: ignore
         command = [
             "nr-cli",
@@ -236,15 +236,30 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         ]
 
         status["pid"] = self.process_handler.processes[identifier].pid
+
+        # Load the logs from the file
+        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
+            status["logs"] = [line.rstrip("\n") for line in out]
+
+        return_code = self.process_handler.processes[identifier].poll()
+        if return_code is not None:
+            # If the process is still in self.process_handler but has terminated then it is a zombie process
+            status["logs"].extend(
+                [
+                    f"The gnodeB process failed with return code {return_code}.",
+                    "The process is still living as zombie process, please call stop to terminate it properly.",
+                ]
+            )
+            status["terminated"] = True
+
+            return status
+
+        # Fetch gnodeB client status only if it is still running
         stdout, stderr = self.host.exec(command)
         if stderr:
             raise NotFound(f"Failed to fetch gNodeB status: {stderr}")
 
         # Parse the status response, it should be a yaml object
         status["status"] = yaml.safe_load(stdout) or {}
-
-        # Load the logs from the file
-        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
-            status["logs"] = [line.rstrip("\n") for line in out]
 
         return status

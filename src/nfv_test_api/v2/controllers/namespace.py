@@ -35,7 +35,7 @@ namespace_create_model = add_model_schema(namespace, NamespaceCreate)
 
 @namespace.route("")
 @namespace.response(
-    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class AllNamespaces(Resource):
@@ -51,7 +51,7 @@ class AllNamespaces(Resource):
         self.service = NamespaceService(self.host)
 
     @namespace.response(
-        code=HTTPStatus.OK,
+        code=HTTPStatus.OK.value,
         description="Get all namespaces on the host",
         model=namespace_model,
         as_list=True,
@@ -66,10 +66,11 @@ class AllNamespaces(Resource):
 
     @namespace.expect(namespace_create_model)
     @namespace.response(
-        HTTPStatus.CREATED, "A new namespace has been created", namespace_model
+        HTTPStatus.CREATED.value, "A new namespace has been created", namespace_model
     )
     @namespace.response(
-        HTTPStatus.CONFLICT, "Another namespace with the same name or id already exists"
+        HTTPStatus.CONFLICT.value,
+        "Another namespace with the same name or id already exists",
     )
     def post(self):
         """
@@ -88,7 +89,7 @@ class AllNamespaces(Resource):
 @namespace.route("/<name>")
 @namespace.param("name", description="The name of the namespace we mean to select")
 @namespace.response(
-    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class OneNamespace(Resource):
@@ -104,10 +105,10 @@ class OneNamespace(Resource):
         self.service = NamespaceService(self.host)
 
     @namespace.response(
-        HTTPStatus.OK, "Found a namespace with a matching name", namespace_model
+        HTTPStatus.OK.value, "Found a namespace with a matching name", namespace_model
     )
     @namespace.response(
-        HTTPStatus.NOT_FOUND, "Couldn't find any namespace with given name"
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any namespace with given name"
     )
     def get(self, name: str):
         """
@@ -122,7 +123,7 @@ class OneNamespace(Resource):
 
         return self.service.get_one(name).json_dict(), HTTPStatus.OK
 
-    @namespace.response(HTTPStatus.OK, "The namespace doesn't exist anymore")
+    @namespace.response(HTTPStatus.OK.value, "The namespace doesn't exist anymore")
     def delete(self, name: str):
         """
         Delete a namespace from the host

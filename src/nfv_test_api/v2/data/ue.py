@@ -150,5 +150,6 @@ class UEStatus(BaseModel):
     """
 
     status: dict
+    terminated: bool
     pid: int
     logs: list[str]

@@ -37,7 +37,7 @@ route_update_model = add_model_schema(namespace, RouteUpdate)
 
 @namespace.route("")
 @namespace.response(
-    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class AllRoutes(Resource):
@@ -65,7 +65,7 @@ class AllRoutes(Resource):
         return self._route_services[ns_name]
 
     @namespace.response(
-        code=HTTPStatus.OK,
+        code=HTTPStatus.OK.value,
         description="Get all routes on the host",
         model=route_model,
         as_list=True,
@@ -85,12 +85,14 @@ class AllRoutes(Resource):
         ], HTTPStatus.OK
 
     @namespace.expect(route_create_model)
-    @namespace.response(HTTPStatus.CREATED, "A new route has been created", route_model)
     @namespace.response(
-        HTTPStatus.CONFLICT, "Another route with the same name already exists"
+        HTTPStatus.CREATED.value, "A new route has been created", route_model
     )
     @namespace.response(
-        HTTPStatus.UNPROCESSABLE_ENTITY,
+        HTTPStatus.CONFLICT.value, "Another route with the same name already exists"
+    )
+    @namespace.response(
+        HTTPStatus.UNPROCESSABLE_ENTITY.value,
         "Couldn't update route because of invalid input",
     )
     def post(self, ns_name: Optional[str] = None):
@@ -135,7 +137,7 @@ class AllRoutesInNamespace(AllRoutes):
     description='The destination ("default" or any address with a prefix length) of the route we mean to select',
 )
 @namespace.response(
-    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class OneRoute(Resource):
@@ -160,10 +162,10 @@ class OneRoute(Resource):
         return self._route_services[ns_name]
 
     @namespace.response(
-        HTTPStatus.OK, "Found an route with a matching destination", route_model
+        HTTPStatus.OK.value, "Found an route with a matching destination", route_model
     )
     @namespace.response(
-        HTTPStatus.NOT_FOUND, "Couldn't find any route with given destination"
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any route with given destination"
     )
     def get(
         self,
@@ -192,12 +194,13 @@ class OneRoute(Resource):
         )
 
     @namespace.expect(route_update_model)
-    @namespace.response(HTTPStatus.OK, "The route has been updated", route_model)
+    @namespace.response(HTTPStatus.OK.value, "The route has been updated", route_model)
     @namespace.response(
-        HTTPStatus.NOT_FOUND, "Couldn't find any route with given destination address"
+        HTTPStatus.NOT_FOUND.value,
+        "Couldn't find any route with given destination address",
     )
     @namespace.response(
-        HTTPStatus.UNPROCESSABLE_ENTITY,
+        HTTPStatus.UNPROCESSABLE_ENTITY.value,
         "Couldn't update route because of invalid input",
     )
     def patch(
@@ -229,7 +232,7 @@ class OneRoute(Resource):
             HTTPStatus.OK,
         )
 
-    @namespace.response(HTTPStatus.OK, "The route doesn't exist anymore")
+    @namespace.response(HTTPStatus.OK.value, "The route doesn't exist anymore")
     def delete(
         self,
         dst_addr: str,

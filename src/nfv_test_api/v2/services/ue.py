@@ -202,9 +202,9 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         self.get_one(identifier)
 
         if identifier not in self.process_handler.processes:
-            raise NotFound(f"No UE process found for supi {identifier}")
+            raise NotFound(f"No gNodeB process found for nci {identifier}")
 
-        status: Dict[str, Any] = {}
+        status: Dict[str, Any] = {"pid": None, "status": {}, "terminated": False}
         command = [
             "nr-cli",
             identifier,
@@ -213,15 +213,30 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         ]
 
         status["pid"] = self.process_handler.processes[identifier].pid
+
+        # Load the logs from the file
+        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
+            status["logs"] = [line.rstrip("\n") for line in out]
+
+        return_code = self.process_handler.processes[identifier].poll()
+        if return_code is not None:
+            # If the process is still in self.process_handler but has terminated then it is a zombie process
+            status["logs"].extend(
+                [
+                    f"The ue process failed with return code {return_code}.",
+                    "The process is still living as zombie process, please call stop to terminate it properly.",
+                ]
+            )
+            status["terminated"] = True
+
+            return status
+
+        # Fetch ue client status only if it is still running
         stdout, stderr = self.host.exec(command)
         if stderr:
             raise NotFound(f"Failed to fetch UE status: {stderr}")
 
         # Parse the status response, it should be a yaml object
         status["status"] = yaml.safe_load(stdout) or {}
-
-        # Load the logs from the file
-        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
-            status["logs"] = [line.rstrip("\n") for line in out]
 
         return status

@@ -44,7 +44,7 @@ interface_update_model = add_model_schema(namespace, InterfaceUpdate)
 
 @namespace.route("")
 @namespace.response(
-    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class AllInterfaces(Resource):
@@ -72,7 +72,7 @@ class AllInterfaces(Resource):
         return self._hosts[ns_name]
 
     @namespace.response(
-        code=HTTPStatus.OK,
+        code=HTTPStatus.OK.value,
         description="Get all interfaces on the host",
         model=interface_model,
         as_list=True,
@@ -94,10 +94,10 @@ class AllInterfaces(Resource):
 
     @namespace.expect(interface_create_model)
     @namespace.response(
-        HTTPStatus.CREATED, "A new interface has been created", interface_model
+        HTTPStatus.CREATED.value, "A new interface has been created", interface_model
     )
     @namespace.response(
-        HTTPStatus.CONFLICT, "Another interface with the same name already exists"
+        HTTPStatus.CONFLICT.value, "Another interface with the same name already exists"
     )
     def post(self, ns_name: Optional[str] = None):
         """
@@ -142,7 +142,7 @@ class AllInterfacesInNamespace(AllInterfaces):
 @namespace.route("/<name>")
 @namespace.param("name", description="The name of the interface we mean to select")
 @namespace.response(
-    code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
 class OneInterface(Resource):
@@ -167,10 +167,10 @@ class OneInterface(Resource):
         return self._interface_services[ns_name]
 
     @namespace.response(
-        HTTPStatus.OK, "Found an interface with a matching name", interface_model
+        HTTPStatus.OK.value, "Found an interface with a matching name", interface_model
     )
     @namespace.response(
-        HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name"
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any interface with given name"
     )
     def get(self, name: str, ns_name: Optional[str] = None):
         """
@@ -192,10 +192,10 @@ class OneInterface(Resource):
 
     @namespace.expect(interface_update_model)
     @namespace.response(
-        HTTPStatus.OK, "The interface has been updated", interface_model
+        HTTPStatus.OK.value, "The interface has been updated", interface_model
     )
     @namespace.response(
-        HTTPStatus.NOT_FOUND, "Couldn't find any interface with given name"
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any interface with given name"
     )
     def patch(self, name: str, ns_name: Optional[str] = None):
         """
@@ -215,7 +215,7 @@ class OneInterface(Resource):
             HTTPStatus.OK,
         )
 
-    @namespace.response(HTTPStatus.OK, "The interface doesn't exist anymore")
+    @namespace.response(HTTPStatus.OK.value, "The interface doesn't exist anymore")
     def delete(self, name: str, ns_name: Optional[str] = None):
         """
         Delete an interface from the host

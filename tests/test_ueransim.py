@@ -73,8 +73,15 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
             continue
 
         response.raise_for_status()
-        GNodeBStatus(**response.json())
+        status = GNodeBStatus(**response.json())
+        if not status.terminated:
+            continue
         break
+
+    # jenkins runner do not have sctp loaded, the gnodeb should thus be terminated
+    assert (
+        status.terminated
+    ), f"The GnodeB is not terminated, status logs: {str(status.logs)}"
 
     # Stop the gnodeb
     requests.post(f"{nfv_test_api_endpoint}/gnodeb/0x000000010/stop").raise_for_status()
@@ -140,7 +147,10 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     response = requests.get(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/status")
     LOGGER.debug(response.json())
     response.raise_for_status()
-    UEStatus(**response.json())
+    status = UEStatus(**response.json())
+    assert (
+        not status.terminated
+    ), f"The UE should not be terminated, status logs: {str(status.logs)}"
 
     # Stop the ue
     requests.post(
