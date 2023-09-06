@@ -74,11 +74,14 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
 
         response.raise_for_status()
         status = GNodeBStatus(**response.json())
-        # jenkins runner do not have sctp loaded, the gnodeb should thus be terminated
-        assert (
-            status.terminated
-        ), f"The GnodeB is not terminated, status logs: {str(status.logs)}"
+        if not status.terminated:
+            continue
         break
+
+    # jenkins runner do not have sctp loaded, the gnodeb should thus be terminated
+    assert (
+        status.terminated
+    ), f"The GnodeB is not terminated, status logs: {str(status.logs)}"
 
     # Stop the gnodeb
     requests.post(f"{nfv_test_api_endpoint}/gnodeb/0x000000010/stop").raise_for_status()
