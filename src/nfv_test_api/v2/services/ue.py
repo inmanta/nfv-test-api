@@ -204,7 +204,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         if identifier not in self.process_handler.processes:
             raise NotFound(f"No gNodeB process found for nci {identifier}")
 
-        status: Dict[str, Any] = {"pid": None, "status": {}}
+        status: Dict[str, Any] = {"pid": None, "status": {}, "terminated": False}
         command = [
             "nr-cli",
             identifier,
@@ -227,6 +227,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
                     "The process is still living as zombie process, please call stop to terminate it properly.",
                 ]
             )
+            status["terminated"] = True
 
             return status
 

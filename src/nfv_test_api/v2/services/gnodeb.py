@@ -226,7 +226,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         if identifier not in self.process_handler.processes:
             raise NotFound(f"No gNodeB process found for nci {identifier}")
 
-        status: Dict[str, Any] = {"pid": None, "status": {}}
+        status: Dict[str, Any] = {"pid": None, "status": {}, "terminated": False}
         node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], base=0)}"  # type: ignore
         command = [
             "nr-cli",
@@ -250,6 +250,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
                     "The process is still living as zombie process, please call stop to terminate it properly.",
                 ]
             )
+            status["terminated"] = True
 
             return status
 
