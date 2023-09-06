@@ -74,7 +74,9 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
 
         response.raise_for_status()
         status = GNodeBStatus(**response.json())
-        assert not status.terminated, f"The GnodeB is terminated, status logs: {str(status.logs)}"
+        assert (
+            not status.terminated
+        ), f"The GnodeB is terminated, status logs: {str(status.logs)}"
         break
 
     # Stop the gnodeb
@@ -142,7 +144,9 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     LOGGER.debug(response.json())
     response.raise_for_status()
     status = UEStatus(**response.json())
-    assert not status.terminated, f"The UE is terminated, status logs: {str(status.logs)}"
+    assert (
+        not status.terminated
+    ), f"The UE is terminated, status logs: {str(status.logs)}"
 
     # Stop the ue
     requests.post(
