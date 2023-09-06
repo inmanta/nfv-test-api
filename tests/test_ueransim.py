@@ -145,10 +145,9 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     LOGGER.debug(response.json())
     response.raise_for_status()
     status = UEStatus(**response.json())
-    # jenkins runner do not have sctp loaded, the ue should thus be terminated
     assert (
-        status.terminated
-    ), f"The UE should be terminated, status logs: {str(status.logs)}"
+        not status.terminated
+    ), f"The UE should not be terminated, status logs: {str(status.logs)}"
 
     # Stop the ue
     requests.post(
