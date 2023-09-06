@@ -221,11 +221,10 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         return_code = self.process_handler.processes[identifier].poll()
         if return_code is not None:
             # If the process is still in self.process_handler but has terminated then it is a zombie process
-            self.process_handler.kill(identifier)  # handle zombie process
             status["logs"].extend(
                 [
                     f"The ue process failed with return code {return_code}.",
-                    "Killing zombie process, next call to status will raise Not Found.",
+                    "The process is still living as zombie process, please call stop to terminate it properly.",
                 ]
             )
 
