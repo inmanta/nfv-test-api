@@ -233,10 +233,14 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
 
         # Fetch ue client status only if it is still running
         stdout, stderr = self.host.exec(command)
-        if stderr:
-            raise NotFound(f"Failed to fetch UE status: {stderr}")
 
         # Parse the status response, it should be a yaml object
-        status["status"] = yaml.safe_load(stdout) or {}
+        try:
+            status["status"] = yaml.safe_load(stdout) or {}
+        except yaml.YAMLError:
+            status["status"] = {}
+
+        if stderr:
+            status["logs"].extend(stderr.split("\n"))
 
         return status
