@@ -28,6 +28,7 @@ class PingRequest(BaseModel):
     interface: Optional[Union[SafeName, IPv4Interface, IPv6Interface]]  # type: ignore
     count: int = 4
     interval: float = 0.5
+    timeout: int = 8
 
 
 class Ping(IpBaseModel):

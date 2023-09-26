@@ -34,6 +34,8 @@ class ActionsService:
             "ping",
             "-c",
             str(ping_request.count),
+            "-w",
+            str(ping_request.timeout),
             "-i",
             str(ping_request.interval),
         ]
@@ -44,6 +46,7 @@ class ActionsService:
         stdout, stderr = self.host.exec(command)
 
         if stderr:
+            LOGGER.error("Ping stderr: %s", stderr)
             if not stdout:
                 raise RuntimeError(f"Failed to execute ping command: {stderr}")
 
@@ -54,5 +57,5 @@ class ActionsService:
             return Ping(**ping_result)  # type: ignore
         except ValidationError as e:
             LOGGER.error("Failed to parse ping response: %s", ping_result)
-            LOGGER.error("Failed to ping: %s", stdout)
+            LOGGER.error("Ping stdout: %s", stdout)
             raise e
