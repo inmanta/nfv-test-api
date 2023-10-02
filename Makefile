@@ -4,7 +4,7 @@ flake8 = flake8 src tests
 
 .PHONY: install
 install:
-	pip install -e . -r requirements.dev.txt
+	pip install -U -e . -r requirements.dev.txt
 
 image:
 	docker build -t inmantaci/nfv-test-api:latest .
