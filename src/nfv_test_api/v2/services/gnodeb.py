@@ -161,7 +161,23 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         existing_gnb = self.get_one_or_default(o.nci)
         if not existing_gnb:
             raise RuntimeError(
-                "The gNodeB config should have been created but can not be found"
+                "Unexpected error: the created gNodeB config can not be found."
+            )
+
+        return existing_gnb
+
+    def update(self, o: GNodeBUpdate) -> GNodeB:
+        existing_gnb = self.get_one_or_default(o.nci)
+        if not existing_gnb:
+            raise NotFound("No gNodeB config with this nci exists")
+
+        with get_file_path(o.nci, FileType.CONFIG).open(mode="w+") as fh:
+            yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
+
+        existing_gnb = self.get_one_or_default(o.nci)
+        if not existing_gnb:
+            raise RuntimeError(
+                "Unexpected error: the updated gNodeB config can not be found."
             )
 
         return existing_gnb
