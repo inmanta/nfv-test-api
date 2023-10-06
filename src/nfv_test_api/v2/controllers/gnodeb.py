@@ -23,14 +23,13 @@ from werkzeug.exceptions import BadRequest  # type: ignore
 from nfv_test_api.host import Host
 from nfv_test_api.v2.controllers.common import add_model_schema
 from nfv_test_api.v2.data.common import InputSafeNci
-from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBStatus, GNodeBUpdate
+from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBStatus
 from nfv_test_api.v2.services.gnodeb import GNodeBService, GNodeBServiceHandler
 
 namespace = Namespace(name="gnodeb", description="Basic gnodeb management")
 
 gnodeb_model = add_model_schema(namespace, GNodeB)
 gnodeb_create_model = add_model_schema(namespace, GNodeBCreate)
-gnodeb_update_model = add_model_schema(namespace, GNodeBUpdate)
 gnodeb_status_model = add_model_schema(namespace, GNodeBStatus)
 gnodeb_service_handler = GNodeBServiceHandler()
 
@@ -128,32 +127,28 @@ class OneGNodeB(Resource):
 
         return self.gnb_service.get_one(nci).json_dict(exclude_none=True), HTTPStatus.OK
 
-    @namespace.expect(gnodeb_update_model)
+    @namespace.expect(gnodeb_create_model)
     @namespace.response(
-        HTTPStatus.OK.value, "The gNodeB config has been updated", gnodeb_model
-    )
-    @namespace.response(
-        HTTPStatus.NOT_FOUND.value, "Couldn't find any gNodeB with given nci"
+        HTTPStatus.OK.value, "The gNodeB config has been created/updated", gnodeb_model
     )
     def put(self, nci: str):
         """
-        Update an gNodeB configuration
+        Create/Update an gNodeB configuration
 
-        The gNodeB is identified by its nci, if no gNodeB with this nci exists, a
-        NotFound error is raised.
+        The gNodeB is identified by its nci.
         """
         try:
             # Validating input
-            update_form = GNodeBUpdate(**request.json)  # type: ignore
+            create_form = GNodeBCreate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        if update_form.nci != nci:
+        if create_form.nci != nci:
             raise BadRequest(
-                f"The provided nci {nci} does not match the nci {update_form.nci} in the config."
+                f"The provided nci {nci} does not match the nci {create_form.nci} in the config."
             )
 
-        return self.gnb_service.update(update_form).json_dict(), HTTPStatus.OK
+        return self.gnb_service.update(create_form).json_dict(), HTTPStatus.OK
 
     @namespace.response(HTTPStatus.OK.value, "The gNodeB config doesn't exist anymore")
     @namespace.response(

@@ -66,12 +66,6 @@ class GNodeBCreate(GNodeB):
     """
 
 
-class GNodeBUpdate(GNodeB):
-    """
-    Input schema for creating a gNodeB
-    """
-
-
 class GNodeBStatus(BaseModel):
     """
     Response to a status call for a running gNobeB.

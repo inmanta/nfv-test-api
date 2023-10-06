@@ -23,14 +23,13 @@ from werkzeug.exceptions import BadRequest  # type: ignore
 from nfv_test_api.host import Host
 from nfv_test_api.v2.controllers.common import add_model_schema
 from nfv_test_api.v2.data.common import InputSafeSupi
-from nfv_test_api.v2.data.ue import UE, UECreate, UEStatus, UEUpdate
+from nfv_test_api.v2.data.ue import UE, UECreate, UEStatus
 from nfv_test_api.v2.services.ue import UEService, UEServiceHandler
 
 namespace = Namespace(name="ue", description="Basic user equipment management")
 
 ue_model = add_model_schema(namespace, UE)
 ue_create_model = add_model_schema(namespace, UECreate)
-ue_update_model = add_model_schema(namespace, UEUpdate)
 ue_status_model = add_model_schema(namespace, UEStatus)
 ue_service_handler = UEServiceHandler()
 
@@ -121,30 +120,28 @@ class OneUE(Resource):
 
         return self.ue_service.get_one(supi).json_dict(exclude_none=True), HTTPStatus.OK
 
-    @namespace.expect(ue_update_model)
-    @namespace.response(HTTPStatus.OK.value, "The UE config has been updated", ue_model)
+    @namespace.expect(ue_create_model)
     @namespace.response(
-        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+        HTTPStatus.OK.value, "The UE config has been created/updated", ue_model
     )
     def put(self, supi: str):
         """
         Update an UE configuration
 
-        The UE is identified by its supi, if no UE with this supi exists, a
-        NotFound error is raised.
+        The UE is identified by its supi.
         """
         try:
             # Validating input
-            update_form = UEUpdate(**request.json)  # type: ignore
+            create_form = UECreate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        if update_form.supi != supi:
+        if create_form.supi != supi:
             raise BadRequest(
-                f"The provided supi {supi} does not match the supi {update_form.supi} in the config."
+                f"The provided supi {supi} does not match the supi {create_form.supi} in the config."
             )
 
-        return self.ue_service.update(update_form).json_dict(), HTTPStatus.OK
+        return self.ue_service.update(create_form).json_dict(), HTTPStatus.OK
 
     @namespace.response(HTTPStatus.OK.value, "The UE config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND.value, "The UE config could not be found.")

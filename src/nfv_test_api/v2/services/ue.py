@@ -27,7 +27,7 @@ from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
 from nfv_test_api.config import Config
 from nfv_test_api.host import Host
-from nfv_test_api.v2.data.ue import UE, UECreate, UEUpdate
+from nfv_test_api.v2.data.ue import UE, UECreate
 from nfv_test_api.v2.services.base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class UEServiceHandler:
             raise NotFound(f"No process running for UE with supi {identifier}")
 
 
-class UEService(BaseService[UE, UECreate, UEUpdate]):
+class UEService(BaseService[UE, UECreate, UECreate]):
     def __init__(self, host: Host, process_handler: UEServiceHandler) -> None:
         super().__init__(host)
         self.process_handler = process_handler
@@ -165,18 +165,17 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
 
         return existing_ue
 
-    def update(self, o: UEUpdate) -> UE:
-        existing_ue = self.get_one_or_default(o.supi)
-        if not existing_ue:
-            raise NotFound("No UE config with this supi exists")
-
+    def update(self, o: UECreate) -> UE:
+        """
+        Create or update a UE.
+        """
         with get_file_path(o.supi, FileType.CONFIG).open(mode="w+") as fh:
             yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
 
         existing_ue = self.get_one_or_default(o.supi)
         if not existing_ue:
             raise RuntimeError(
-                "Unexpected error: the updated UE config can not be found."
+                "Unexpected error: the created/updated UE config can not be found."
             )
 
         return existing_ue

@@ -27,7 +27,7 @@ from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
 from nfv_test_api.config import Config
 from nfv_test_api.host import Host
-from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBUpdate
+from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate
 from nfv_test_api.v2.services.base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class GNodeBServiceHandler:
             raise NotFound(f"No process running for gNodeB with nci {identifier}")
 
 
-class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
+class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBCreate]):
     def __init__(self, host: Host, process_handler: GNodeBServiceHandler) -> None:
         super().__init__(host)
         self.process_handler = process_handler
@@ -166,18 +166,17 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
 
         return existing_gnb
 
-    def update(self, o: GNodeBUpdate) -> GNodeB:
-        existing_gnb = self.get_one_or_default(o.nci)
-        if not existing_gnb:
-            raise NotFound("No gNodeB config with this nci exists")
-
+    def update(self, o: GNodeBCreate) -> GNodeB:
+        """
+        Create or update a GNodeB.
+        """
         with get_file_path(o.nci, FileType.CONFIG).open(mode="w+") as fh:
             yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
 
         existing_gnb = self.get_one_or_default(o.nci)
         if not existing_gnb:
             raise RuntimeError(
-                "Unexpected error: the updated gNodeB config can not be found."
+                "Unexpected error: the created/updated gNodeB config can not be found."
             )
 
         return existing_gnb
