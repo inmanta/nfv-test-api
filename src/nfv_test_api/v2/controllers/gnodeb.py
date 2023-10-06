@@ -148,7 +148,7 @@ class OneGNodeB(Resource):
                 f"The provided nci {nci} does not match the nci {create_form.nci} in the config."
             )
 
-        return self.gnb_service.update(create_form).json_dict(), HTTPStatus.OK
+        return self.gnb_service.put(create_form).json_dict(), HTTPStatus.OK
 
     @namespace.response(HTTPStatus.OK.value, "The gNodeB config doesn't exist anymore")
     @namespace.response(

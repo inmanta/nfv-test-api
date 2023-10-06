@@ -27,7 +27,7 @@ from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
 from nfv_test_api.config import Config
 from nfv_test_api.host import Host
-from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate
+from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBUpdate
 from nfv_test_api.v2.services.base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class GNodeBServiceHandler:
             raise NotFound(f"No process running for gNodeB with nci {identifier}")
 
 
-class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBCreate]):
+class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
     def __init__(self, host: Host, process_handler: GNodeBServiceHandler) -> None:
         super().__init__(host)
         self.process_handler = process_handler
@@ -166,7 +166,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBCreate]):
 
         return existing_gnb
 
-    def update(self, o: GNodeBCreate) -> GNodeB:
+    def put(self, o: GNodeBCreate) -> GNodeB:
         """
         Create or update a GNodeB.
         """

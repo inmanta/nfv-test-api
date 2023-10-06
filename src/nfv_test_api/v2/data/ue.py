@@ -138,6 +138,12 @@ class UECreate(UE):
     """
 
 
+class UEUpdate(UE):
+    """
+    Input schema for creating a UE
+    """
+
+
 class UEStatus(BaseModel):
     """
     Response to a status call for a running UE.

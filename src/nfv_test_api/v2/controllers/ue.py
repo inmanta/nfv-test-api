@@ -141,7 +141,7 @@ class OneUE(Resource):
                 f"The provided supi {supi} does not match the supi {create_form.supi} in the config."
             )
 
-        return self.ue_service.update(create_form).json_dict(), HTTPStatus.OK
+        return self.ue_service.put(create_form).json_dict(), HTTPStatus.OK
 
     @namespace.response(HTTPStatus.OK.value, "The UE config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND.value, "The UE config could not be found.")

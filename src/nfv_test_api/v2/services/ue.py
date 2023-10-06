@@ -27,7 +27,7 @@ from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
 from nfv_test_api.config import Config
 from nfv_test_api.host import Host
-from nfv_test_api.v2.data.ue import UE, UECreate
+from nfv_test_api.v2.data.ue import UE, UECreate, UEUpdate
 from nfv_test_api.v2.services.base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class UEServiceHandler:
             raise NotFound(f"No process running for UE with supi {identifier}")
 
 
-class UEService(BaseService[UE, UECreate, UECreate]):
+class UEService(BaseService[UE, UECreate, UEUpdate]):
     def __init__(self, host: Host, process_handler: UEServiceHandler) -> None:
         super().__init__(host)
         self.process_handler = process_handler
@@ -165,7 +165,7 @@ class UEService(BaseService[UE, UECreate, UECreate]):
 
         return existing_ue
 
-    def update(self, o: UECreate) -> UE:
+    def put(self, o: UECreate) -> UE:
         """
         Create or update a UE.
         """
