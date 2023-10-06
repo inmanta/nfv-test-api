@@ -89,7 +89,7 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
 
     # Update the config
 
-    new_gnodeb.gtpIp = "127.0.0.2"
+    new_gnodeb.gtpIp = IPv4Address("127.0.0.2")
     response = requests.put(
         f"{nfv_test_api_endpoint}/gnodeb/0x000000010", json=new_gnodeb.json_dict()
     )
@@ -177,7 +177,7 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
 
     # Update the config
 
-    new_ue.gnbSearchList = ["127.0.0.2"]
+    new_ue.gnbSearchList = [IPv4Address("127.0.0.2")]
     response = requests.put(
         f"{nfv_test_api_endpoint}/ue/imsi-001010000000001", json=new_ue.json_dict()
     )
