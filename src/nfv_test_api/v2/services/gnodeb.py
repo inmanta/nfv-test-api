@@ -155,16 +155,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         if existing_gnb:
             raise Conflict("A gNodeB config with this nci already exists")
 
-        with get_file_path(o.nci, FileType.CONFIG).open(mode="w+") as fh:
-            yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
-
-        existing_gnb = self.get_one_or_default(o.nci)
-        if not existing_gnb:
-            raise RuntimeError(
-                "Unexpected error: the created gNodeB config can not be found."
-            )
-
-        return existing_gnb
+        return self.put(o)
 
     def put(self, o: GNodeBCreate) -> GNodeB:
         """
