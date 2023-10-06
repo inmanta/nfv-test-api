@@ -127,6 +127,29 @@ class OneGNodeB(Resource):
 
         return self.gnb_service.get_one(nci).json_dict(exclude_none=True), HTTPStatus.OK
 
+    @namespace.expect(gnodeb_create_model)
+    @namespace.response(
+        HTTPStatus.OK.value, "The gNodeB config has been created/updated", gnodeb_model
+    )
+    def put(self, nci: str):
+        """
+        Create/Update an gNodeB configuration
+
+        The gNodeB is identified by its nci.
+        """
+        try:
+            # Validating input
+            create_form = GNodeBCreate(**request.json)  # type: ignore
+        except ValidationError as e:
+            raise BadRequest(str(e))
+
+        if create_form.nci != nci:
+            raise BadRequest(
+                f"The provided nci {nci} does not match the nci {create_form.nci} in the config."
+            )
+
+        return self.gnb_service.put(create_form).json_dict(), HTTPStatus.OK
+
     @namespace.response(HTTPStatus.OK.value, "The gNodeB config doesn't exist anymore")
     @namespace.response(
         HTTPStatus.NOT_FOUND.value, "The gNodeB config could not be found."

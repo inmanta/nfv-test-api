@@ -154,13 +154,19 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         if existing_ue:
             raise Conflict("A UE config with this supi already exists")
 
+        return self.put(o)
+
+    def put(self, o: UECreate) -> UE:
+        """
+        Create or update a UE.
+        """
         with get_file_path(o.supi, FileType.CONFIG).open(mode="w+") as fh:
             yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
 
         existing_ue = self.get_one_or_default(o.supi)
         if not existing_ue:
             raise RuntimeError(
-                "The UE config should have been created but can not be found"
+                "Unexpected error: the created/updated UE config can not be found."
             )
 
         return existing_ue

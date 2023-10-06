@@ -15,6 +15,7 @@
 """
 import logging
 import time
+from ipaddress import IPv4Address
 
 import requests
 
@@ -86,6 +87,23 @@ def test_create_gnb(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None
     # Stop the gnodeb
     requests.post(f"{nfv_test_api_endpoint}/gnodeb/0x000000010/stop").raise_for_status()
 
+    # Update the config
+
+    new_gnodeb.gtpIp = IPv4Address("127.0.0.2")
+    response = requests.put(
+        f"{nfv_test_api_endpoint}/gnodeb/0x000000010", json=new_gnodeb.json_dict()
+    )
+    LOGGER.debug(response.json())
+    response.raise_for_status()
+
+    # verify that the update worked
+
+    response = requests.get(f"{nfv_test_api_endpoint}/gnodeb/0x000000010")
+    LOGGER.debug(response.json())
+    response.raise_for_status()
+    updated_gnodeb = GNodeB(**response.json())
+    assert updated_gnodeb.gtpIp == IPv4Address("127.0.0.2")
+
     # Delete the gnodeb config
     requests.delete(f"{nfv_test_api_endpoint}/gnodeb/0x000000010").raise_for_status()
 
@@ -156,6 +174,23 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     requests.post(
         f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/stop"
     ).raise_for_status()
+
+    # Update the config
+
+    new_ue.gnbSearchList = [IPv4Address("127.0.0.2")]
+    response = requests.put(
+        f"{nfv_test_api_endpoint}/ue/imsi-001010000000001", json=new_ue.json_dict()
+    )
+    LOGGER.debug(response.json())
+    response.raise_for_status()
+
+    # verify that the update worked
+
+    response = requests.get(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001")
+    LOGGER.debug(response.json())
+    response.raise_for_status()
+    updated_ue = UE(**response.json())
+    assert updated_ue.gnbSearchList == [IPv4Address("127.0.0.2")]
 
     # Delete the ue config
     requests.delete(

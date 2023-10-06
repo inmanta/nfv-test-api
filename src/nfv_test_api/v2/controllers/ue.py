@@ -120,6 +120,29 @@ class OneUE(Resource):
 
         return self.ue_service.get_one(supi).json_dict(exclude_none=True), HTTPStatus.OK
 
+    @namespace.expect(ue_create_model)
+    @namespace.response(
+        HTTPStatus.OK.value, "The UE config has been created/updated", ue_model
+    )
+    def put(self, supi: str):
+        """
+        Update an UE configuration
+
+        The UE is identified by its supi.
+        """
+        try:
+            # Validating input
+            create_form = UECreate(**request.json)  # type: ignore
+        except ValidationError as e:
+            raise BadRequest(str(e))
+
+        if create_form.supi != supi:
+            raise BadRequest(
+                f"The provided supi {supi} does not match the supi {create_form.supi} in the config."
+            )
+
+        return self.ue_service.put(create_form).json_dict(), HTTPStatus.OK
+
     @namespace.response(HTTPStatus.OK.value, "The UE config doesn't exist anymore")
     @namespace.response(HTTPStatus.NOT_FOUND.value, "The UE config could not be found.")
     @namespace.response(
