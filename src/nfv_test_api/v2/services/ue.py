@@ -153,7 +153,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         existing_ue = self.get_one_or_default(o.supi)
         if existing_ue:
             raise Conflict("A UE config with this supi already exists")
-        
+
         return self.put(o)
 
     def put(self, o: UECreate) -> UE:
