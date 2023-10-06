@@ -15,9 +15,9 @@
 """
 import logging
 import time
+from ipaddress import IPv4Address
 
 import requests
-from ipaddress import IPv4Address
 
 from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBStatus
 from nfv_test_api.v2.data.ue import UE, UECreate, UEStatus
@@ -190,7 +190,7 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     LOGGER.debug(response.json())
     response.raise_for_status()
     updated_ue = UE(**response.json())
-    assert updated_ue.gnbSearchList == [IPv4Address('127.0.0.2')]
+    assert updated_ue.gnbSearchList == [IPv4Address("127.0.0.2")]
 
     # Delete the ue config
     requests.delete(
