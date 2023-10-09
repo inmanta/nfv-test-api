@@ -9,7 +9,7 @@ COPY misc/centos.repo /etc/yum.repos.d/centos.repo
 RUN yum install -y yum-utils curl nc iproute iputils git gcc lksctp-tools-devel traceroute nmap tcpdump
 
 # Installing ueransim
-RUN git clone https://github.com/aligungr/UERANSIM && \
+RUN git clone https://github.com/aligungr/UERANSIM --branch v3.2.6 && \
     cd UERANSIM && \
     make && \
     mv build/* /bin
