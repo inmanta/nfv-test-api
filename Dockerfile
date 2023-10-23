@@ -1,19 +1,34 @@
-FROM registry.access.redhat.com/ubi8/python-311:latest
+FROM rockylinux:9
 
 # We need to be root to setup the container image
 USER root
 
-COPY misc/centos.repo /etc/yum.repos.d/centos.repo
+# Enable more repos
+RUN dnf install -y epel-release dnf-plugins-core
+RUN dnf install -y --allowerasing curl
+RUN dnf config-manager --set-enabled devel
+#COPY misc/rocky.repo /etc/yum.repos.d/rocky.repo
 
 # Install required packages
-RUN yum install -y yum-utils curl nc iproute iputils git gcc lksctp-tools-devel traceroute nmap tcpdump
+RUN dnf install -y vim yum-utils curl nc iproute iputils git gcc lksctp-tools-devel traceroute nmap tcpdump \
+    fftw-libs fftw-devel fftw-static mbedtls-devel libconfig glibc-devel czmq-devel cmake gcc gcc-c++ python3.11-devel \
+    boost-devel libconfig-devel
 
-# Installing ueransim
+# Install ueransim
 RUN git clone https://github.com/aligungr/UERANSIM && \
     cd UERANSIM && \
     git checkout ab5cd8607f914c6ca6bbb48114a008b6bf8e21d0 && \
     make && \
     mv build/* /bin
+
+# Install srsLTE
+RUN git clone https://github.com/srsRAN/srsRAN_4G.git && \
+    cd srsRAN_4G && \
+    mkdir build && \
+    cd build && \
+    cmake ../ && \
+    make && \
+    make install
 
 # Copying the source of this project
 COPY setup.cfg /opt/nfv-test-api/setup.cfg
