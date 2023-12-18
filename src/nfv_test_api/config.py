@@ -27,7 +27,8 @@ class Config(BaseModel):
     gnb_log_folder: str = "gnb_log/"
     ue_config_folder: str = "ue_config/"
     ue_log_folder: str = "ue_log/"
-
+    enb_config_folder: str = "enb_config/"
+    enb_log_folder: str = "enb_log/"
 
 CONFIG = None
 
@@ -61,5 +62,12 @@ def get_config(
 
     ue_log_folder = pathlib.Path(CONFIG.ue_log_folder)
     ue_log_folder.mkdir(parents=True, exist_ok=True)
+
+    # create enb folders
+    enb_config_folder = pathlib.Path(CONFIG.gnb_config_folder)
+    enb_config_folder.mkdir(parents=True, exist_ok=True)
+
+    enb_log_folder = pathlib.Path(CONFIG.gnb_log_folder)
+    enb_log_folder.mkdir(parents=True, exist_ok=True)
 
     return CONFIG
