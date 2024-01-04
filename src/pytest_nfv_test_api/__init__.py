@@ -27,7 +27,7 @@ from docker.models import containers, images  # type: ignore
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = "2.5.6"
+__version__ = "2.6.0"
 
 
 @pytest.fixture(scope="session")

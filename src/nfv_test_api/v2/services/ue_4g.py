@@ -228,8 +228,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         status["pid"] = self.process_handler.processes[identifier].pid
 
         # Load the logs from the file
-        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
-            status["logs"] = [line.rstrip("\n") for line in out]
+        status["logs"] = get_file_path(identifier, FileType.LOG).read_text().split("\n")
 
         return_code = self.process_handler.processes[identifier].poll()
         if return_code is not None:
