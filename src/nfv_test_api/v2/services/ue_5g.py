@@ -13,7 +13,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-import configparser
 import logging
 import pathlib
 import subprocess
@@ -22,12 +21,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import pydantic
+import yaml
 from pydantic import ValidationError
 from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
 from nfv_test_api.config import Config
 from nfv_test_api.host import Host
-from nfv_test_api.v2.data.enodeb import ENodeB, ENodeBCreate, ENodeBUpdate
+from nfv_test_api.v2.data.ue_5g import UE, UECreate, UEUpdate
 from nfv_test_api.v2.services.base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
@@ -40,26 +40,23 @@ class FileType(str, Enum):
 
 def get_file_path(identifier: str, type: FileType) -> Path:
     if type == FileType.CONFIG:
-        filename = "enb_" + identifier + ".conf"
-        path = Path(Config().enb_config_folder) / filename
+        filename = "ue_5g_" + identifier + ".yml"
+        path = Path(Config().ue_5g_config_folder) / filename
     elif type == FileType.LOG:
-        filename = "enb_" + identifier + ".log"
-        path = Path(Config().enb_log_folder) / filename
+        filename = "ue_5g_" + identifier + ".log"
+        path = Path(Config().ue_5g_log_folder) / filename
     else:
         raise RuntimeError(f"Unkown file type {str(type)}")
     return path
 
 
-class ENodeBServiceHandler:
+class UEServiceHandler:
     def __init__(self) -> None:
         self.processes: Dict[str, subprocess.Popen] = {}
 
     def add(self, identifier: str) -> None:
         if identifier not in self.processes:
-            command = [
-                "/srsRAN_4G/build/srsenb/src/srsenb",
-                str(get_file_path(identifier, FileType.CONFIG)),
-            ]
+            command = ["nr-ue", "-c", str(get_file_path(identifier, FileType.CONFIG))]
             out = get_file_path(identifier, FileType.LOG).open(mode="w+")
 
             self.processes[identifier] = subprocess.Popen(
@@ -70,7 +67,7 @@ class ENodeBServiceHandler:
                 stderr=out,
             )
         else:
-            raise Conflict(f"an eNodeB with enb_id {identifier} is already running")
+            raise Conflict(f"a UE with supi {identifier} is already running")
 
     def kill(self, identifier: str) -> None:
         if identifier in self.processes:
@@ -78,37 +75,41 @@ class ENodeBServiceHandler:
             self.processes[identifier].wait()
             del self.processes[identifier]
         else:
-            raise NotFound(f"No process running for eNodeB with enb_id {identifier}")
+            raise NotFound(f"No process running for UE with supi {identifier}")
 
 
-class ENodeBService(BaseService[ENodeB, ENodeBCreate, ENodeBUpdate]):
-    def __init__(self, host: Host, process_handler: ENodeBServiceHandler) -> None:
+class UEService(BaseService[UE, UECreate, UEUpdate]):
+    def __init__(self, host: Host, process_handler: UEServiceHandler) -> None:
         super().__init__(host)
         self.process_handler = process_handler
 
     def get_one_raw(
-        self, enb_id: Optional[str] = None, filename: Optional[str] = None
+        self, supi: Optional[str] = None, filename: Optional[str] = None
     ) -> Any:
-        # Get eNodeB config using enb_id or directly the filename
-        if not enb_id and not filename:
+        # Get UE config using supi or directly the filename
+        if not supi and not filename:
             raise NotFound(
-                "Please specify either enb_id or filename to get the eNodeB config"
+                "Please specify either supi or filename to get the UE config"
             )
-        elif enb_id:
-            filename = str(get_file_path(enb_id, FileType.CONFIG))
+        elif supi:
+            filename = str(get_file_path(supi, FileType.CONFIG))
 
         try:
-            config = configparser.ConfigParser(interpolation=None)
-            config.read(filename)  # type: ignore
-            return dict(config.items("enb"))
-        except configparser.NoSectionError:
-            if not enb_id:
+            with Path(filename).open(mode="r") as stream:  # type: ignore
+                try:
+                    return yaml.safe_load(stream)
+                except yaml.YAMLError as e:
+                    raise RuntimeError(
+                        f"Failed to load UE config: {filename}\n" f"{str(e)}"
+                    )
+        except FileNotFoundError:
+            if not supi:
                 # raise exception only if filename specified
-                raise NotFound(f"Could not find eNodeB config {filename}")
+                raise NotFound(f"Could not find UE config {filename}")
 
     def get_all_raw(self) -> List[Dict[str, Any]]:
-        enb_folder = pathlib.Path(Config().enb_config_folder)
-        config_files = enb_folder.glob("*.conf")
+        ue_folder = pathlib.Path(Config().ue_5g_config_folder)
+        config_files = ue_folder.glob("*.yml")
         configs = []
 
         for filename in config_files:
@@ -116,84 +117,66 @@ class ENodeBService(BaseService[ENodeB, ENodeBCreate, ENodeBUpdate]):
 
         return pydantic.parse_obj_as(List[Dict[str, Any]], configs)
 
-    def get_all(self) -> List[ENodeB]:
-        enodeb_list: List[ENodeB] = []
-        for enodeb_json in self.get_all_raw():
+    def get_all(self) -> List[UE]:
+        ue_list: List[UE] = []
+        for ue_json in self.get_all_raw():
             try:
-                enodeb = ENodeB(**enodeb_json)
-                enodeb.attach_host(self.host)
-                enodeb_list.append(enodeb)
+                ue = UE(**ue_json)
+                ue.attach_host(self.host)
+                ue_list.append(ue)
             except ValidationError as e:
                 LOGGER.error(
-                    f"Failed to parse a eNodeB configuration : {enodeb_json}\n"
-                    f"{str(e)}"
+                    f"Failed to parse a UE configuration : {ue_json}\n" f"{str(e)}"
                 )
 
-        return enodeb_list
+        return ue_list
 
     def get_one_or_default(
         self, identifier: str, default: Optional[K] = None
-    ) -> Union[ENodeB, None, K]:
-        raw_enb = self.get_one_raw(enb_id=identifier)
-        if raw_enb is None:
+    ) -> Union[UE, None, K]:
+        raw_ue = self.get_one_raw(supi=identifier)
+        if raw_ue is None:
             return default
 
-        enb = ENodeB(**raw_enb)
-        enb.attach_host(self.host)
-        return enb
+        ue = UE(**raw_ue)
+        ue.attach_host(self.host)
+        return ue
 
-    def get_one(self, identifier: str) -> ENodeB:
-        enb = self.get_one_or_default(identifier)
-        if not enb:
-            raise NotFound(f"Could not find eNodeB with enb_id {identifier}")
+    def get_one(self, identifier: str) -> UE:
+        ue = self.get_one_or_default(identifier)
+        if not ue:
+            raise NotFound(f"Could not find UE with supi {identifier}")
 
-        return enb
+        return ue
 
-    def create(self, o: ENodeBCreate) -> ENodeB:
-        existing_enb = self.get_one_or_default(o.enb_id)
-        if existing_enb:
-            raise Conflict("An eNodeB config with this enb_id already exists")
+    def create(self, o: UECreate) -> UE:
+        existing_ue = self.get_one_or_default(o.supi)
+        if existing_ue:
+            raise Conflict("A UE config with this supi already exists")
 
         return self.put(o)
 
-    def put(self, o: ENodeBCreate) -> ENodeB:
+    def put(self, o: UECreate) -> UE:
         """
-        Create or update a ENodeB.
-        We read the template and set all the fields in config file of the enb.
+        Create or update a UE.
         """
-        template = "/etc/srsran/enb_template.conf"
-        filename = get_file_path(o.enb_id, FileType.CONFIG)
-        config = configparser.ConfigParser(interpolation=None)
-        config.read(template)
+        with get_file_path(o.supi, FileType.CONFIG).open(mode="w+") as fh:
+            yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
 
-        if not config.has_section("enb"):
-            config.add_section("enb")
-        config.set("enb", "enb_id", o.enb_id)
-        config.set("enb", "mcc", o.mcc)
-        config.set("enb", "mnc", o.mnc)
-        config.set("enb", "mme_addr", str(o.mme_addr))
-        config.set("enb", "gtp_bind_addr", str(o.gtp_bind_addr))
-        config.set("enb", "s1c_bind_addr", str(o.s1c_bind_addr))
-        config.set("enb", "s1c_bind_port", str(o.s1c_bind_port))
-        config.set("enb", "n_prb", str(o.n_prb))
-
-        with open(filename, "w+") as fp:
-            config.write(fp)
-
-        existing_enb = self.get_one_or_default(o.enb_id)
-        if not existing_enb:
+        existing_ue = self.get_one_or_default(o.supi)
+        if not existing_ue:
             raise RuntimeError(
-                "Unexpected error: the created/updated eNodeB config can not be found."
+                "Unexpected error: the created/updated UE config can not be found."
             )
 
-        return existing_enb
+        return existing_ue
 
     def delete(self, identifier: str) -> None:
         self.get_one(identifier)
 
         try:
             self.node_status(identifier)
-            raise Conflict(f"The eNodeB client {identifier} is still running !")
+            raise Conflict(f"The UE client {identifier} is still running !")
         except NotFound:
             pass
 
@@ -201,13 +184,13 @@ class ENodeBService(BaseService[ENodeB, ENodeBCreate, ENodeBUpdate]):
             get_file_path(identifier, FileType.CONFIG).unlink()
         except FileNotFoundError:
             raise RuntimeError(
-                f"The configuration for eNodeB with enb_id {identifier} doesn't exist"
+                f"The configuration for UE with supi {identifier} doesn't exist"
             )
 
-        existing_enb = self.get_one_or_default(identifier)
-        if existing_enb:
+        existing_ue = self.get_one_or_default(identifier)
+        if existing_ue:
             raise RuntimeError(
-                "The eNodeB should have been deleted but could not be deleted"
+                "The UE should have been deleted but could not be deleted"
             )
 
     def start(self, identifier: str) -> None:
@@ -225,13 +208,16 @@ class ENodeBService(BaseService[ENodeB, ENodeBCreate, ENodeBUpdate]):
         self.get_one(identifier)
 
         if identifier not in self.process_handler.processes:
-            raise NotFound(f"No eNodeB process found for enb_id {identifier}")
+            raise NotFound(f"No gNodeB process found for nci {identifier}")
 
-        status: Dict[str, Any] = {
-            "pid": None,
-            "started": False,
-            "terminated": False,
-        }
+        status: Dict[str, Any] = {"pid": None, "status": {}, "terminated": False}
+        command = [
+            "nr-cli",
+            identifier,
+            "--exec",
+            "status",
+        ]
+
         status["pid"] = self.process_handler.processes[identifier].pid
 
         # Load the logs from the file
@@ -243,12 +229,24 @@ class ENodeBService(BaseService[ENodeB, ENodeBCreate, ENodeBUpdate]):
             # If the process is still in self.process_handler but has terminated then it is a zombie process
             status["logs"].extend(
                 [
-                    f"The eNodeB process failed with return code {return_code}.",
+                    f"The ue process failed with return code {return_code}.",
                     "The process is still living as zombie process, please call stop to terminate it properly.",
                 ]
             )
             status["terminated"] = True
 
-        status["started"] = "==== eNodeB started ===" in status["logs"]
+            return status
+
+        # Fetch ue client status only if it is still running
+        stdout, stderr = self.host.exec(command)
+
+        # Parse the status response, it should be a yaml object
+        try:
+            status["status"] = yaml.safe_load(stdout) or {}
+        except yaml.YAMLError:
+            status["status"] = {}
+
+        if stderr:
+            status["logs"].extend(stderr.split("\n"))
 
         return status

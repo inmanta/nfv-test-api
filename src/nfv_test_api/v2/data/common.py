@@ -25,6 +25,8 @@ Hostname = constr(
 SafeName = constr(regex=r"^[0-9A-Z-a-z@#$_\-.]{1,16}$")  # type: ignore
 Nci = constr(regex="0x[0-9a-fA-F]{9}")
 Supi = constr(regex="imsi-[0-9]{15}")
+Enb_id = constr(regex="^0x[0-9A-Fa-f]{1,5}$")
+Imei = constr(regex=r"^\d{15}$")
 
 
 class InputSafeName(BaseModel):
@@ -41,6 +43,14 @@ class InputSafeNci(BaseModel):
 
 class InputSafeSupi(BaseModel):
     supi: Supi  # type: ignore
+
+
+class InputSafeEnbId(BaseModel):
+    enb_id: Enb_id  # type: ignore
+
+
+class InputSafeImei(BaseModel):
+    imei: Imei  # type: ignore
 
 
 class Scope(str, Enum):

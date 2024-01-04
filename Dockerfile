@@ -12,7 +12,7 @@ RUN dnf config-manager --set-enabled devel
 # Install required packages
 RUN dnf install -y vim yum-utils curl nc iproute iputils git gcc lksctp-tools-devel traceroute nmap tcpdump \
     fftw-libs fftw-devel fftw-static mbedtls-devel libconfig glibc-devel czmq-devel cmake gcc gcc-c++ python3.11-devel \
-    boost-devel libconfig-devel procps-ng
+    boost-devel libconfig-devel
 
 # Install ueransim
 RUN git clone https://github.com/aligungr/UERANSIM && \
@@ -36,7 +36,7 @@ COPY pyproject.toml /opt/nfv-test-api/pyproject.toml
 COPY src/ /opt/nfv-test-api/src
 COPY config.yaml /etc/nfv-test-api.yaml
 COPY entrypoint.sh /entrypoint.sh
-COPY misc/srsran /opt/srsran
+COPY misc/srsran /etc/srsran
 
 # Installing nfv-test-api
 RUN cd /opt/nfv-test-api && \

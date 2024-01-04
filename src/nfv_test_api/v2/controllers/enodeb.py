@@ -22,7 +22,7 @@ from werkzeug.exceptions import BadRequest  # type: ignore
 
 from nfv_test_api.host import Host
 from nfv_test_api.v2.controllers.common import add_model_schema
-from nfv_test_api.v2.data.common import InputSafeNci
+from nfv_test_api.v2.data.common import InputSafeEnbId
 from nfv_test_api.v2.data.enodeb import ENodeB, ENodeBCreate, ENodeBStatus
 from nfv_test_api.v2.services.enodeb import ENodeBService, ENodeBServiceHandler
 
@@ -60,7 +60,7 @@ class AllENodeB(Resource):
         Get all eNodeBs
         """
         return [
-            gnodeb.json_dict() for gnodeb in self.enb_service.get_all()
+            enodeb.json_dict() for enodeb in self.enb_service.get_all()
         ], HTTPStatus.OK
 
     @namespace.expect(enodeb_create_model)
@@ -79,7 +79,6 @@ class AllENodeB(Resource):
         The eNodeB is identified by its enb_id, if another eNodeB with the same enb_id already exists, a
         conflict error is raised.
         """
-        #breakpoint()
         try:
             # Validating input
             create_form = ENodeBCreate(**request.json)  # type: ignore
@@ -109,7 +108,9 @@ class OneGNodeB(Resource):
         self.enb_service = ENodeBService(Host(), enodeb_service_handler)
 
     @namespace.response(
-        HTTPStatus.OK.value, "Found an eNodeB config with a matching enb_id", enodeb_model
+        HTTPStatus.OK.value,
+        "Found an eNodeB config with a matching enb_id",
+        enodeb_model,
     )
     @namespace.response(
         HTTPStatus.NOT_FOUND.value, "Couldn't find any eNodeB with given enb_id"
@@ -122,11 +123,14 @@ class OneGNodeB(Resource):
         """
         try:
             # Validating input
-            InputSafeNci(enb_id=enb_id)
+            InputSafeEnbId(enb_id=enb_id)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.enb_service.get_one(enb_id).json_dict(exclude_none=True), HTTPStatus.OK
+        return (
+            self.enb_service.get_one(enb_id).json_dict(exclude_none=True),
+            HTTPStatus.OK,
+        )
 
     @namespace.expect(enodeb_create_model)
     @namespace.response(
@@ -168,7 +172,7 @@ class OneGNodeB(Resource):
         """
         try:
             # Validating input
-            InputSafeNci(enb_id=enb_id)
+            InputSafeEnbId(enb_id=enb_id)
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -185,7 +189,7 @@ class OneGNodeB(Resource):
     code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
-class StartGNodeB(Resource):
+class StartENodeB(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.enb_service = ENodeBService(Host(), enodeb_service_handler)
@@ -206,7 +210,7 @@ class StartGNodeB(Resource):
 
         try:
             # Validating input
-            InputSafeNci(enb_id=enb_id)
+            InputSafeEnbId(enb_id=enb_id)
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -223,7 +227,7 @@ class StartGNodeB(Resource):
     code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
-class StopGNodeB(Resource):
+class StopENodeB(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.enb_service = ENodeBService(Host(), enodeb_service_handler)
@@ -241,7 +245,7 @@ class StopGNodeB(Resource):
 
         try:
             # Validating input
-            InputSafeNci(enb_id=enb_id)
+            InputSafeEnbId(enb_id=enb_id)
         except ValidationError as e:
             raise BadRequest(str(e))
 
@@ -258,7 +262,7 @@ class StopGNodeB(Resource):
     code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
     description="An error occurred when trying to process the request, this can also be because of bad input from the user",
 )
-class StatusGNodeB(Resource):
+class StatusENodeB(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api=api, *args, **kwargs)
         self.enb_service = ENodeBService(Host(), enodeb_service_handler)
@@ -280,7 +284,7 @@ class StatusGNodeB(Resource):
 
         try:
             # Validating input
-            InputSafeNci(enb_id=enb_id)
+            InputSafeEnbId(enb_id=enb_id)
         except ValidationError as e:
             raise BadRequest(str(e))
 

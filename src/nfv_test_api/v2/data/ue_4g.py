@@ -13,47 +13,45 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-
-from ipaddress import IPv4Address
+from typing import Optional
 
 from pydantic import Extra
 
 from .base_model import BaseModel, IpBaseModel
+from .common import Imei
 
 
-class ENodeB(IpBaseModel, extra=Extra.allow):
+class UE(IpBaseModel, extra=Extra.allow):
     """
-    An eNodeB identified by its enb_id.
-    """
-
-    enb_id: str  # indentifier of the eNodeB
-    mcc: str  # Mobile Country Code value
-    mnc: str  # Mobile Network Code value (2 or 3 digits)
-    mme_addr: IPv4Address
-    gtp_bind_addr: IPv4Address
-    s1c_bind_addr: IPv4Address
-    s1c_bind_port: int
-    n_prb: int
-
-
-class ENodeBCreate(ENodeB):
-    """
-    Input schema for creating a eNodeB
+    A UE identified by its imei.
     """
 
+    # Imei is the 15 digit International Mobile Subscriber Identity
+    imei: Imei  # type: ignore
+    imsi: str  # 15 digit International Mobile Station Equipment Identity (SIM)
+    op: str  # 128-bit Operator Variant Algorithm Configuration Field (hex)
+    k: str  # 128-bit subscriber key (hex)
+    mode: Optional[str] = "soft"  # USIM mode (soft/pcsc)
+    algo: Optional[str] = "milenage"  # Authentication algorithm (xor/milenage)
 
-class ENodeBUpdate(ENodeB):
+
+class UECreate(UE):
     """
-    Input schema for creating a eNodeB
+    Input schema for creating a UE
     """
 
 
-class ENodeBStatus(BaseModel):
+class UEUpdate(UE):
     """
-    Response to a status call for a running eNodeB.
+    Input schema for creating a UE
     """
 
-    started: bool
+
+class UEStatus(BaseModel):
+    """
+    Response to a status call for a running UE.
+    """
+
     terminated: bool
     pid: int
     logs: list[str]
