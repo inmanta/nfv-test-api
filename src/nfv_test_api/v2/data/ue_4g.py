@@ -18,7 +18,7 @@ from typing import Optional
 from pydantic import Extra
 
 from .base_model import BaseModel, IpBaseModel
-from .common import Imei
+from .common import Imsi
 
 
 class UE(IpBaseModel, extra=Extra.allow):
@@ -26,9 +26,10 @@ class UE(IpBaseModel, extra=Extra.allow):
     A UE identified by its imei.
     """
 
-    # Imei is the 15 digit International Mobile Subscriber Identity
-    imei: Imei  # type: ignore
-    imsi: str  # 15 digit International Mobile Station Equipment Identity (SIM)
+    # Imsi is the 15 digit International Mobile Station Equipment Identity (SIM)
+    imsi: Imsi  # type: ignore
+    imei: str  # 15 digit International Mobile Subscriber Identity
+
     op: str  # 128-bit Operator Variant Algorithm Configuration Field (hex)
     k: str  # 128-bit subscriber key (hex)
     mode: Optional[str] = "soft"  # USIM mode (soft/pcsc)

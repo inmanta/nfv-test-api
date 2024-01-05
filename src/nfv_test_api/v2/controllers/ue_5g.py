@@ -26,7 +26,7 @@ from nfv_test_api.v2.data.common import InputSafeSupi
 from nfv_test_api.v2.data.ue_5g import UE, UECreate, UEStatus
 from nfv_test_api.v2.services.ue_5g import UEService, UEServiceHandler
 
-namespace = Namespace(name="ue_5g", description="Basic 5G user equipment management")
+namespace = Namespace(name="ue", description="Basic 5G user equipment management")
 
 ue_model = add_model_schema(namespace, UE)
 ue_create_model = add_model_schema(namespace, UECreate)

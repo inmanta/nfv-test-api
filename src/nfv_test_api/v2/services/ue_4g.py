@@ -70,7 +70,7 @@ class UEServiceHandler:
                 stderr=out,
             )
         else:
-            raise Conflict(f"an UE with imei {identifier} is already running")
+            raise Conflict(f"an UE with imsi {identifier} is already running")
 
     def kill(self, identifier: str) -> None:
         if identifier in self.processes:
@@ -78,7 +78,7 @@ class UEServiceHandler:
             self.processes[identifier].wait()
             del self.processes[identifier]
         else:
-            raise NotFound(f"No process running for UE with imei {identifier}")
+            raise NotFound(f"No process running for UE with imsi {identifier}")
 
 
 class UEService(BaseService[UE, UECreate, UEUpdate]):
@@ -87,22 +87,22 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         self.process_handler = process_handler
 
     def get_one_raw(
-        self, imei: Optional[str] = None, filename: Optional[str] = None
+        self, imsi: Optional[str] = None, filename: Optional[str] = None
     ) -> Any:
-        # Get ue config using imei or directly the filename
-        if not imei and not filename:
+        # Get ue config using imsi or directly the filename
+        if not imsi and not filename:
             raise NotFound(
-                "Please specify either imei or filename to get the UE config"
+                "Please specify either imsi or filename to get the UE config"
             )
-        elif imei:
-            filename = str(get_file_path(imei, FileType.CONFIG))
+        elif imsi:
+            filename = str(get_file_path(imsi, FileType.CONFIG))
 
         try:
             config = configparser.ConfigParser(interpolation=None)
             config.read(filename)  # type: ignore
             return dict(config.items("usim"))
         except configparser.NoSectionError:
-            if not imei:
+            if not imsi:
                 # raise exception only if filename specified
                 raise NotFound(f"Could not find UE config {filename}")
 
@@ -133,7 +133,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
     def get_one_or_default(
         self, identifier: str, default: Optional[K] = None
     ) -> Union[UE, None, K]:
-        raw_ue = self.get_one_raw(imei=identifier)
+        raw_ue = self.get_one_raw(imsi=identifier)
         if raw_ue is None:
             return default
 
@@ -144,14 +144,14 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
     def get_one(self, identifier: str) -> UE:
         ue = self.get_one_or_default(identifier)
         if not ue:
-            raise NotFound(f"Could not find UE with imei {identifier}")
+            raise NotFound(f"Could not find UE with imsi {identifier}")
 
         return ue
 
     def create(self, o: UECreate) -> UE:
-        existing_ue = self.get_one_or_default(o.imei)
+        existing_ue = self.get_one_or_default(o.imsi)
         if existing_ue:
-            raise Conflict("A UE config with this imei already exists")
+            raise Conflict("A UE config with this imsi already exists")
 
         return self.put(o)
 
@@ -161,14 +161,14 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         We read the template and set all the fields in config file of the UE.
         """
         template = "/etc/srsran/ue_template.conf"
-        filename = get_file_path(o.imei, FileType.CONFIG)
+        filename = get_file_path(o.imsi, FileType.CONFIG)
         config = configparser.ConfigParser(interpolation=None)
         config.read(template)
 
         if not config.has_section("usim"):
             config.add_section("usim")
-        config.set("usim", "imei", o.imei)
         config.set("usim", "imsi", o.imsi)
+        config.set("usim", "imei", o.imei)
         config.set("usim", "op", o.op)
         config.set("usim", "k", o.k)
         config.set("usim", "mode", o.mode)
@@ -177,7 +177,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         with open(filename, "w+") as fp:
             config.write(fp)
 
-        existing_ue = self.get_one_or_default(o.imei)
+        existing_ue = self.get_one_or_default(o.imsi)
         if not existing_ue:
             raise RuntimeError(
                 "Unexpected error: the created/updated UE config can not be found."
@@ -198,7 +198,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
             get_file_path(identifier, FileType.CONFIG).unlink()
         except FileNotFoundError:
             raise RuntimeError(
-                f"The configuration for UE with imei {identifier} doesn't exist"
+                f"The configuration for UE with imsi {identifier} doesn't exist"
             )
 
         existing_ue = self.get_one_or_default(identifier)
@@ -222,7 +222,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         self.get_one(identifier)
 
         if identifier not in self.process_handler.processes:
-            raise NotFound(f"No 4G user equipment process found for imei {identifier}")
+            raise NotFound(f"No 4G user equipment process found for imsi {identifier}")
 
         status: Dict[str, Any] = {"pid": None, "terminated": False}
         status["pid"] = self.process_handler.processes[identifier].pid

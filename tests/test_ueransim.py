@@ -141,7 +141,7 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
             "integrityMaxRate": {"uplink": "full", "downlink": "full"},
         }
     )
-    response = requests.post(f"{nfv_test_api_endpoint}/ue_5g", json=new_ue.json_dict())
+    response = requests.post(f"{nfv_test_api_endpoint}/ue", json=new_ue.json_dict())
     LOGGER.debug(response.json())
     response.raise_for_status()
 
@@ -150,7 +150,7 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
     assert created_ue.dict() == new_ue.dict()
 
     # Get the ue config and check it is consistent with what we created
-    response = requests.get(f"{nfv_test_api_endpoint}/ue_5g/imsi-001010000000001")
+    response = requests.get(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001")
     LOGGER.debug(response.json())
     response.raise_for_status()
     ue = UE(**response.json())
@@ -158,13 +158,11 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
 
     # Start the ue
     requests.post(
-        f"{nfv_test_api_endpoint}/ue_5g/imsi-001010000000001/start"
+        f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/start"
     ).raise_for_status()
 
     # Get the status of the ue
-    response = requests.get(
-        f"{nfv_test_api_endpoint}/ue_5g/imsi-001010000000001/status"
-    )
+    response = requests.get(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/status")
     LOGGER.debug(response.json())
     response.raise_for_status()
     status = UEStatus(**response.json())
@@ -174,21 +172,21 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
 
     # Stop the ue
     requests.post(
-        f"{nfv_test_api_endpoint}/ue_5g/imsi-001010000000001/stop"
+        f"{nfv_test_api_endpoint}/ue/imsi-001010000000001/stop"
     ).raise_for_status()
 
     # Update the config
 
     new_ue.gnbSearchList = [IPv4Address("127.0.0.2")]
     response = requests.put(
-        f"{nfv_test_api_endpoint}/ue_5g/imsi-001010000000001", json=new_ue.json_dict()
+        f"{nfv_test_api_endpoint}/ue/imsi-001010000000001", json=new_ue.json_dict()
     )
     LOGGER.debug(response.json())
     response.raise_for_status()
 
     # verify that the update worked
 
-    response = requests.get(f"{nfv_test_api_endpoint}/ue_5g/imsi-001010000000001")
+    response = requests.get(f"{nfv_test_api_endpoint}/ue/imsi-001010000000001")
     LOGGER.debug(response.json())
     response.raise_for_status()
     updated_ue = UE(**response.json())
@@ -196,5 +194,5 @@ def test_create_ue(nfv_test_api_endpoint: str, nfv_test_api_logs: None) -> None:
 
     # Delete the ue config
     requests.delete(
-        f"{nfv_test_api_endpoint}/ue_5g/imsi-001010000000001"
+        f"{nfv_test_api_endpoint}/ue/imsi-001010000000001"
     ).raise_for_status()
