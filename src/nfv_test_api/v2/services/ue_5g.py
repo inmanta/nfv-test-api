@@ -27,7 +27,7 @@ from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
 from nfv_test_api.config import Config
 from nfv_test_api.host import Host
-from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBUpdate
+from nfv_test_api.v2.data.ue_5g import UE, UECreate, UEUpdate
 from nfv_test_api.v2.services.base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
@@ -40,23 +40,23 @@ class FileType(str, Enum):
 
 def get_file_path(identifier: str, type: FileType) -> Path:
     if type == FileType.CONFIG:
-        filename = "gnb_" + identifier + ".yml"
-        path = Path(Config().gnb_config_folder) / filename
+        filename = "ue_5g_" + identifier + ".yml"
+        path = Path(Config().ue_5g_config_folder) / filename
     elif type == FileType.LOG:
-        filename = "gnb_" + identifier + ".log"
-        path = Path(Config().gnb_log_folder) / filename
+        filename = "ue_5g_" + identifier + ".log"
+        path = Path(Config().ue_5g_log_folder) / filename
     else:
         raise RuntimeError(f"Unkown file type {str(type)}")
     return path
 
 
-class GNodeBServiceHandler:
+class UEServiceHandler:
     def __init__(self) -> None:
         self.processes: Dict[str, subprocess.Popen] = {}
 
     def add(self, identifier: str) -> None:
         if identifier not in self.processes:
-            command = ["nr-gnb", "-c", str(get_file_path(identifier, FileType.CONFIG))]
+            command = ["nr-ue", "-c", str(get_file_path(identifier, FileType.CONFIG))]
             out = get_file_path(identifier, FileType.LOG).open(mode="w+")
 
             self.processes[identifier] = subprocess.Popen(
@@ -67,7 +67,7 @@ class GNodeBServiceHandler:
                 stderr=out,
             )
         else:
-            raise Conflict(f"a gNodeB with nci {identifier} is already running")
+            raise Conflict(f"a UE with supi {identifier} is already running")
 
     def kill(self, identifier: str) -> None:
         if identifier in self.processes:
@@ -75,24 +75,24 @@ class GNodeBServiceHandler:
             self.processes[identifier].wait()
             del self.processes[identifier]
         else:
-            raise NotFound(f"No process running for gNodeB with nci {identifier}")
+            raise NotFound(f"No process running for UE with supi {identifier}")
 
 
-class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
-    def __init__(self, host: Host, process_handler: GNodeBServiceHandler) -> None:
+class UEService(BaseService[UE, UECreate, UEUpdate]):
+    def __init__(self, host: Host, process_handler: UEServiceHandler) -> None:
         super().__init__(host)
         self.process_handler = process_handler
 
     def get_one_raw(
-        self, nci: Optional[str] = None, filename: Optional[str] = None
+        self, supi: Optional[str] = None, filename: Optional[str] = None
     ) -> Any:
-        # Get gNodeB config using nci or directly the filename
-        if not nci and not filename:
+        # Get UE config using supi or directly the filename
+        if not supi and not filename:
             raise NotFound(
-                "Please specify either nci or filename to get the gNodeB config"
+                "Please specify either supi or filename to get the UE config"
             )
-        elif nci:
-            filename = str(get_file_path(nci, FileType.CONFIG))
+        elif supi:
+            filename = str(get_file_path(supi, FileType.CONFIG))
 
         try:
             with Path(filename).open(mode="r") as stream:  # type: ignore
@@ -100,16 +100,16 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
                     return yaml.safe_load(stream)
                 except yaml.YAMLError as e:
                     raise RuntimeError(
-                        f"Failed to load gNodeB config: {filename}\n" f"{str(e)}"
+                        f"Failed to load UE config: {filename}\n" f"{str(e)}"
                     )
         except FileNotFoundError:
-            if not nci:
+            if not supi:
                 # raise exception only if filename specified
-                raise NotFound(f"Could not find gNodeB config {filename}")
+                raise NotFound(f"Could not find UE config {filename}")
 
     def get_all_raw(self) -> List[Dict[str, Any]]:
-        gnb_folder = pathlib.Path(Config().gnb_config_folder)
-        config_files = gnb_folder.glob("*.yml")
+        ue_folder = pathlib.Path(Config().ue_5g_config_folder)
+        config_files = ue_folder.glob("*.yml")
         configs = []
 
         for filename in config_files:
@@ -117,67 +117,66 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
 
         return pydantic.parse_obj_as(List[Dict[str, Any]], configs)
 
-    def get_all(self) -> List[GNodeB]:
-        gnodeb_list: List[GNodeB] = []
-        for gnodeb_json in self.get_all_raw():
+    def get_all(self) -> List[UE]:
+        ue_list: List[UE] = []
+        for ue_json in self.get_all_raw():
             try:
-                gnodeb = GNodeB(**gnodeb_json)
-                gnodeb.attach_host(self.host)
-                gnodeb_list.append(gnodeb)
+                ue = UE(**ue_json)
+                ue.attach_host(self.host)
+                ue_list.append(ue)
             except ValidationError as e:
                 LOGGER.error(
-                    f"Failed to parse a gNodeB configuration : {gnodeb_json}\n"
-                    f"{str(e)}"
+                    f"Failed to parse a UE configuration : {ue_json}\n" f"{str(e)}"
                 )
 
-        return gnodeb_list
+        return ue_list
 
     def get_one_or_default(
         self, identifier: str, default: Optional[K] = None
-    ) -> Union[GNodeB, None, K]:
-        raw_gnb = self.get_one_raw(nci=identifier)
-        if raw_gnb is None:
+    ) -> Union[UE, None, K]:
+        raw_ue = self.get_one_raw(supi=identifier)
+        if raw_ue is None:
             return default
 
-        gnb = GNodeB(**raw_gnb)
-        gnb.attach_host(self.host)
-        return gnb
+        ue = UE(**raw_ue)
+        ue.attach_host(self.host)
+        return ue
 
-    def get_one(self, identifier: str) -> GNodeB:
-        gnb = self.get_one_or_default(identifier)
-        if not gnb:
-            raise NotFound(f"Could not find gNodeB with nci {identifier}")
+    def get_one(self, identifier: str) -> UE:
+        ue = self.get_one_or_default(identifier)
+        if not ue:
+            raise NotFound(f"Could not find UE with supi {identifier}")
 
-        return gnb
+        return ue
 
-    def create(self, o: GNodeBCreate) -> GNodeB:
-        existing_gnb = self.get_one_or_default(o.nci)
-        if existing_gnb:
-            raise Conflict("A gNodeB config with this nci already exists")
+    def create(self, o: UECreate) -> UE:
+        existing_ue = self.get_one_or_default(o.supi)
+        if existing_ue:
+            raise Conflict("A UE config with this supi already exists")
 
         return self.put(o)
 
-    def put(self, o: GNodeBCreate) -> GNodeB:
+    def put(self, o: UECreate) -> UE:
         """
-        Create or update a GNodeB.
+        Create or update a UE.
         """
-        with get_file_path(o.nci, FileType.CONFIG).open(mode="w+") as fh:
+        with get_file_path(o.supi, FileType.CONFIG).open(mode="w+") as fh:
             yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
 
-        existing_gnb = self.get_one_or_default(o.nci)
-        if not existing_gnb:
+        existing_ue = self.get_one_or_default(o.supi)
+        if not existing_ue:
             raise RuntimeError(
-                "Unexpected error: the created/updated gNodeB config can not be found."
+                "Unexpected error: the created/updated UE config can not be found."
             )
 
-        return existing_gnb
+        return existing_ue
 
     def delete(self, identifier: str) -> None:
         self.get_one(identifier)
 
         try:
             self.node_status(identifier)
-            raise Conflict(f"The gNodeB client {identifier} is still running !")
+            raise Conflict(f"The UE client {identifier} is still running !")
         except NotFound:
             pass
 
@@ -185,13 +184,13 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             get_file_path(identifier, FileType.CONFIG).unlink()
         except FileNotFoundError:
             raise RuntimeError(
-                f"The configuration for gNodeB with nci {identifier} doesn't exist"
+                f"The configuration for UE with supi {identifier} doesn't exist"
             )
 
-        existing_gnb = self.get_one_or_default(identifier)
-        if existing_gnb:
+        existing_ue = self.get_one_or_default(identifier)
+        if existing_ue:
             raise RuntimeError(
-                "The gNodeB should have been deleted but could not be deleted"
+                "The UE should have been deleted but could not be deleted"
             )
 
     def start(self, identifier: str) -> None:
@@ -205,38 +204,16 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
         self.process_handler.kill(identifier)
 
     def node_status(self, identifier: str) -> Dict[str, Any]:
-        """
-        To be able to execute command on a running node,
-        we use nr-cli command with the name generated internally by UERANSIM.
-
-        The pattern is "UERANSIM-gnb-x-y-z" where:
-        - x is the mcc
-        - y is the mnc
-        - z is the gnbId.
-        The gnbId is found from the nci and the idLength, for example:
-            idLength = 32,
-            nci (36 bits)   : 0000 0000 0000 0000 0000 0000 0100 0010 0001
-                              ^                                     ^ ^  ^
-                              |                  gnbId              | | cellId |
-
-            // Splitted values are as below
-            gnbId (32 bits) : 0000 0000 0000 0000 0000 0000 0100 0010 = 66 = z
-            cellId (4 bits) : 0001 = 1
-
-            source: https://github.com/aligungr/UERANSIM/issues/224
-        """
-
         # make sure the config exists
-        gnb = self.get_one(identifier)
+        self.get_one(identifier)
 
         if identifier not in self.process_handler.processes:
             raise NotFound(f"No gNodeB process found for nci {identifier}")
 
         status: Dict[str, Any] = {"pid": None, "status": {}, "terminated": False}
-        node_name = f"UERANSIM-gnb-{int(gnb.mcc)}-{int(gnb.mnc)}-{int(gnb.nci[:-1], base=0)}"  # type: ignore
         command = [
             "nr-cli",
-            node_name,
+            identifier,
             "--exec",
             "status",
         ]
@@ -251,7 +228,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
             # If the process is still in self.process_handler but has terminated then it is a zombie process
             status["logs"].extend(
                 [
-                    f"The gnodeB process failed with return code {return_code}.",
+                    f"The ue process failed with return code {return_code}.",
                     "The process is still living as zombie process, please call stop to terminate it properly.",
                 ]
             )
@@ -259,7 +236,7 @@ class GNodeBService(BaseService[GNodeB, GNodeBCreate, GNodeBUpdate]):
 
             return status
 
-        # Fetch gnodeB client status only if it is still running
+        # Fetch ue client status only if it is still running
         stdout, stderr = self.host.exec(command)
 
         # Parse the status response, it should be a yaml object

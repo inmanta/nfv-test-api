@@ -22,11 +22,11 @@ from werkzeug.exceptions import BadRequest  # type: ignore
 
 from nfv_test_api.host import Host
 from nfv_test_api.v2.controllers.common import add_model_schema
-from nfv_test_api.v2.data.common import InputSafeSupi
-from nfv_test_api.v2.data.ue import UE, UECreate, UEStatus
-from nfv_test_api.v2.services.ue import UEService, UEServiceHandler
+from nfv_test_api.v2.data.common import InputSafeImsi
+from nfv_test_api.v2.data.ue_4g import UE, UECreate, UEStatus
+from nfv_test_api.v2.services.ue_4g import UEService, UEServiceHandler
 
-namespace = Namespace(name="ue", description="Basic user equipment management")
+namespace = Namespace(name="ue_4g", description="Basic 4G user equipment management")
 
 ue_model = add_model_schema(namespace, UE)
 ue_create_model = add_model_schema(namespace, UECreate)
@@ -41,7 +41,7 @@ ue_service_handler = UEServiceHandler()
 )
 class AllUE(Resource):
     """
-    The scope of this controller is all the UEs.
+    The scope of this controller is all the UE.
     """
 
     def __init__(self, api=None, *args, **kwargs):
@@ -50,40 +50,45 @@ class AllUE(Resource):
         self.ue_service = UEService(self._host, ue_service_handler)
 
     @namespace.response(
-        code=HTTPStatus.OK.value, description="Get all UE", model=ue_model, as_list=True
+        code=HTTPStatus.OK.value,
+        description="Get all UE",
+        model=ue_model,
+        as_list=True,
     )
     def get(self):
         """
-        Get all UEs
+        Get all UE
         """
         return [ue.json_dict() for ue in self.ue_service.get_all()], HTTPStatus.OK
 
     @namespace.expect(ue_create_model)
     @namespace.response(
-        HTTPStatus.CREATED.value, "A new UE configuration has been created", ue_model
+        HTTPStatus.CREATED.value,
+        "A new UE configuration has been created",
+        ue_model,
     )
     @namespace.response(
-        HTTPStatus.CONFLICT.value, "Another UE with the same supi already exists"
+        HTTPStatus.CONFLICT.value, "Another UE with the same imsi already exists"
     )
     def post(self):
         """
-        Create an UE configuration
+        Create a UE configuration
 
-        The UE is identified by its supi, if another UE with the same supi already exists, a
+        The UE is identified by its imsi, if another ue with the same imsi already exists, a
         conflict error is raised.
         """
         try:
             # Validating input
-            create_form = UECreate(**request.json)
+            create_form = UECreate(**request.json)  # type: ignore
         except ValidationError as e:
             raise BadRequest(str(e))
 
         return self.ue_service.create(create_form).json_dict(), HTTPStatus.CREATED
 
 
-@namespace.route("/<supi>")
+@namespace.route("/<imsi>")
 @namespace.param(
-    "supi", description="The radio cell identifier, identify the cell of the UE."
+    "imsi", description="The radio cell identifier, identify the cell of the UE."
 )
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
@@ -91,7 +96,7 @@ class AllUE(Resource):
 )
 class OneUE(Resource):
     """
-    The scope of this controller is a single UE identified by its supi.
+    The scope of this controller is a single UE identified by its imsi.
 
     With it you can either get it, create it or delete it.
     """
@@ -101,34 +106,34 @@ class OneUE(Resource):
         self.ue_service = UEService(Host(), ue_service_handler)
 
     @namespace.response(
-        HTTPStatus.OK.value, "Found a UE config with a matching supi", ue_model
+        HTTPStatus.OK.value, "Found a UE config with a matching imsi", ue_model
     )
     @namespace.response(
-        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given imsi"
     )
-    def get(self, supi: str):
+    def get(self, imsi: str):
         """
-        Get a UE configuration
+        Get an UE configuration
 
-        The UE is identified by its supi.
+        The UE is identified by its imsi.
         """
         try:
             # Validating input
-            InputSafeSupi(supi=supi)
+            InputSafeImsi(imsi=imsi)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.ue_service.get_one(supi).json_dict(exclude_none=True), HTTPStatus.OK
+        return self.ue_service.get_one(imsi).json_dict(exclude_none=True), HTTPStatus.OK
 
     @namespace.expect(ue_create_model)
     @namespace.response(
         HTTPStatus.OK.value, "The UE config has been created/updated", ue_model
     )
-    def put(self, supi: str):
+    def put(self, imsi: str):
         """
-        Update an UE configuration
+        Create/Update a UE configuration
 
-        The UE is identified by its supi.
+        The UE is identified by its imsi.
         """
         try:
             # Validating input
@@ -136,9 +141,9 @@ class OneUE(Resource):
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        if create_form.supi != supi:
+        if create_form.imsi != imsi:
             raise BadRequest(
-                f"The provided supi {supi} does not match the supi {create_form.supi} in the config."
+                f"The provided imsi {imsi} does not match the imsi {create_form.imsi} in the config."
             )
 
         return self.ue_service.put(create_form).json_dict(), HTTPStatus.OK
@@ -149,27 +154,27 @@ class OneUE(Resource):
         HTTPStatus.CONFLICT.value,
         "The UE client should be stopped before removing config.",
     )
-    def delete(self, supi: str):
+    def delete(self, imsi: str):
         """
         Delete a UE configuration.
 
-        The UE is identified by its supi. This method is idempotent, if the UE
+        The UE is identified by its imsi. This method is idempotent, if the UE
         doesn't exist it won't try to delete it again, and consider the deletion successful.
         """
         try:
             # Validating input
-            InputSafeSupi(supi=supi)
+            InputSafeImsi(imsi=imsi)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        self.ue_service.delete(supi)
+        self.ue_service.delete(imsi)
 
         return HTTPStatus.OK
 
 
-@namespace.route("/<supi>/start")
+@namespace.route("/<imsi>/start")
 @namespace.param(
-    "supi", description="The radio cell identifier, identify the cell of the UE."
+    "imsi", description="The radio cell identifier, identify the cell of the UE."
 )
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
@@ -182,32 +187,32 @@ class StartUE(Resource):
 
     @namespace.response(HTTPStatus.OK.value, "UE started")
     @namespace.response(
-        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any ue with given imsi"
     )
     @namespace.response(
-        HTTPStatus.CONFLICT.value, "A UE with given supi is already running"
+        HTTPStatus.CONFLICT.value, "A UE with given imsi is already running"
     )
-    def post(self, supi: str):
+    def post(self, imsi: str):
         """
         Start a UE configuration
 
-        The UE is identified by its supi.
+        The UE is identified by its imsi.
         """
 
         try:
             # Validating input
-            InputSafeSupi(supi=supi)
+            InputSafeImsi(imsi=imsi)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        self.ue_service.start(supi)
+        self.ue_service.start(imsi)
 
         return HTTPStatus.OK
 
 
-@namespace.route("/<supi>/stop")
+@namespace.route("/<imsi>/stop")
 @namespace.param(
-    "supi", description="The radio cell identifier, identify the cell of the UE."
+    "imsi", description="The radio cell identifier, identify the cell of the UE."
 )
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
@@ -220,29 +225,29 @@ class StopUE(Resource):
 
     @namespace.response(HTTPStatus.OK.value, "UE stopped")
     @namespace.response(
-        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given imsi"
     )
-    def post(self, supi: str):
+    def post(self, imsi: str):
         """
-        Stop a UE configuration
+        Stop a UE configuration. If You stop the UE don't forget to restart the related eNodeB.
 
-        The UE is identified by its supi.
+        The UE is identified by its imsi.
         """
 
         try:
             # Validating input
-            InputSafeSupi(supi=supi)
+            InputSafeImsi(imsi=imsi)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        self.ue_service.stop(supi)
+        self.ue_service.stop(imsi)
 
         return HTTPStatus.OK
 
 
-@namespace.route("/<supi>/status")
+@namespace.route("/<imsi>/status")
 @namespace.param(
-    "supi", description="The radio cell identifier, identify the cell of the UE."
+    "imsi", description="The radio cell identifier, identify the cell of the UE."
 )
 @namespace.response(
     code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
@@ -254,22 +259,24 @@ class StatusUE(Resource):
         self.ue_service = UEService(Host(), ue_service_handler)
 
     @namespace.response(
-        HTTPStatus.OK.value, "Found a UE config with a matching supi", ue_status_model
+        HTTPStatus.OK.value,
+        "Found a UE config with a matching imsi",
+        ue_status_model,
     )
     @namespace.response(
-        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given supi"
+        HTTPStatus.NOT_FOUND.value, "Couldn't find any UE with given imsi"
     )
-    def get(self, supi: str):
+    def get(self, imsi: str):
         """
         Get the status of a UE.
 
-        The UE is identified by its supi.
+        The UE is identified by its imsi.
         """
 
         try:
             # Validating input
-            InputSafeSupi(supi=supi)
+            InputSafeImsi(imsi=imsi)
         except ValidationError as e:
             raise BadRequest(str(e))
 
-        return self.ue_service.node_status(supi), HTTPStatus.OK
+        return self.ue_service.node_status(imsi), HTTPStatus.OK

@@ -13,6 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import configparser
 import logging
 import pathlib
 import subprocess
@@ -21,13 +22,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import pydantic
-import yaml
 from pydantic import ValidationError
 from werkzeug.exceptions import Conflict, NotFound  # type: ignore
 
 from nfv_test_api.config import Config
 from nfv_test_api.host import Host
-from nfv_test_api.v2.data.ue import UE, UECreate, UEUpdate
+from nfv_test_api.v2.data.ue_4g import UE, UECreate, UEUpdate
 from nfv_test_api.v2.services.base_service import BaseService, K
 
 LOGGER = logging.getLogger(__name__)
@@ -40,11 +40,11 @@ class FileType(str, Enum):
 
 def get_file_path(identifier: str, type: FileType) -> Path:
     if type == FileType.CONFIG:
-        filename = "ue_" + identifier + ".yml"
-        path = Path(Config().ue_config_folder) / filename
+        filename = "ue_4g_" + identifier + ".conf"
+        path = Path(Config().ue_4g_config_folder) / filename
     elif type == FileType.LOG:
-        filename = "ue_" + identifier + ".log"
-        path = Path(Config().ue_log_folder) / filename
+        filename = "ue_4g_" + identifier + ".log"
+        path = Path(Config().ue_4g_log_folder) / filename
     else:
         raise RuntimeError(f"Unkown file type {str(type)}")
     return path
@@ -56,7 +56,10 @@ class UEServiceHandler:
 
     def add(self, identifier: str) -> None:
         if identifier not in self.processes:
-            command = ["nr-ue", "-c", str(get_file_path(identifier, FileType.CONFIG))]
+            command = [
+                "/srsRAN_4G/build/srsue/src/srsue",
+                str(get_file_path(identifier, FileType.CONFIG)),
+            ]
             out = get_file_path(identifier, FileType.LOG).open(mode="w+")
 
             self.processes[identifier] = subprocess.Popen(
@@ -67,7 +70,7 @@ class UEServiceHandler:
                 stderr=out,
             )
         else:
-            raise Conflict(f"a UE with supi {identifier} is already running")
+            raise Conflict(f"an UE with imsi {identifier} is already running")
 
     def kill(self, identifier: str) -> None:
         if identifier in self.processes:
@@ -75,7 +78,7 @@ class UEServiceHandler:
             self.processes[identifier].wait()
             del self.processes[identifier]
         else:
-            raise NotFound(f"No process running for UE with supi {identifier}")
+            raise NotFound(f"No process running for UE with imsi {identifier}")
 
 
 class UEService(BaseService[UE, UECreate, UEUpdate]):
@@ -84,32 +87,28 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         self.process_handler = process_handler
 
     def get_one_raw(
-        self, supi: Optional[str] = None, filename: Optional[str] = None
+        self, imsi: Optional[str] = None, filename: Optional[str] = None
     ) -> Any:
-        # Get UE config using supi or directly the filename
-        if not supi and not filename:
+        # Get ue config using imsi or directly the filename
+        if not imsi and not filename:
             raise NotFound(
-                "Please specify either supi or filename to get the UE config"
+                "Please specify either imsi or filename to get the UE config"
             )
-        elif supi:
-            filename = str(get_file_path(supi, FileType.CONFIG))
+        elif imsi:
+            filename = str(get_file_path(imsi, FileType.CONFIG))
 
         try:
-            with Path(filename).open(mode="r") as stream:  # type: ignore
-                try:
-                    return yaml.safe_load(stream)
-                except yaml.YAMLError as e:
-                    raise RuntimeError(
-                        f"Failed to load UE config: {filename}\n" f"{str(e)}"
-                    )
-        except FileNotFoundError:
-            if not supi:
+            config = configparser.ConfigParser(interpolation=None)
+            config.read(filename)  # type: ignore
+            return dict(config.items("usim"))
+        except configparser.NoSectionError:
+            if not imsi:
                 # raise exception only if filename specified
                 raise NotFound(f"Could not find UE config {filename}")
 
     def get_all_raw(self) -> List[Dict[str, Any]]:
-        ue_folder = pathlib.Path(Config().ue_config_folder)
-        config_files = ue_folder.glob("*.yml")
+        ue_folder = pathlib.Path(Config().ue_4g_config_folder)
+        config_files = ue_folder.glob("*.conf")
         configs = []
 
         for filename in config_files:
@@ -134,7 +133,7 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
     def get_one_or_default(
         self, identifier: str, default: Optional[K] = None
     ) -> Union[UE, None, K]:
-        raw_ue = self.get_one_raw(supi=identifier)
+        raw_ue = self.get_one_raw(imsi=identifier)
         if raw_ue is None:
             return default
 
@@ -145,25 +144,40 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
     def get_one(self, identifier: str) -> UE:
         ue = self.get_one_or_default(identifier)
         if not ue:
-            raise NotFound(f"Could not find UE with supi {identifier}")
+            raise NotFound(f"Could not find UE with imsi {identifier}")
 
         return ue
 
     def create(self, o: UECreate) -> UE:
-        existing_ue = self.get_one_or_default(o.supi)
+        existing_ue = self.get_one_or_default(o.imsi)
         if existing_ue:
-            raise Conflict("A UE config with this supi already exists")
+            raise Conflict("A UE config with this imsi already exists")
 
         return self.put(o)
 
     def put(self, o: UECreate) -> UE:
         """
         Create or update a UE.
+        We read the template and set all the fields in config file of the UE.
         """
-        with get_file_path(o.supi, FileType.CONFIG).open(mode="w+") as fh:
-            yaml.dump(o.json_dict(), fh, sort_keys=False, default_style=None)
+        template = "/etc/srsran/ue_template.conf"
+        filename = get_file_path(o.imsi, FileType.CONFIG)
+        config = configparser.ConfigParser(interpolation=None)
+        config.read(template)
 
-        existing_ue = self.get_one_or_default(o.supi)
+        if not config.has_section("usim"):
+            config.add_section("usim")
+        config.set("usim", "imsi", o.imsi)
+        config.set("usim", "imei", o.imei)
+        config.set("usim", "op", o.op)
+        config.set("usim", "k", o.k)
+        config.set("usim", "mode", o.mode)
+        config.set("usim", "algo", o.algo)
+
+        with open(filename, "w+") as fp:
+            config.write(fp)
+
+        existing_ue = self.get_one_or_default(o.imsi)
         if not existing_ue:
             raise RuntimeError(
                 "Unexpected error: the created/updated UE config can not be found."
@@ -184,13 +198,13 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
             get_file_path(identifier, FileType.CONFIG).unlink()
         except FileNotFoundError:
             raise RuntimeError(
-                f"The configuration for UE with supi {identifier} doesn't exist"
+                f"The configuration for UE with imsi {identifier} doesn't exist"
             )
 
         existing_ue = self.get_one_or_default(identifier)
         if existing_ue:
             raise RuntimeError(
-                "The UE should have been deleted but could not be deleted"
+                "The ue should have been deleted but could not be deleted"
             )
 
     def start(self, identifier: str) -> None:
@@ -208,45 +222,23 @@ class UEService(BaseService[UE, UECreate, UEUpdate]):
         self.get_one(identifier)
 
         if identifier not in self.process_handler.processes:
-            raise NotFound(f"No gNodeB process found for nci {identifier}")
+            raise NotFound(f"No 4G user equipment process found for imsi {identifier}")
 
-        status: Dict[str, Any] = {"pid": None, "status": {}, "terminated": False}
-        command = [
-            "nr-cli",
-            identifier,
-            "--exec",
-            "status",
-        ]
-
+        status: Dict[str, Any] = {"pid": None, "terminated": False}
         status["pid"] = self.process_handler.processes[identifier].pid
 
         # Load the logs from the file
-        with get_file_path(identifier, FileType.LOG).open(mode="r") as out:
-            status["logs"] = [line.rstrip("\n") for line in out]
+        status["logs"] = get_file_path(identifier, FileType.LOG).read_text().split("\n")
 
         return_code = self.process_handler.processes[identifier].poll()
         if return_code is not None:
             # If the process is still in self.process_handler but has terminated then it is a zombie process
             status["logs"].extend(
                 [
-                    f"The ue process failed with return code {return_code}.",
+                    f"The 4G user equipment process failed with return code {return_code}.",
                     "The process is still living as zombie process, please call stop to terminate it properly.",
                 ]
             )
             status["terminated"] = True
-
-            return status
-
-        # Fetch ue client status only if it is still running
-        stdout, stderr = self.host.exec(command)
-
-        # Parse the status response, it should be a yaml object
-        try:
-            status["status"] = yaml.safe_load(stdout) or {}
-        except yaml.YAMLError:
-            status["status"] = {}
-
-        if stderr:
-            status["logs"].extend(stderr.split("\n"))
 
         return status

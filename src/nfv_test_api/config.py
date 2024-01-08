@@ -25,8 +25,12 @@ class Config(BaseModel):
     port: int = 8080
     gnb_config_folder: str = "gnb_config/"
     gnb_log_folder: str = "gnb_log/"
-    ue_config_folder: str = "ue_config/"
-    ue_log_folder: str = "ue_log/"
+    ue_5g_config_folder: str = "ue_5g_config/"
+    ue_5g_log_folder: str = "ue_5g_log/"
+    enb_config_folder: str = "enb_config/"
+    enb_log_folder: str = "enb_log/"
+    ue_4g_config_folder: str = "ue_4g_config/"
+    ue_4g_log_folder: str = "ue_4g_log/"
 
 
 CONFIG = None
@@ -55,11 +59,25 @@ def get_config(
     gnb_log_folder = pathlib.Path(CONFIG.gnb_log_folder)
     gnb_log_folder.mkdir(parents=True, exist_ok=True)
 
-    # create ue folders
-    ue_config_folder = pathlib.Path(CONFIG.ue_config_folder)
-    ue_config_folder.mkdir(parents=True, exist_ok=True)
+    # create 5g ue folders
+    ue_5g_config_folder = pathlib.Path(CONFIG.ue_5g_config_folder)
+    ue_5g_config_folder.mkdir(parents=True, exist_ok=True)
 
-    ue_log_folder = pathlib.Path(CONFIG.ue_log_folder)
-    ue_log_folder.mkdir(parents=True, exist_ok=True)
+    ue_5g_log_folder = pathlib.Path(CONFIG.ue_5g_log_folder)
+    ue_5g_log_folder.mkdir(parents=True, exist_ok=True)
+
+    # create enb folders
+    enb_config_folder = pathlib.Path(CONFIG.enb_config_folder)
+    enb_config_folder.mkdir(parents=True, exist_ok=True)
+
+    enb_log_folder = pathlib.Path(CONFIG.enb_log_folder)
+    enb_log_folder.mkdir(parents=True, exist_ok=True)
+
+    # create 5g ue folders
+    ue_4g_config_folder = pathlib.Path(CONFIG.ue_4g_config_folder)
+    ue_4g_config_folder.mkdir(parents=True, exist_ok=True)
+
+    ue_4g_log_folder = pathlib.Path(CONFIG.ue_4g_log_folder)
+    ue_4g_log_folder.mkdir(parents=True, exist_ok=True)
 
     return CONFIG

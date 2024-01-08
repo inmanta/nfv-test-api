@@ -23,11 +23,13 @@ from requests.models import HTTPError  # type: ignore
 from werkzeug.exceptions import ServiceUnavailable  # type: ignore
 
 from nfv_test_api.v2.controllers.actions import namespace as actions_ns
+from nfv_test_api.v2.controllers.enodeb import namespace as enb_ns
 from nfv_test_api.v2.controllers.gnodeb import namespace as gnb_ns
 from nfv_test_api.v2.controllers.interface import namespace as interface_ns
 from nfv_test_api.v2.controllers.namespace import namespace as namespace_ns
 from nfv_test_api.v2.controllers.route import namespace as route_ns
-from nfv_test_api.v2.controllers.ue import namespace as ue_ns
+from nfv_test_api.v2.controllers.ue_4g import namespace as ue_4g_ns
+from nfv_test_api.v2.controllers.ue_5g import namespace as ue_5g_ns
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +48,9 @@ api_extension.add_namespace(interface_ns)
 api_extension.add_namespace(route_ns)
 api_extension.add_namespace(actions_ns)
 api_extension.add_namespace(gnb_ns)
-api_extension.add_namespace(ue_ns)
+api_extension.add_namespace(ue_5g_ns)
+api_extension.add_namespace(enb_ns)
+api_extension.add_namespace(ue_4g_ns)
 
 # Ugly patches to force openapi 3.0
 from flask_restx.swagger import Swagger  # type: ignore # noqa: E402

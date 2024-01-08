@@ -74,7 +74,7 @@ class GNodeBUpdate(GNodeB):
 
 class GNodeBStatus(BaseModel):
     """
-    Response to a status call for a running gNobeB.
+    Response to a status call for a running gNodeB.
     """
 
     status: dict

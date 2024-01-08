@@ -36,6 +36,7 @@ COPY pyproject.toml /opt/nfv-test-api/pyproject.toml
 COPY src/ /opt/nfv-test-api/src
 COPY config.yaml /etc/nfv-test-api.yaml
 COPY entrypoint.sh /entrypoint.sh
+COPY misc/srsran /etc/srsran
 
 # Installing nfv-test-api
 RUN cd /opt/nfv-test-api && \

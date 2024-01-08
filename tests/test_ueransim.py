@@ -20,7 +20,7 @@ from ipaddress import IPv4Address
 import requests
 
 from nfv_test_api.v2.data.gnodeb import GNodeB, GNodeBCreate, GNodeBStatus
-from nfv_test_api.v2.data.ue import UE, UECreate, UEStatus
+from nfv_test_api.v2.data.ue_5g import UE, UECreate, UEStatus
 
 LOGGER = logging.getLogger(__name__)
 
